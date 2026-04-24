@@ -4,18 +4,24 @@ import { PostService } from "./post.service.js";
 import { User as UserModel } from "./generated/prisma/client.js";
 import { Post as PostModel } from "./generated/prisma/client.js";
 import { AppService } from "./app.service.js";
-
+ 
+import { JwtService } from '@nestjs/jwt';
+import { UseGuards} from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 @Controller()
 export class AppController {
   constructor(
     private readonly UserService: UserService,
     private readonly postService: PostService,
-    private readonly appService: AppService
+    private readonly appService: AppService,
+    private readonly jwtService: JwtService,
   ) {}
   @Get()
   getHello(): string {
     return this.appService.getHello();
   }
+
+  @UseGuards(AuthGuard('jwt'))
   @Get('users')
   async getAllUsers(): Promise<UserModel[]> {
     return this.UserService.users({}); // Prosledi prazan objekat
@@ -49,11 +55,20 @@ export class AppController {
     });
   }
 
+ // @UseGuards(AuthGuard('jwt'))
   @Post("post")
   async createDraft(
     @Body() postData: { title: string; content?: string; authorEmail: string },
   ): Promise<PostModel> {
     const { title, content, authorEmail } = postData;
+    // PRVO PROVERI DA LI KORISNIK POSTOJI
+    const user = await this.UserService.user({ email: authorEmail });
+    if (!user) {
+      throw new HttpException(
+        `Korisnik sa emailom ${authorEmail} nije pronađen u bazi.`, 
+        HttpStatus.NOT_FOUND
+      );
+    }
     return this.postService.createPost({
       title,
       content,
@@ -65,6 +80,17 @@ export class AppController {
 
   @Post("user")
   async signupUser(@Body() userData: { name?: string; email: string; password:string }): Promise<UserModel> {
+    const existingUser = await this.UserService.user({ email: userData.email });
+
+    if (existingUser) {
+      // Ako baza vrati korisnika, znači da email već postoji
+      throw new HttpException(
+        'Korisnik sa ovim email-om već postoji!', 
+        HttpStatus.BAD_REQUEST
+      );
+    }
+
+    // 2. Ako je existingUser null, ideš na kreiranje
     return this.UserService.createUser(userData);
   }
 
@@ -77,15 +103,19 @@ export class AppController {
   }
 
   @Post("login")
-  async login( @Body() loginData: { email: string; password: string }): Promise<UserModel | { message: string }> {
+  async login( @Body() loginData: { email: string; password: string }): Promise<{ accessToken: string, user: any }>{
   const user = await this.UserService.validateUser(loginData.email, loginData.password);
   
   if (!user) {
     //return { message: "Pogrešan email ili šifra!" };
     throw new HttpException('Pogrešan email ili šifra', HttpStatus.UNAUTHORIZED);
   }
-
-  return user; // Vraća podatke o korisniku ako je login uspešan
+  const payload = { sub: user.id, email: user.email };
+  return {
+    accessToken: this.jwtService.sign(payload),
+    user:user
+  };
+  
   }
 
   @Delete("post/:id")
