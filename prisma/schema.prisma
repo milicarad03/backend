@@ -12,12 +12,19 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum Role{
+  USER
+  ADMIN
+}
+
 model User { 
   id    Int     @id @default(autoincrement()) 
   email String  @unique
   name  String?
   password String @default("promeni_me")  //svi ostali koji su vec u bazi dok nije bilo polja pswd dobice ovo kao default vrednost
   posts Post[]
+  role  Role   @default(USER)
 } 
 
 model Post { 

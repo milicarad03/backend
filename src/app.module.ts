@@ -4,12 +4,14 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { JwtModule } from '@nestjs/jwt';
 import { UsersController } from './users/users.controller';
+import { PostController } from './post/post.controller';
 import { PrismaService } from "./prisma.service.js"; 
-import { UserService } from "./user.service.js"; 
-import { PostService } from "./post.service.js"; 
+import { UserService } from "./users/users.service.js"; 
+import { PostService } from "./post/post.service.js"; 
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './jwt.strategy'; 
-
+import { UserRepository } from './users/users.repository';
+import { PostRepository } from './post/post.repository';
 
 
 @Module({
@@ -19,13 +21,13 @@ import { JwtStrategy } from './jwt.strategy';
       isGlobal: true,
     }),
     JwtModule.register({
-      global: true, // Ovo omogućava da ne moraš da ga uvoziš u svaki podmodul
-      secret: process.env.TOKEN_SECRET || 'neka_tajna_sifra', // Koristi tajnu iz .env fajla
-      signOptions: { expiresIn: '1h' }, // Token važi sat vremena
+      global: true, // da moze da se uvozi u svaki podmodul
+      secret: process.env.TOKEN_SECRET, 
+      signOptions: { expiresIn: '1h' }, 
     }),
     
   ],
-  controllers: [AppController],
-  providers: [AppService,PrismaService,UserService,PostService,JwtStrategy],
+  controllers: [AppController,UsersController,PostController],
+  providers: [AppService,PrismaService,UserService,PostService,JwtStrategy,UserRepository,PostRepository],
 })
 export class AppModule {}
