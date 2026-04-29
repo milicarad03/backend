@@ -2,13 +2,18 @@ import { Injectable,HttpException,HttpStatus} from "@nestjs/common";
 import { PrismaService } from "../prisma.service.js";
 import { User, Prisma } from "../generated/prisma/client.js";
 import * as bcrypt from 'bcrypt';
-import { UserRepository } from "./users.repository.js";
+import { UsersRepository } from "./users.repository.js";
 import { JwtService } from '@nestjs/jwt';
+import {CreateUserDto} from './dto/create-user.dto'
+import {LoginDto} from './dto/login-user.dto'
+import {AdminUpdateUserDto} from './dto/admin-update-to-user.dto'
+import {UpdateUserDto} from './dto/update-user.dto'
+
 
 @Injectable()
-export class UserService {
+export class UsersService {
   constructor(
-    private repository: UserRepository,
+    private repository: UsersRepository,
     private jwtService:JwtService
 
   ) {}
@@ -26,7 +31,7 @@ export class UserService {
     return this.repository.findMany(params);
   }
 
-  async createUser(data: Prisma.UserCreateInput): Promise<User> {
+  async createUser(data: CreateUserDto): Promise<User> {
     const existingUser = await this.repository.findOne({ email: data.email });
     
       if (existingUser) {
@@ -39,9 +44,7 @@ export class UserService {
   
   // Ako nema nijednog, postavi mu ulogu admina
     const initialRole = userCount === 0 ?  "ADMIN" : "USER";
-    if (!data.password) {
-    throw new Error('Password is required');
-  }
+    
 
 
   const hashedPassword = await bcrypt.hash(data.password, 10);
@@ -55,13 +58,18 @@ export class UserService {
 
   async updateUser(params: {
     where: Prisma.UserWhereUniqueInput;
-    data: Prisma.UserUpdateInput;
-  }): Promise<User> {
+    data: AdminUpdateUserDto | UpdateUserDto| Prisma.UserUpdateInput; }): Promise<User> {
     const { where, data } = params;
-    return this.repository.update({
-      data,
-      where,
-    });
+    const updateData = { ...data } as any; 
+
+    if (updateData.password) {
+      updateData.password = await bcrypt.hash(updateData.password, 10);
+    }
+      
+      return this.repository.update({
+        data:updateData,
+        where,
+      });
   }
 
   async promoteToAdmin(userId: number) {
@@ -71,6 +79,7 @@ export class UserService {
     });
   }
 
+
   async deleteUser(where: Prisma.UserWhereUniqueInput): Promise<User> {
     return this.repository.delete(where);
   }
@@ -78,27 +87,26 @@ export class UserService {
 
   async validateUser(email: string, pass: string): Promise<User | null> {
   
-  const user = await this.repository.findOne({ email });
-  if (user && user.password) {
-    const isMatch = await bcrypt.compare(pass, user.password);
-    if (isMatch) {
-      const { password, ...result } = user;
-      return result as User;
+    const user = await this.repository.findOne({ email });
+    if (user && user.password) {
+      const isMatch = await bcrypt.compare(pass, user.password);
+      if (isMatch) {
+        const { password, ...result } = user;
+        return result as User;
+      }
     }
-  }
-  
-  return null;
+    
+    return null;
   }
 
 
-  async login(email:string, pass:string){
-    const user = await this.validateUser(email, pass);
+  async login(loginData:LoginDto){
+    const user = await this.validateUser(loginData.email, loginData.password);
     if (!user) {
       throw new HttpException('Pogrešan email ili šifra', HttpStatus.UNAUTHORIZED);
     }
     const payload = { sub: user.id, email: user.email , role: user.role};
     const { password, ...safeUser } = user;
-    //console.log(user.role);
     return {
       accessToken: this.jwtService.sign(payload),
       user: safeUser

@@ -4,7 +4,7 @@ import { User, Prisma } from "../generated/prisma/client.js";
 
 
 @Injectable()
-export class UserRepository {
+export class UsersRepository {
   constructor(private prisma: PrismaService) {}
 
 
@@ -47,6 +47,5 @@ export class UserRepository {
   async delete(where:Prisma.UserWhereUniqueInput):Promise<User> {
         return this.prisma.user.delete({where});
     }
-
 
 }

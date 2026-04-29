@@ -1,6 +1,6 @@
 
 import { Controller, Get, Param, Post, Body, Put, Delete,HttpException, HttpStatus,Req, Patch} from "@nestjs/common";
-import { UserService } from "./users.service.js";
+import { UsersService } from "./users.service.js";
 import { User as UserModel } from "../generated/prisma/client.js";
 import { Role } from '../../enums/role.enum'; 
 import { Roles } from '../roles.decorator'; 
@@ -8,11 +8,12 @@ import { RolesGuard } from '../roles.guard';
 import { JwtService } from '@nestjs/jwt';
 import { UseGuards} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-
+import {CreateUserDto} from './dto/create-user.dto'
+import {LoginDto} from './dto/login-user.dto'
 @Controller('users')
 export class UsersController {
   constructor(
-      private readonly userService: UserService,
+      private readonly userService: UsersService,
     ) {}
   
   @Get('allusers')
@@ -23,14 +24,13 @@ export class UsersController {
   }
 
   @Post("user")
-  async signupUser(@Body() userData: { name?: string; email: string; password:string }): Promise<UserModel> {
-
+  async signupUser(@Body() userData: CreateUserDto): Promise<UserModel> {
     return this.userService.createUser(userData);
   }
 
   @Post("login")
-    async login( @Body() loginData: { email: string; password: string }): Promise<{ accessToken: string, user: any }>{
-    return this.userService.login(loginData.email, loginData.password);
+    async login( @Body() loginData: LoginDto): Promise<{ accessToken: string, user: any }>{
+    return this.userService.login(loginData);
   }
 
   @Get('profile')
@@ -43,8 +43,8 @@ export class UsersController {
   @Patch('user/make-admin/:id')
   @Roles(Role.ADMIN)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  async makeAdmin(@Param('id') id: string) {
-    return this.userService.promoteToAdmin(Number(id));
+  async makeAdmin(@Param('id') id: number) {
+    return this.userService.promoteToAdmin(id);
   }
 
 }

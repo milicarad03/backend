@@ -1,6 +1,7 @@
 import { Injectable,ForbiddenException,NotFoundException } from "@nestjs/common";
 import { Post, Prisma } from "../generated/prisma/client.js";
 import { PostRepository } from "./post.repository.js";
+import {CreatePostDto} from './dto/create-post.dto'
 @Injectable()
 export class PostService {
     constructor(
@@ -14,8 +15,14 @@ export class PostService {
         return this.repository.findMany(params);
     }
 
-    async createPost(data: Prisma.PostCreateInput): Promise<Post> {
-        return this.repository.create(data);
+    async createPost(userId:number, data: CreatePostDto): Promise<Post> {
+        return this.repository.create({
+        title: data.title,
+        content: data.content,
+        author: {
+            connect: { id: userId }
+        },
+    });
     }
 
     async updatePost(params: {
@@ -80,6 +87,7 @@ export class PostService {
         where: {
         authorId: userId, 
         },
+        orderBy: { id: 'desc' }
     });
 }
 }

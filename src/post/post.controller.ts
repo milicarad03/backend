@@ -7,7 +7,7 @@ import { RolesGuard } from '../roles.guard';
 import { JwtService } from '@nestjs/jwt';
 import { UseGuards} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-
+import {CreatePostDto} from './dto/create-post.dto'
 
 
 @Controller('post')
@@ -18,14 +18,16 @@ export class PostController {
     ) {}
 
     @Get("drafts")
-    @UseGuards(AuthGuard('jwt'))
+    @Roles(Role.USER, Role.ADMIN) 
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+  
     async getDraftsByEmail(@Req() req){
         return this.postService.getDraftsByAuthorId(req.user.userId);
     }
 
     @Get("post/:id")
-    async getPostById(@Param("id") id: string): Promise<PostModel | null> {
-        return this.postService.post({ id: Number(id) });
+    async getPostById(@Param("id") id: number): Promise<PostModel | null> {
+        return this.postService.post({ id });
     }
 
     
@@ -35,7 +37,6 @@ export class PostController {
         return this.postService.posts({where:{published:true}})
 
     }
-    
 
     @Get("filtered-posts/:searchString")
     async getFilteredPosts(@Param("searchString") searchString: string): Promise<PostModel[]> {
@@ -48,21 +49,14 @@ export class PostController {
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     async createDraft(
         @Req() req,
-        @Body() postData: { title: string; content?: string},
+        @Body() postData: CreatePostDto,
         ){
-        return this.postService.createPost({
-        title: postData.title,
-        content: postData.content,
-         author: {
-            connect: { id: req.user.userId } 
-        },
-        });
+        return this.postService.createPost(req.user.userId, postData);
     }
 
-    
-
     @Put("publish/:id")
-    @UseGuards(AuthGuard('jwt'))
+    @Roles(Role.USER, Role.ADMIN) 
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
     async publishPost(@Param("id") id: string, @Req() req) {
     // Servis treba da proveri da li korisnik poseduje ovaj post
     return this.postService.publishIfOwner(Number(id), req.user.userId);
@@ -80,12 +74,10 @@ export class PostController {
     
 
     @Get('my-posts')
-    @UseGuards(AuthGuard('jwt'))
+    @Roles(Role.USER, Role.ADMIN) 
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
     async getMyPosts(@Req() req) {
-        
         const userId = req.user.userId; 
-
-        // 
         return this.postService.findAllByAuthor(userId);
     }
 
