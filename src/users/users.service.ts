@@ -80,8 +80,14 @@ export class UsersService {
   }
 
 
-  async deleteUser(where: Prisma.UserWhereUniqueInput): Promise<User> {
-    return this.repository.delete(where);
+  async deleteUser(userId:number, requestingAdminId:number): Promise<User> {
+    if (userId === requestingAdminId) {
+    throw new HttpException(
+      'Ne možete obrisati sopstveni nalog!', 
+      HttpStatus.BAD_REQUEST
+    );
+  }
+    return this.repository.delete({id:userId});
   }
 
 

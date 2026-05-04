@@ -47,4 +47,11 @@ export class UsersController {
     return this.userService.promoteToAdmin(id);
   }
 
+
+  @Delete('user/:id')
+  @Roles(Role.ADMIN)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  async removeUser(@Param('id') id: number,@Req() req) {
+    return this.userService.deleteUser(id, req.user.userId);
+  }
 }
