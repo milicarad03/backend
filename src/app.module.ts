@@ -12,6 +12,7 @@ import { JwtStrategy } from './jwt.strategy';
 import { PostRepository } from './post/post.repository';
 import {UsersModule} from './users/users.module'
 import {PostModule} from './post/post.module'
+import {DeviceModule} from './device/device.module'
 
 
 @Module({
@@ -27,8 +28,9 @@ import {PostModule} from './post/post.module'
     }),
     UsersModule,
     PostModule,
+    DeviceModule,
   ],
-  controllers: [AppController,PostController],
+  controllers: [AppController],
   providers: [AppService,JwtStrategy],
 })
 export class AppModule {}

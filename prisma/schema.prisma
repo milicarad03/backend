@@ -24,6 +24,7 @@ model User {
   name  String?
   password String @default("promeni_me")  //svi ostali koji su vec u bazi dok nije bilo polja pswd dobice ovo kao default vrednost
   posts Post[]
+  devices Device[]
   role  Role   @default(USER)
 } 
 
@@ -35,3 +36,17 @@ model Post {
   author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   authorId  Int
 } 
+
+model Device {
+  id              String   @id @default(uuid())
+  serialNumber    String   @unique // npr. "SN-100234" (ono što piše na nalepnici)
+  name            String?
+  type            String?   // npr. "Senzor u hodniku"
+  apiKey          String   @unique @default(cuid()) // Tajni ključ za pristup API-ju
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          Int
+  lastseen        DateTime @default(now())
+}
