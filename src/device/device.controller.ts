@@ -18,16 +18,17 @@ export class DeviceController {
 
  
   @Post()
-  @Roles(Role.USER, Role.ADMIN)
+  @Roles(Role.ADMIN)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   async registerDevice( @Req() req, @Body() deviceData: CreateDeviceDto) {
     return this.deviceService.createDevice(req.user.userId, deviceData);
   }
 
   @Get("feed")
+  @Roles(Role.ADMIN)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
     async getDevices(){
         return this.deviceService.getAllDevices();
-
     }
 
   
@@ -49,7 +50,7 @@ export class DeviceController {
 
   
   @Delete(":id")
-  @Roles(Role.USER, Role.ADMIN)
+  @Roles(Role.ADMIN)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   async deleteDevice(@Param("id") id: string, @Req() req) {
     return this.deviceService.deleteIfOwnerOrAdmin(id, req.user.userId, req.user.role);

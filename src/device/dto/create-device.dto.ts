@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsOptional, MaxLength } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional, MaxLength, IsNumber } from 'class-validator';
 
 export class CreateDeviceDto {
   @IsNotEmpty({ message: 'Serial number is required' })
@@ -12,4 +12,10 @@ export class CreateDeviceDto {
   @IsOptional()
   @IsString()
   type?: string;
+
+
+  @IsOptional()
+  @IsNumber()
+  targetUserId?:number
+
 }

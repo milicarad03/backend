@@ -19,13 +19,14 @@ export class DeviceService {
         }
 
     async createDevice(userId:number, data: CreateDeviceDto): Promise<Device> {
+        const targetId = data.targetUserId ? data.targetUserId: userId;
         try{
             return await this.repository.create({
             serialNumber: data.serialNumber,
             name: data.name,
             type: data.type,
             user: {
-                connect: { id: userId }
+                connect: { id: targetId}
             },
             });
         } catch(error:any)
@@ -59,13 +60,13 @@ export class DeviceService {
     }
 
 
-    async deleteIfOwnerOrAdmin(deviceId: string, userId: number, role: string) {
+    async deleteIfAdmin(deviceId: string, userId: number, role: string) {
         const device = await this.repository.findOne({ id: deviceId });
 
         if (!device) throw new NotFoundException('Device not found');
 
         
-        if (role !== 'ADMIN' && device.userId !== userId) {
+        if (role !== 'ADMIN') {
             throw new ForbiddenException('Permission denied for removing device');
         }
 
