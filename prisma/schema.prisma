@@ -17,7 +17,11 @@ enum Role{
   USER
   ADMIN
 }
-
+enum UserStatus{
+  PENDING
+  APPROVED
+  REJECTED
+}
 model User { 
   id    Int     @id @default(autoincrement()) 
   email String  @unique
@@ -26,6 +30,7 @@ model User {
   posts Post[]
   devices Device[]
   role  Role   @default(USER)
+  status   UserStatus @default(PENDING)
 } 
 
 model Post { 

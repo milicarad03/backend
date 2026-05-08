@@ -1,4 +1,4 @@
-import { Injectable,HttpException,HttpStatus} from "@nestjs/common";
+import { Injectable,HttpException,HttpStatus, BadRequestException,NotFoundException} from "@nestjs/common";
 import { PrismaService } from "../prisma.service.js";
 import { User, Prisma } from "../generated/prisma/client.js";
 import * as bcrypt from 'bcrypt';
@@ -44,6 +44,7 @@ export class UsersService {
   
   // Ako nema nijednog, postavi mu ulogu admina
     const initialRole = userCount === 0 ?  "ADMIN" : "USER";
+    const initialStatus = initialRole === "ADMIN" ? "APPROVED" : "PENDING";
     
 
 
@@ -52,7 +53,7 @@ export class UsersService {
       ...data,
       password: hashedPassword,
       role: initialRole,
-    
+      status:initialStatus,
     });
   }
 
@@ -71,6 +72,22 @@ export class UsersService {
         where,
       });
   }
+  
+
+async handleApproval(userId: number, status: 'APPROVED' | 'REJECTED') {
+ console.log('Update status za ID:', userId, 'na:', status);
+  const user = await this.repository.findOne({ id: userId });
+  
+  if (!user) {
+    throw new NotFoundException(`Korisnik sa ID-em ${userId} nije pronađen.`);
+  }
+  return this.repository.update({
+    where: { id: userId },
+    data: { status: status },
+  });
+}
+
+ 
 
   async promoteToAdmin(userId: number) {
     return this.repository.update({
@@ -82,12 +99,13 @@ export class UsersService {
 
   async deleteUser(userId:number, requestingAdminId:number): Promise<User> {
     if (userId === requestingAdminId) {
-    throw new HttpException(
-      'Ne možete obrisati sopstveni nalog!', 
-      HttpStatus.BAD_REQUEST
-    );
+      throw new BadRequestException('Ne možete obrisati sopstveni nalog!');
   }
-    return this.repository.delete({id:userId});
+    try {
+    return await this.repository.delete({ id: userId  });
+  } catch (error) {
+    throw new NotFoundException(`Korisnik sa ID-em ${userId} nije pronađen.`);
+  }
   }
 
 
@@ -110,6 +128,12 @@ export class UsersService {
     const user = await this.validateUser(loginData.email, loginData.password);
     if (!user) {
       throw new HttpException('Pogrešan email ili šifra', HttpStatus.UNAUTHORIZED);
+    }
+    if(user.status=="PENDING"){
+      throw new HttpException('Account not yet approved by admin', HttpStatus.FORBIDDEN);
+    }
+    if(user.status=="REJECTED"){
+      throw new HttpException('Account rejected', HttpStatus.FORBIDDEN);
     }
     const payload = { sub: user.id, email: user.email , role: user.role};
     const { password, ...safeUser } = user;

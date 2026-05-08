@@ -1,5 +1,5 @@
 
-import { Controller, Get, Param, Post, Body, Put, Delete,HttpException, HttpStatus,Req, Patch} from "@nestjs/common";
+import { Controller, Get, Param, Post, Body, Put, Delete,HttpException, HttpStatus,Req, Patch, ParseIntPipe} from "@nestjs/common";
 import { UsersService } from "./users.service.js";
 import { User as UserModel } from "../generated/prisma/client.js";
 import { Role } from '../../enums/role.enum'; 
@@ -43,15 +43,23 @@ export class UsersController {
   @Patch('user/make-admin/:id')
   @Roles(Role.ADMIN)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  async makeAdmin(@Param('id') id: number) {
+  async makeAdmin(@Param('id', ParseIntPipe) id: number) {
     return this.userService.promoteToAdmin(id);
+  }
+
+  @Patch('approval/:id')
+  async approveOrRejectUser(
+    @Param('id', ParseIntPipe) id: number, 
+    @Body('status') status: "APPROVED" | "REJECTED"
+  ) {
+    return this.userService.handleApproval(id, status);
   }
 
 
   @Delete('user/:id')
   @Roles(Role.ADMIN)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  async removeUser(@Param('id') id: number,@Req() req) {
+  async removeUser(@Param('id', ParseIntPipe) id: number,@Req() req) {
     return this.userService.deleteUser(id, req.user.userId);
   }
 }

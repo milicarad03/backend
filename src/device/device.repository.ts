@@ -11,7 +11,11 @@ export class DeviceRepository {
 
 
     async findOne(where: Prisma.DeviceWhereUniqueInput): Promise<Device| null> {
-        return this.prisma.device.findUnique({where});
+        return this.prisma.device.findUnique({
+            where,
+            include:{ user:true }
+
+        });
     }
 
 
@@ -29,6 +33,7 @@ export class DeviceRepository {
             cursor,
             where,
             orderBy,
+            include:{ user :true }
         });
     }
     
