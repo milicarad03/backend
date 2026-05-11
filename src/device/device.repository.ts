@@ -25,15 +25,16 @@ export class DeviceRepository {
         cursor?: Prisma.DeviceWhereUniqueInput;
         where?: Prisma.DeviceWhereInput;
         orderBy?: Prisma.DeviceOrderByWithRelationInput;
+        include?: Prisma.DeviceInclude;
         }): Promise<Device[]> {
-        const { skip, take, cursor, where, orderBy } = params;
+        const { skip, take, cursor, where, orderBy, include } = params;
         return this.prisma.device.findMany({
             skip,
             take,
             cursor,
             where,
             orderBy,
-            include:{ user :true }
+            include: include || { user: true }
         });
     }
     

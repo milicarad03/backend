@@ -18,30 +18,28 @@ export class DeviceController {
   ) {}
 
  
-@Get()
-@Roles(Role.USER, Role.ADMIN)
-@UseGuards(AuthGuard('jwt'), RolesGuard)
-async getDevice(
-  @Req() req, 
-  @Query('own') own?: string,    // Hvataj ih pojedinačno
-  @Query('status') status?: string,
-  @Query('type') type?: string
-) {
-  const userId = req.user.userId;
-  const userRole = req.user.role;
-
-  // Ručno spakuj u objekat da budemo 100% sigurni
-  const filterParams = { own, status, type };
   
-  console.log('Kontroler primio own:', own); // Proveri ovaj log!
+  @Get()
+  @Roles(Role.USER, Role.ADMIN)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  async getDevice( @Req() req, @Query('status') status?: string, @Query('type') type?: string, @Query('userId') userIds?: string | string[] ) {
+    const userId = req.user.userId;
+    const userRole = req.user.role;
 
-  return this.deviceService.findDevices(userId, userRole, filterParams);
+    // sve se pretvara u niz iako je stigao jedan id
+    const normalizedUserIds = Array.isArray(userIds) ? userIds : userIds ? [userIds] : [];
+
+    const filterParams = { status, type, userIds: normalizedUserIds };
+
+    const result = await this.deviceService.findDevices(userId, userRole, filterParams);
+    return result;
 }
+
   @Post()
   @Roles(Role.ADMIN)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   async registerDevice( @Req() req, @Body() deviceData: CreateDeviceDto) {
-    return this.deviceService.createDevice(req.user.userId, deviceData); //mozda treba +
+    return this.deviceService.createDevice(req.user.userId, deviceData); 
   }
 
   @Get("feed")
@@ -61,14 +59,11 @@ async getDevice(
   }
 
 
-  // device.controller.ts
-
- // device.controller.ts
 
   @Get(":id")
   @Roles(Role.USER, Role.ADMIN)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  async getDeviceById(@Param("id", ParseIntPipe) id: string): Promise<DeviceModel | null> {
+  async getDeviceById(@Param("id") id: string): Promise<DeviceModel | null> {
     return this.deviceService.getDevice({ id });
   }
 
@@ -76,7 +71,7 @@ async getDevice(
   @Delete(":id")
   @Roles(Role.ADMIN)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  async deleteDevice(@Param("id", ParseIntPipe) id: string, @Req() req) {
+  async deleteDevice(@Param("id") id: string, @Req() req) {
     return this.deviceService.deleteIfAdmin(id, req.user.userId, req.user.role);
   }
 
@@ -84,7 +79,7 @@ async getDevice(
   @Patch(":id/toggle")
   @Roles(Role.USER, Role.ADMIN)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  async toggleDevice(@Param("id", ParseIntPipe) id: string, @Req() req) {
+  async toggleDevice(@Param("id") id: string, @Req() req) {
     return this.deviceService.toggleDeviceStatus(id, req.user.userId);
   }
 }

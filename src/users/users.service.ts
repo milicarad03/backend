@@ -42,7 +42,6 @@ export class UsersService {
         }
     const userCount = await this.repository.count();
   
-  // Ako nema nijednog, postavi mu ulogu admina
     const initialRole = userCount === 0 ?  "ADMIN" : "USER";
     const initialStatus = initialRole === "ADMIN" ? "APPROVED" : "PENDING";
     
@@ -75,7 +74,7 @@ export class UsersService {
   
 
 async handleApproval(userId: number, status: 'APPROVED' | 'REJECTED') {
- console.log('Update status za ID:', userId, 'na:', status);
+  console.log('Update status za ID:', userId, 'na:', status);
   const user = await this.repository.findOne({ id: userId });
   
   if (!user) {
