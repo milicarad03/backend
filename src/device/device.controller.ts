@@ -22,14 +22,15 @@ export class DeviceController {
   @Get()
   @Roles(Role.USER, Role.ADMIN)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  async getDevice( @Req() req, @Query('status') status?: string, @Query('type') type?: string, @Query('userId') userIds?: string | string[] ) {
+  async getDevice( @Req() req, @Query('status') status?: string, @Query('type') type?: string[], @Query('userId') userIds?: string | string[] ) {
     const userId = req.user.userId;
     const userRole = req.user.role;
 
     // sve se pretvara u niz iako je stigao jedan id
     const normalizedUserIds = Array.isArray(userIds) ? userIds : userIds ? [userIds] : [];
+    const normalizedDeviceType = Array.isArray(type) ? type : type ? [type] : [];
 
-    const filterParams = { status, type, userIds: normalizedUserIds };
+    const filterParams = { status, type : normalizedDeviceType, userIds: normalizedUserIds };
 
     const result = await this.deviceService.findDevices(userId, userRole, filterParams);
     return result;
