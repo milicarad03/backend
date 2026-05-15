@@ -13,7 +13,7 @@ import { PostRepository } from './post/post.repository';
 import {UsersModule} from './users/users.module'
 import {PostModule} from './post/post.module'
 import {DeviceModule} from './device/device.module'
-
+import {DeviceDashboardModule} from 'serverplugin'
 
 @Module({
   imports: [
@@ -29,6 +29,7 @@ import {DeviceModule} from './device/device.module'
     UsersModule,
     PostModule,
     DeviceModule,
+  
   ],
   controllers: [AppController],
   providers: [AppService,JwtStrategy],

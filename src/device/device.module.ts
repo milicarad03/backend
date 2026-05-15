@@ -1,14 +1,42 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
 import { DeviceService } from './device.service';
 import { DeviceController } from './device.controller';
 import { DeviceRepository } from './device.repository';
-import { PrismaService } from '../prisma.service';
+import { DeviceDataModule } from './device-data.module';
+
+import { DeviceDashboardModule } from 'serverplugin';
 
 @Module({
-    imports :[],
-    controllers:[DeviceController],
-    providers:[DeviceRepository, DeviceService, PrismaService],
-    exports: [DeviceService],
+  imports: [
+    DeviceDataModule,
+
+    DeviceDashboardModule.registerAsync({
+      imports: [DeviceDataModule],
+      useFactory: (deviceRepository: DeviceRepository) => ({
+        brokerUrl: 'mqtt://localhost:1883',
+
+        findDeviceById: async (deviceId: string) => {
+          const device = await deviceRepository.findOne({
+            serialNumber: deviceId,
+          });
+
+          if (!device) {
+            return null;
+          }
+
+          return {
+            id: device.id,
+            serialNumber: device.serialNumber,
+            name: device.name,
+            type: device.type,
+          };
+        },
+      }),
+      inject: [DeviceRepository],
+    }),
+  ],
+  controllers: [DeviceController],
+  providers: [DeviceService],
+  exports: [DeviceService],
 })
-export class DeviceModule{}
+export class DeviceModule {}

@@ -15,6 +15,8 @@ import { CreateDeviceDto } from './dto/create-device.dto';
 export class DeviceController {
   constructor(
     private readonly deviceService: DeviceService,
+    
+    
   ) {}
 
  
@@ -40,7 +42,8 @@ export class DeviceController {
   @Roles(Role.ADMIN)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   async registerDevice( @Req() req, @Body() deviceData: CreateDeviceDto) {
-    return this.deviceService.createDevice(req.user.userId, deviceData); 
+    
+    return this.deviceService.createDevice(req.user.id, deviceData); 
   }
 
   @Get("feed")
@@ -82,5 +85,9 @@ export class DeviceController {
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   async toggleDevice(@Param("id") id: string, @Req() req) {
     return this.deviceService.toggleDeviceStatus(id, req.user.userId);
+  }
+  @Get('plugin-check/:deviceId')
+  async pluginCheck(@Param('deviceId') deviceId: string) {
+  return this.deviceService.testPluginDeviceCheck(deviceId);
   }
 }

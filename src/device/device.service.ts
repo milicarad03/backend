@@ -3,11 +3,15 @@ import { Device, Prisma } from "../generated/prisma/client.js";
 import { DeviceRepository } from "./device.repository.js";
 import {CreateDeviceDto} from './dto/create-device.dto'
 
+import { DeviceDashboardService } from "serverplugin";
 
 @Injectable()
 export class DeviceService {
     constructor(
-        private repository:DeviceRepository
+        private repository:DeviceRepository,
+        private dashboardPlugin: DeviceDashboardService,
+      
+        
     ) {}
 
 
@@ -20,7 +24,9 @@ export class DeviceService {
         }
 
     async createDevice(userId:number, data: CreateDeviceDto): Promise<Device> {
-        const targetId = data.targetUserId ? data.targetUserId: userId;
+
+        
+         const targetId = data.targetUserId ? data.targetUserId: userId;
         try{
             return await this.repository.create({
             serialNumber: data.serialNumber,
@@ -37,6 +43,7 @@ export class DeviceService {
             }
             throw new InternalServerErrorException('DATABASE_CONNECTION_ERROR');
         }
+   
    
     }
 
@@ -142,6 +149,9 @@ export class DeviceService {
             data:
             { isActive:!device.isActive },
         });
+    }
+    async testPluginDeviceCheck(deviceId: string) {
+    return this.dashboardPlugin.checkDevice(deviceId);
     }
 
 }

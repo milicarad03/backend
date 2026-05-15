@@ -42,6 +42,7 @@
     "react-hot-toast": "^2.6.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "serverplugin": "file:../../projectplugin/serverplugin",
     "typeorm": "^0.3.28"
   },
   "devDependencies": {
