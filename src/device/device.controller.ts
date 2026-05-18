@@ -10,12 +10,12 @@ import { Roles } from '../roles.decorator';
 import { RolesGuard } from '../roles.guard';
 import { AuthGuard } from '@nestjs/passport';
 import { CreateDeviceDto } from './dto/create-device.dto';
-
+import { DeviceTelemetryService } from './device-telemetry.service';
 @Controller('device')
 export class DeviceController {
   constructor(
     private readonly deviceService: DeviceService,
-    
+    private readonly deviceTelemetryService:DeviceTelemetryService,
     
   ) {}
 
@@ -62,6 +62,27 @@ export class DeviceController {
     return this.deviceService.findAllByUser(userId);
   }
 
+  @Get(':id/telemetry/latest')
+  @Roles(Role.USER, Role.ADMIN)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  async getLatestDeviceTelemetry(@Param('id') id: string) {
+    return this.deviceTelemetryService.getLatestTelemetry(id);
+  }
+
+   @Get(':id/telemetry')
+   @Roles(Role.USER, Role.ADMIN)
+   @UseGuards(AuthGuard('jwt'), RolesGuard)
+   async getDeviceTelemetry(@Param('id') id: string) {
+      return this.deviceTelemetryService.getTelemetryHistory(id);
+   }
+
+   @Get('plugin-check/:deviceId')
+   @Roles(Role.USER, Role.ADMIN)
+   @UseGuards(AuthGuard('jwt'), RolesGuard)
+   async pluginCheck(@Param('deviceId') deviceId: string) {
+    return this.deviceService.testPluginDeviceCheck(deviceId);
+   }
+
 
 
   @Get(":id")
@@ -86,8 +107,5 @@ export class DeviceController {
   async toggleDevice(@Param("id") id: string, @Req() req) {
     return this.deviceService.toggleDeviceStatus(id, req.user.userId);
   }
-  @Get('plugin-check/:deviceId')
-  async pluginCheck(@Param('deviceId') deviceId: string) {
-  return this.deviceService.testPluginDeviceCheck(deviceId);
-  }
+  
 }

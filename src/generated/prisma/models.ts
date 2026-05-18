@@ -11,4 +11,5 @@
 export type * from './models/User'
 export type * from './models/Post'
 export type * from './models/Device'
+export type * from './models/DeviceTelemetry'
 export type * from './commonInputTypes'

@@ -54,3 +54,8 @@ export type Post = Prisma.PostModel
  * 
  */
 export type Device = Prisma.DeviceModel
+/**
+ * Model DeviceTelemetry
+ * 
+ */
+export type DeviceTelemetry = Prisma.DeviceTelemetryModel

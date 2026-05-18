@@ -15,12 +15,12 @@ export class RolesGuard implements CanActivate {
     ]);
     
     if (!requiredRoles) {
-      return true; // Ako ruta nema @Roles, dozvoli pristup
+      return true; 
     }
 
     const { user } = context.switchToHttp().getRequest();
     
-    // Provera: Da li korisnik ima bar jednu od potrebnih uloga?
+
     return requiredRoles.some((role) => user.role?.includes(role));
   }
 }

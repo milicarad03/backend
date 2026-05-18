@@ -10,8 +10,6 @@ export class DeviceService {
     constructor(
         private repository:DeviceRepository,
         private dashboardPlugin: DeviceDashboardService,
-      
-        
     ) {}
 
 
@@ -151,7 +149,39 @@ export class DeviceService {
         });
     }
     async testPluginDeviceCheck(deviceId: string) {
-    return this.dashboardPlugin.checkDevice(deviceId);
+        return this.dashboardPlugin.checkDevice(deviceId);
     }
+
+    async createDeviceTelemetry(params:{
+        deviceId:string,
+        timestamp:Date,
+        data: Prisma.InputJsonValue;
+    })
+    {
+        this.repository.createTelemetry(params);
+    }
+
+    async handleTelemetry(telemetry:{ deviceId:string, timestamp: string, data:Record <string,unknown>}){
+        await this.repository.createTelemetry({
+              deviceId: telemetry.deviceId,
+              timestamp: new Date(telemetry.timestamp),
+              data: telemetry.data as Prisma.InputJsonValue,
+            });
+
+            await this.repository.update({
+              where: {
+                serialNumber: telemetry.deviceId,
+              },
+              data: {
+                lastseen: new Date(telemetry.timestamp),
+              },
+            });
+
+            console.log('[HOST] telemetry saved:', telemetry.deviceId);
+    }
+
+    
+
+   
 
 }

@@ -3,8 +3,14 @@ import { DeviceService } from './device.service';
 import { DeviceController } from './device.controller';
 import { DeviceRepository } from './device.repository';
 import { DeviceDataModule } from './device-data.module';
-
 import { DeviceDashboardModule } from 'serverplugin';
+import { DeviceTelemetryService } from './device-telemetry.service';
+export type DeviceTelemetry = {
+  deviceId: string;
+  timestamp: string;
+  data: Record<string, unknown>;
+
+};
 
 @Module({
   imports: [
@@ -12,7 +18,7 @@ import { DeviceDashboardModule } from 'serverplugin';
 
     DeviceDashboardModule.registerAsync({
       imports: [DeviceDataModule],
-      useFactory: (deviceRepository: DeviceRepository) => ({
+      useFactory: (deviceRepository: DeviceRepository, deviceService:DeviceTelemetryService) => ({
         brokerUrl: 'mqtt://localhost:1883',
 
         findDeviceById: async (deviceId: string) => {
@@ -31,8 +37,14 @@ import { DeviceDashboardModule } from 'serverplugin';
             type: device.type,
           };
         },
+        onTelemetry: async (telemetry) => {
+            console.log('[HOST] telemetry received from plugin', telemetry);
+            await deviceService.handleTelemetry(telemetry);
+
+            console.log('[HOST] telemetry saved:', telemetry.deviceId);
+          },
       }),
-      inject: [DeviceRepository],
+      inject: [DeviceRepository, DeviceTelemetryService],
     }),
   ],
   controllers: [DeviceController],

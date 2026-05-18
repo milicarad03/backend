@@ -52,5 +52,40 @@ export class DeviceRepository {
     async delete(where:Prisma.DeviceWhereUniqueInput):Promise<Device> {
             return this.prisma.device.delete({where});
     }
+    async createTelemetry(params:{
+        deviceId:string,
+        timestamp:Date,
+        data: Prisma.InputJsonValue;
+    }){
+        return this.prisma.deviceTelemetry.create({
+            data:{
+                deviceId: params.deviceId,
+                timestamp: params.timestamp,
+                data: params.data,
+            },
+        });
+    }
+    async findTelemetryByDeviceId(deviceId: string) {
+        return this.prisma.deviceTelemetry.findMany({
+            where: {
+            deviceId,
+            },
+            orderBy: {
+            timestamp: 'desc',
+            },
+            take: 20,
+        });
+    }
+
+    async findLatestTelemetryByDeviceId(deviceId: string) {
+        return this.prisma.deviceTelemetry.findFirst({
+            where: {
+            deviceId,
+            },
+            orderBy: {
+            timestamp: 'desc',
+            },
+        });
+    }
     
 }

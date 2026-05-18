@@ -26,7 +26,7 @@ model User {
   id    Int     @id @default(autoincrement()) 
   email String  @unique
   name  String?
-  password String @default("promeni_me")  //svi ostali koji su vec u bazi dok nije bilo polja pswd dobice ovo kao default vrednost
+  password String @default("promeni_me")  
   posts Post[]
   devices Device[]
   role  Role   @default(USER)
@@ -44,14 +44,24 @@ model Post {
 
 model Device {
   id              String   @id @default(uuid())
-  serialNumber    String   @unique // npr. "SN-100234" (ono što piše na nalepnici)
+  serialNumber    String   @unique 
   name            String?
-  type            String?   // npr. "Senzor u hodniku"
-  apiKey          String   @unique @default(cuid()) // Tajni ključ za pristup API-ju
+  type            String?   
+  apiKey          String   @unique @default(cuid()) 
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
 
   user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId          Int
   lastseen        DateTime @default(now())
+  telemetry DeviceTelemetry[]
+}
+model DeviceTelemetry {
+  id             String   @id @default(uuid())
+
+  deviceId       String
+  timestamp      DateTime
+  data           Json
+  createdAt      DateTime @default(now())
+  device    Device   @relation(fields: [deviceId], references: [serialNumber], onDelete: Cascade)
 }

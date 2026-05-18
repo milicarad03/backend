@@ -27,7 +27,9 @@
     "@nestjs/mapped-types": "^2.1.1",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/platform-socket.io": "^11.1.21",
     "@nestjs/typeorm": "^11.0.1",
+    "@nestjs/websockets": "^11.1.21",
     "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.7.0",
     "bcrypt": "^6.0.0",
@@ -43,6 +45,7 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "serverplugin": "file:../../projectplugin/serverplugin",
+    "socket.io": "^4.8.3",
     "typeorm": "^0.3.28"
   },
   "devDependencies": {

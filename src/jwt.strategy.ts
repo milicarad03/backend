@@ -6,7 +6,6 @@ import { Injectable } from '@nestjs/common';
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor() {
     super({
-      // Ovo govori Nest-u da traži token u Headeru kao "Bearer <token>"
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
       secretOrKey: process.env.TOKEN_SECRET, 
