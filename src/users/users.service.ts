@@ -47,12 +47,12 @@ export class UsersService {
     
 
 
-  const hashedPassword = await bcrypt.hash(data.password, 10);
-    return this.repository.create({
-      ...data,
-      password: hashedPassword,
-      role: initialRole,
-      status:initialStatus,
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+      return this.repository.create({
+        ...data,
+        password: hashedPassword,
+        role: initialRole,
+        status:initialStatus,
     });
   }
 

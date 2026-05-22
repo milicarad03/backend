@@ -38,6 +38,7 @@
     "dotenv": "^17.4.2",
     "jsonschema": "^1.5.0",
     "jsonwebtoken": "^9.0.3",
+    "mqtt": "^5.15.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "pg": "^8.20.0",
@@ -86,6 +87,9 @@
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s"
