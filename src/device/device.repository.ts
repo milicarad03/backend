@@ -73,7 +73,7 @@ export class DeviceRepository {
             orderBy: {
             timestamp: 'desc',
             },
-            take: 20,
+            take: 5,
         });
     }
 
@@ -86,6 +86,32 @@ export class DeviceRepository {
             timestamp: 'desc',
             },
         });
+    }
+    async deleteOldTelemetryForDevice(deviceId: string, keepLast: number) {
+    const oldTelemetry = await this.prisma.deviceTelemetry.findMany({
+        where: {
+        deviceId,
+        },
+        orderBy: {
+        timestamp: 'desc',
+        },
+        skip: keepLast,
+        select: {
+        id: true,
+        },
+    });
+
+    if (oldTelemetry.length === 0) {
+        return { count: 0 };
+    }
+
+    return this.prisma.deviceTelemetry.deleteMany({
+        where: {
+        id: {
+            in: oldTelemetry.map((item) => item.id),
+        },
+        },
+    });
     }
     
 }

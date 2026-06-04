@@ -11,7 +11,7 @@ export const createDeviceDashboardConfig = (
   deviceRepository: DeviceRepository,
   deviceTelemetryService: DeviceTelemetryService,
 ) => ({
-//brokerUrl: 'mqtt://localhost:1883',
+
 
   findDeviceById: async (deviceId: string) => {
     const device = await deviceRepository.findOne({

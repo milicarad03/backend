@@ -55,6 +55,7 @@ model Device {
   userId          Int
   lastseen        DateTime @default(now())
   telemetry DeviceTelemetry[]
+
 }
 model DeviceTelemetry {
   id             String   @id @default(uuid())

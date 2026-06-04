@@ -1,0 +1,16 @@
+{
+  "fields": {
+    "temperature": {
+      "path": "telemetry.temperature"
+    },
+    "humidity": {
+      "path": "telemetry.humidity"
+    },
+    "pressure": {
+      "path": "telemetry.pressure"
+    },
+    "led": {
+      "path": "telemetry.led"
+    }
+  }
+}

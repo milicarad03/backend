@@ -17,34 +17,44 @@ export class DeviceTelemetryService {
   ) {}
 
   async handleTelemetry(telemetry: IncomingTelemetry) {
-    console.log('[HOST] Telemetry received from plugin:', telemetry);
+    console.log('[HOST] (handleTelemetry)Telemetry received from plugin:', telemetry);
 
     const timestamp = new Date(telemetry.timestamp);
-
+    console.log('[HOST] telemetry.timestamp raw:', telemetry.timestamp);
+    console.log('[HOST] timestamp.toISOString():', timestamp.toISOString());
+    console.log('[HOST] timestamp local:', timestamp.toLocaleString('sr-RS', {
+      timeZone: 'Europe/Belgrade',
+    }));
     const savedTelemetry = await this.deviceRepository.createTelemetry({
-      deviceId: telemetry.deviceId,
-      timestamp,
-      data: telemetry.data as Prisma.InputJsonValue,
-    });
+        deviceId: telemetry.deviceId,
+        timestamp,
+        data: telemetry.data as Prisma.InputJsonValue,
+     });
 
-    await this.deviceRepository.update({
-      where: {
-        serialNumber: telemetry.deviceId,
-      },
-      data: {
-        lastseen: timestamp,
-      },
-    });
+  await this.deviceRepository.deleteOldTelemetryForDevice(
+    telemetry.deviceId,
+    5,
+  );
 
-    this.telemetryGateway.emitTelemetryUpdate({
+  await this.deviceRepository.update({
+    where: {
+      serialNumber: telemetry.deviceId,
+    },
+    data: {
+      lastseen: timestamp,
+    },
+  });
+
+
+      this.telemetryGateway.emitTelemetryUpdate({
       deviceId: telemetry.deviceId,
       timestamp: savedTelemetry.timestamp,
       data: savedTelemetry.data as Record<string, unknown>,
     });
 
-    console.log('[HOST] Telemetry saved and emitted:', telemetry.deviceId);
+  console.log('[HOST] Telemetry saved and emitted:', telemetry.deviceId);
 
-    return savedTelemetry;
+  return savedTelemetry;
   }
 
   async getTelemetryHistory(deviceId: string) {

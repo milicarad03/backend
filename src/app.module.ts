@@ -14,6 +14,7 @@ import {UsersModule} from './users/users.module'
 import {PostModule} from './post/post.module'
 import {DeviceModule} from './device/device.module'
 import {DeviceDashboardModule} from 'serverplugin'
+import { CertificateRegistrationModule } from './certificates/certificate-registration.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import {DeviceDashboardModule} from 'serverplugin'
     UsersModule,
     PostModule,
     DeviceModule,
+    CertificateRegistrationModule,
   
   ],
   controllers: [AppController],
