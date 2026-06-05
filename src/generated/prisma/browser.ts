@@ -37,3 +37,13 @@ export type Device = Prisma.DeviceModel
  * 
  */
 export type DeviceTelemetry = Prisma.DeviceTelemetryModel
+/**
+ * Model DeviceModel
+ * 
+ */
+export type DeviceModel = Prisma.DeviceModelModel
+/**
+ * Model ModelVersion
+ * 
+ */
+export type ModelVersion = Prisma.ModelVersionModel

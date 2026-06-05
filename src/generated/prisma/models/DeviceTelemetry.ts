@@ -29,6 +29,7 @@ export type DeviceTelemetryMinAggregateOutputType = {
   deviceId: string | null
   timestamp: Date | null
   createdAt: Date | null
+  modelVersionId: string | null
 }
 
 export type DeviceTelemetryMaxAggregateOutputType = {
@@ -36,6 +37,7 @@ export type DeviceTelemetryMaxAggregateOutputType = {
   deviceId: string | null
   timestamp: Date | null
   createdAt: Date | null
+  modelVersionId: string | null
 }
 
 export type DeviceTelemetryCountAggregateOutputType = {
@@ -44,6 +46,7 @@ export type DeviceTelemetryCountAggregateOutputType = {
   timestamp: number
   data: number
   createdAt: number
+  modelVersionId: number
   _all: number
 }
 
@@ -53,6 +56,7 @@ export type DeviceTelemetryMinAggregateInputType = {
   deviceId?: true
   timestamp?: true
   createdAt?: true
+  modelVersionId?: true
 }
 
 export type DeviceTelemetryMaxAggregateInputType = {
@@ -60,6 +64,7 @@ export type DeviceTelemetryMaxAggregateInputType = {
   deviceId?: true
   timestamp?: true
   createdAt?: true
+  modelVersionId?: true
 }
 
 export type DeviceTelemetryCountAggregateInputType = {
@@ -68,6 +73,7 @@ export type DeviceTelemetryCountAggregateInputType = {
   timestamp?: true
   data?: true
   createdAt?: true
+  modelVersionId?: true
   _all?: true
 }
 
@@ -149,6 +155,7 @@ export type DeviceTelemetryGroupByOutputType = {
   timestamp: Date
   data: runtime.JsonValue
   createdAt: Date
+  modelVersionId: string | null
   _count: DeviceTelemetryCountAggregateOutputType | null
   _min: DeviceTelemetryMinAggregateOutputType | null
   _max: DeviceTelemetryMaxAggregateOutputType | null
@@ -178,7 +185,9 @@ export type DeviceTelemetryWhereInput = {
   timestamp?: Prisma.DateTimeFilter<"DeviceTelemetry"> | Date | string
   data?: Prisma.JsonFilter<"DeviceTelemetry">
   createdAt?: Prisma.DateTimeFilter<"DeviceTelemetry"> | Date | string
+  modelVersionId?: Prisma.StringNullableFilter<"DeviceTelemetry"> | string | null
   device?: Prisma.XOR<Prisma.DeviceScalarRelationFilter, Prisma.DeviceWhereInput>
+  modelVersion?: Prisma.XOR<Prisma.ModelVersionNullableScalarRelationFilter, Prisma.ModelVersionWhereInput> | null
 }
 
 export type DeviceTelemetryOrderByWithRelationInput = {
@@ -187,7 +196,9 @@ export type DeviceTelemetryOrderByWithRelationInput = {
   timestamp?: Prisma.SortOrder
   data?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  modelVersionId?: Prisma.SortOrderInput | Prisma.SortOrder
   device?: Prisma.DeviceOrderByWithRelationInput
+  modelVersion?: Prisma.ModelVersionOrderByWithRelationInput
 }
 
 export type DeviceTelemetryWhereUniqueInput = Prisma.AtLeast<{
@@ -199,7 +210,9 @@ export type DeviceTelemetryWhereUniqueInput = Prisma.AtLeast<{
   timestamp?: Prisma.DateTimeFilter<"DeviceTelemetry"> | Date | string
   data?: Prisma.JsonFilter<"DeviceTelemetry">
   createdAt?: Prisma.DateTimeFilter<"DeviceTelemetry"> | Date | string
+  modelVersionId?: Prisma.StringNullableFilter<"DeviceTelemetry"> | string | null
   device?: Prisma.XOR<Prisma.DeviceScalarRelationFilter, Prisma.DeviceWhereInput>
+  modelVersion?: Prisma.XOR<Prisma.ModelVersionNullableScalarRelationFilter, Prisma.ModelVersionWhereInput> | null
 }, "id">
 
 export type DeviceTelemetryOrderByWithAggregationInput = {
@@ -208,6 +221,7 @@ export type DeviceTelemetryOrderByWithAggregationInput = {
   timestamp?: Prisma.SortOrder
   data?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  modelVersionId?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.DeviceTelemetryCountOrderByAggregateInput
   _max?: Prisma.DeviceTelemetryMaxOrderByAggregateInput
   _min?: Prisma.DeviceTelemetryMinOrderByAggregateInput
@@ -222,6 +236,7 @@ export type DeviceTelemetryScalarWhereWithAggregatesInput = {
   timestamp?: Prisma.DateTimeWithAggregatesFilter<"DeviceTelemetry"> | Date | string
   data?: Prisma.JsonWithAggregatesFilter<"DeviceTelemetry">
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"DeviceTelemetry"> | Date | string
+  modelVersionId?: Prisma.StringNullableWithAggregatesFilter<"DeviceTelemetry"> | string | null
 }
 
 export type DeviceTelemetryCreateInput = {
@@ -230,6 +245,7 @@ export type DeviceTelemetryCreateInput = {
   data: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   device: Prisma.DeviceCreateNestedOneWithoutTelemetryInput
+  modelVersion?: Prisma.ModelVersionCreateNestedOneWithoutTelemetryInput
 }
 
 export type DeviceTelemetryUncheckedCreateInput = {
@@ -238,6 +254,7 @@ export type DeviceTelemetryUncheckedCreateInput = {
   timestamp: Date | string
   data: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
+  modelVersionId?: string | null
 }
 
 export type DeviceTelemetryUpdateInput = {
@@ -246,6 +263,7 @@ export type DeviceTelemetryUpdateInput = {
   data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   device?: Prisma.DeviceUpdateOneRequiredWithoutTelemetryNestedInput
+  modelVersion?: Prisma.ModelVersionUpdateOneWithoutTelemetryNestedInput
 }
 
 export type DeviceTelemetryUncheckedUpdateInput = {
@@ -254,6 +272,7 @@ export type DeviceTelemetryUncheckedUpdateInput = {
   timestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  modelVersionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type DeviceTelemetryCreateManyInput = {
@@ -262,6 +281,7 @@ export type DeviceTelemetryCreateManyInput = {
   timestamp: Date | string
   data: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
+  modelVersionId?: string | null
 }
 
 export type DeviceTelemetryUpdateManyMutationInput = {
@@ -277,6 +297,7 @@ export type DeviceTelemetryUncheckedUpdateManyInput = {
   timestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  modelVersionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type DeviceTelemetryListRelationFilter = {
@@ -295,6 +316,7 @@ export type DeviceTelemetryCountOrderByAggregateInput = {
   timestamp?: Prisma.SortOrder
   data?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  modelVersionId?: Prisma.SortOrder
 }
 
 export type DeviceTelemetryMaxOrderByAggregateInput = {
@@ -302,6 +324,7 @@ export type DeviceTelemetryMaxOrderByAggregateInput = {
   deviceId?: Prisma.SortOrder
   timestamp?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  modelVersionId?: Prisma.SortOrder
 }
 
 export type DeviceTelemetryMinOrderByAggregateInput = {
@@ -309,6 +332,7 @@ export type DeviceTelemetryMinOrderByAggregateInput = {
   deviceId?: Prisma.SortOrder
   timestamp?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  modelVersionId?: Prisma.SortOrder
 }
 
 export type DeviceTelemetryCreateNestedManyWithoutDeviceInput = {
@@ -353,11 +377,54 @@ export type DeviceTelemetryUncheckedUpdateManyWithoutDeviceNestedInput = {
   deleteMany?: Prisma.DeviceTelemetryScalarWhereInput | Prisma.DeviceTelemetryScalarWhereInput[]
 }
 
+export type DeviceTelemetryCreateNestedManyWithoutModelVersionInput = {
+  create?: Prisma.XOR<Prisma.DeviceTelemetryCreateWithoutModelVersionInput, Prisma.DeviceTelemetryUncheckedCreateWithoutModelVersionInput> | Prisma.DeviceTelemetryCreateWithoutModelVersionInput[] | Prisma.DeviceTelemetryUncheckedCreateWithoutModelVersionInput[]
+  connectOrCreate?: Prisma.DeviceTelemetryCreateOrConnectWithoutModelVersionInput | Prisma.DeviceTelemetryCreateOrConnectWithoutModelVersionInput[]
+  createMany?: Prisma.DeviceTelemetryCreateManyModelVersionInputEnvelope
+  connect?: Prisma.DeviceTelemetryWhereUniqueInput | Prisma.DeviceTelemetryWhereUniqueInput[]
+}
+
+export type DeviceTelemetryUncheckedCreateNestedManyWithoutModelVersionInput = {
+  create?: Prisma.XOR<Prisma.DeviceTelemetryCreateWithoutModelVersionInput, Prisma.DeviceTelemetryUncheckedCreateWithoutModelVersionInput> | Prisma.DeviceTelemetryCreateWithoutModelVersionInput[] | Prisma.DeviceTelemetryUncheckedCreateWithoutModelVersionInput[]
+  connectOrCreate?: Prisma.DeviceTelemetryCreateOrConnectWithoutModelVersionInput | Prisma.DeviceTelemetryCreateOrConnectWithoutModelVersionInput[]
+  createMany?: Prisma.DeviceTelemetryCreateManyModelVersionInputEnvelope
+  connect?: Prisma.DeviceTelemetryWhereUniqueInput | Prisma.DeviceTelemetryWhereUniqueInput[]
+}
+
+export type DeviceTelemetryUpdateManyWithoutModelVersionNestedInput = {
+  create?: Prisma.XOR<Prisma.DeviceTelemetryCreateWithoutModelVersionInput, Prisma.DeviceTelemetryUncheckedCreateWithoutModelVersionInput> | Prisma.DeviceTelemetryCreateWithoutModelVersionInput[] | Prisma.DeviceTelemetryUncheckedCreateWithoutModelVersionInput[]
+  connectOrCreate?: Prisma.DeviceTelemetryCreateOrConnectWithoutModelVersionInput | Prisma.DeviceTelemetryCreateOrConnectWithoutModelVersionInput[]
+  upsert?: Prisma.DeviceTelemetryUpsertWithWhereUniqueWithoutModelVersionInput | Prisma.DeviceTelemetryUpsertWithWhereUniqueWithoutModelVersionInput[]
+  createMany?: Prisma.DeviceTelemetryCreateManyModelVersionInputEnvelope
+  set?: Prisma.DeviceTelemetryWhereUniqueInput | Prisma.DeviceTelemetryWhereUniqueInput[]
+  disconnect?: Prisma.DeviceTelemetryWhereUniqueInput | Prisma.DeviceTelemetryWhereUniqueInput[]
+  delete?: Prisma.DeviceTelemetryWhereUniqueInput | Prisma.DeviceTelemetryWhereUniqueInput[]
+  connect?: Prisma.DeviceTelemetryWhereUniqueInput | Prisma.DeviceTelemetryWhereUniqueInput[]
+  update?: Prisma.DeviceTelemetryUpdateWithWhereUniqueWithoutModelVersionInput | Prisma.DeviceTelemetryUpdateWithWhereUniqueWithoutModelVersionInput[]
+  updateMany?: Prisma.DeviceTelemetryUpdateManyWithWhereWithoutModelVersionInput | Prisma.DeviceTelemetryUpdateManyWithWhereWithoutModelVersionInput[]
+  deleteMany?: Prisma.DeviceTelemetryScalarWhereInput | Prisma.DeviceTelemetryScalarWhereInput[]
+}
+
+export type DeviceTelemetryUncheckedUpdateManyWithoutModelVersionNestedInput = {
+  create?: Prisma.XOR<Prisma.DeviceTelemetryCreateWithoutModelVersionInput, Prisma.DeviceTelemetryUncheckedCreateWithoutModelVersionInput> | Prisma.DeviceTelemetryCreateWithoutModelVersionInput[] | Prisma.DeviceTelemetryUncheckedCreateWithoutModelVersionInput[]
+  connectOrCreate?: Prisma.DeviceTelemetryCreateOrConnectWithoutModelVersionInput | Prisma.DeviceTelemetryCreateOrConnectWithoutModelVersionInput[]
+  upsert?: Prisma.DeviceTelemetryUpsertWithWhereUniqueWithoutModelVersionInput | Prisma.DeviceTelemetryUpsertWithWhereUniqueWithoutModelVersionInput[]
+  createMany?: Prisma.DeviceTelemetryCreateManyModelVersionInputEnvelope
+  set?: Prisma.DeviceTelemetryWhereUniqueInput | Prisma.DeviceTelemetryWhereUniqueInput[]
+  disconnect?: Prisma.DeviceTelemetryWhereUniqueInput | Prisma.DeviceTelemetryWhereUniqueInput[]
+  delete?: Prisma.DeviceTelemetryWhereUniqueInput | Prisma.DeviceTelemetryWhereUniqueInput[]
+  connect?: Prisma.DeviceTelemetryWhereUniqueInput | Prisma.DeviceTelemetryWhereUniqueInput[]
+  update?: Prisma.DeviceTelemetryUpdateWithWhereUniqueWithoutModelVersionInput | Prisma.DeviceTelemetryUpdateWithWhereUniqueWithoutModelVersionInput[]
+  updateMany?: Prisma.DeviceTelemetryUpdateManyWithWhereWithoutModelVersionInput | Prisma.DeviceTelemetryUpdateManyWithWhereWithoutModelVersionInput[]
+  deleteMany?: Prisma.DeviceTelemetryScalarWhereInput | Prisma.DeviceTelemetryScalarWhereInput[]
+}
+
 export type DeviceTelemetryCreateWithoutDeviceInput = {
   id?: string
   timestamp: Date | string
   data: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
+  modelVersion?: Prisma.ModelVersionCreateNestedOneWithoutTelemetryInput
 }
 
 export type DeviceTelemetryUncheckedCreateWithoutDeviceInput = {
@@ -365,6 +432,7 @@ export type DeviceTelemetryUncheckedCreateWithoutDeviceInput = {
   timestamp: Date | string
   data: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
+  modelVersionId?: string | null
 }
 
 export type DeviceTelemetryCreateOrConnectWithoutDeviceInput = {
@@ -402,6 +470,49 @@ export type DeviceTelemetryScalarWhereInput = {
   timestamp?: Prisma.DateTimeFilter<"DeviceTelemetry"> | Date | string
   data?: Prisma.JsonFilter<"DeviceTelemetry">
   createdAt?: Prisma.DateTimeFilter<"DeviceTelemetry"> | Date | string
+  modelVersionId?: Prisma.StringNullableFilter<"DeviceTelemetry"> | string | null
+}
+
+export type DeviceTelemetryCreateWithoutModelVersionInput = {
+  id?: string
+  timestamp: Date | string
+  data: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  device: Prisma.DeviceCreateNestedOneWithoutTelemetryInput
+}
+
+export type DeviceTelemetryUncheckedCreateWithoutModelVersionInput = {
+  id?: string
+  deviceId: string
+  timestamp: Date | string
+  data: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+}
+
+export type DeviceTelemetryCreateOrConnectWithoutModelVersionInput = {
+  where: Prisma.DeviceTelemetryWhereUniqueInput
+  create: Prisma.XOR<Prisma.DeviceTelemetryCreateWithoutModelVersionInput, Prisma.DeviceTelemetryUncheckedCreateWithoutModelVersionInput>
+}
+
+export type DeviceTelemetryCreateManyModelVersionInputEnvelope = {
+  data: Prisma.DeviceTelemetryCreateManyModelVersionInput | Prisma.DeviceTelemetryCreateManyModelVersionInput[]
+  skipDuplicates?: boolean
+}
+
+export type DeviceTelemetryUpsertWithWhereUniqueWithoutModelVersionInput = {
+  where: Prisma.DeviceTelemetryWhereUniqueInput
+  update: Prisma.XOR<Prisma.DeviceTelemetryUpdateWithoutModelVersionInput, Prisma.DeviceTelemetryUncheckedUpdateWithoutModelVersionInput>
+  create: Prisma.XOR<Prisma.DeviceTelemetryCreateWithoutModelVersionInput, Prisma.DeviceTelemetryUncheckedCreateWithoutModelVersionInput>
+}
+
+export type DeviceTelemetryUpdateWithWhereUniqueWithoutModelVersionInput = {
+  where: Prisma.DeviceTelemetryWhereUniqueInput
+  data: Prisma.XOR<Prisma.DeviceTelemetryUpdateWithoutModelVersionInput, Prisma.DeviceTelemetryUncheckedUpdateWithoutModelVersionInput>
+}
+
+export type DeviceTelemetryUpdateManyWithWhereWithoutModelVersionInput = {
+  where: Prisma.DeviceTelemetryScalarWhereInput
+  data: Prisma.XOR<Prisma.DeviceTelemetryUpdateManyMutationInput, Prisma.DeviceTelemetryUncheckedUpdateManyWithoutModelVersionInput>
 }
 
 export type DeviceTelemetryCreateManyDeviceInput = {
@@ -409,6 +520,7 @@ export type DeviceTelemetryCreateManyDeviceInput = {
   timestamp: Date | string
   data: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
+  modelVersionId?: string | null
 }
 
 export type DeviceTelemetryUpdateWithoutDeviceInput = {
@@ -416,6 +528,7 @@ export type DeviceTelemetryUpdateWithoutDeviceInput = {
   timestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  modelVersion?: Prisma.ModelVersionUpdateOneWithoutTelemetryNestedInput
 }
 
 export type DeviceTelemetryUncheckedUpdateWithoutDeviceInput = {
@@ -423,10 +536,44 @@ export type DeviceTelemetryUncheckedUpdateWithoutDeviceInput = {
   timestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  modelVersionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type DeviceTelemetryUncheckedUpdateManyWithoutDeviceInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  timestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  modelVersionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+}
+
+export type DeviceTelemetryCreateManyModelVersionInput = {
+  id?: string
+  deviceId: string
+  timestamp: Date | string
+  data: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+}
+
+export type DeviceTelemetryUpdateWithoutModelVersionInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  timestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  device?: Prisma.DeviceUpdateOneRequiredWithoutTelemetryNestedInput
+}
+
+export type DeviceTelemetryUncheckedUpdateWithoutModelVersionInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  deviceId?: Prisma.StringFieldUpdateOperationsInput | string
+  timestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type DeviceTelemetryUncheckedUpdateManyWithoutModelVersionInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  deviceId?: Prisma.StringFieldUpdateOperationsInput | string
   timestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -440,7 +587,9 @@ export type DeviceTelemetrySelect<ExtArgs extends runtime.Types.Extensions.Inter
   timestamp?: boolean
   data?: boolean
   createdAt?: boolean
+  modelVersionId?: boolean
   device?: boolean | Prisma.DeviceDefaultArgs<ExtArgs>
+  modelVersion?: boolean | Prisma.DeviceTelemetry$modelVersionArgs<ExtArgs>
 }, ExtArgs["result"]["deviceTelemetry"]>
 
 export type DeviceTelemetrySelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -449,7 +598,9 @@ export type DeviceTelemetrySelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   timestamp?: boolean
   data?: boolean
   createdAt?: boolean
+  modelVersionId?: boolean
   device?: boolean | Prisma.DeviceDefaultArgs<ExtArgs>
+  modelVersion?: boolean | Prisma.DeviceTelemetry$modelVersionArgs<ExtArgs>
 }, ExtArgs["result"]["deviceTelemetry"]>
 
 export type DeviceTelemetrySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -458,7 +609,9 @@ export type DeviceTelemetrySelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
   timestamp?: boolean
   data?: boolean
   createdAt?: boolean
+  modelVersionId?: boolean
   device?: boolean | Prisma.DeviceDefaultArgs<ExtArgs>
+  modelVersion?: boolean | Prisma.DeviceTelemetry$modelVersionArgs<ExtArgs>
 }, ExtArgs["result"]["deviceTelemetry"]>
 
 export type DeviceTelemetrySelectScalar = {
@@ -467,23 +620,28 @@ export type DeviceTelemetrySelectScalar = {
   timestamp?: boolean
   data?: boolean
   createdAt?: boolean
+  modelVersionId?: boolean
 }
 
-export type DeviceTelemetryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "deviceId" | "timestamp" | "data" | "createdAt", ExtArgs["result"]["deviceTelemetry"]>
+export type DeviceTelemetryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "deviceId" | "timestamp" | "data" | "createdAt" | "modelVersionId", ExtArgs["result"]["deviceTelemetry"]>
 export type DeviceTelemetryInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   device?: boolean | Prisma.DeviceDefaultArgs<ExtArgs>
+  modelVersion?: boolean | Prisma.DeviceTelemetry$modelVersionArgs<ExtArgs>
 }
 export type DeviceTelemetryIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   device?: boolean | Prisma.DeviceDefaultArgs<ExtArgs>
+  modelVersion?: boolean | Prisma.DeviceTelemetry$modelVersionArgs<ExtArgs>
 }
 export type DeviceTelemetryIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   device?: boolean | Prisma.DeviceDefaultArgs<ExtArgs>
+  modelVersion?: boolean | Prisma.DeviceTelemetry$modelVersionArgs<ExtArgs>
 }
 
 export type $DeviceTelemetryPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "DeviceTelemetry"
   objects: {
     device: Prisma.$DevicePayload<ExtArgs>
+    modelVersion: Prisma.$ModelVersionPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -491,6 +649,7 @@ export type $DeviceTelemetryPayload<ExtArgs extends runtime.Types.Extensions.Int
     timestamp: Date
     data: runtime.JsonValue
     createdAt: Date
+    modelVersionId: string | null
   }, ExtArgs["result"]["deviceTelemetry"]>
   composites: {}
 }
@@ -886,6 +1045,7 @@ readonly fields: DeviceTelemetryFieldRefs;
 export interface Prisma__DeviceTelemetryClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   device<T extends Prisma.DeviceDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DeviceDefaultArgs<ExtArgs>>): Prisma.Prisma__DeviceClient<runtime.Types.Result.GetResult<Prisma.$DevicePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  modelVersion<T extends Prisma.DeviceTelemetry$modelVersionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DeviceTelemetry$modelVersionArgs<ExtArgs>>): Prisma.Prisma__ModelVersionClient<runtime.Types.Result.GetResult<Prisma.$ModelVersionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -920,6 +1080,7 @@ export interface DeviceTelemetryFieldRefs {
   readonly timestamp: Prisma.FieldRef<"DeviceTelemetry", 'DateTime'>
   readonly data: Prisma.FieldRef<"DeviceTelemetry", 'Json'>
   readonly createdAt: Prisma.FieldRef<"DeviceTelemetry", 'DateTime'>
+  readonly modelVersionId: Prisma.FieldRef<"DeviceTelemetry", 'String'>
 }
     
 
@@ -1318,6 +1479,25 @@ export type DeviceTelemetryDeleteManyArgs<ExtArgs extends runtime.Types.Extensio
    * Limit how many DeviceTelemetries to delete.
    */
   limit?: number
+}
+
+/**
+ * DeviceTelemetry.modelVersion
+ */
+export type DeviceTelemetry$modelVersionArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ModelVersion
+   */
+  select?: Prisma.ModelVersionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ModelVersion
+   */
+  omit?: Prisma.ModelVersionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ModelVersionInclude<ExtArgs> | null
+  where?: Prisma.ModelVersionWhereInput
 }
 
 /**

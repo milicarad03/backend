@@ -387,7 +387,9 @@ export const ModelName = {
   User: 'User',
   Post: 'Post',
   Device: 'Device',
-  DeviceTelemetry: 'DeviceTelemetry'
+  DeviceTelemetry: 'DeviceTelemetry',
+  DeviceModel: 'DeviceModel',
+  ModelVersion: 'ModelVersion'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -403,7 +405,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "post" | "device" | "deviceTelemetry"
+    modelProps: "user" | "post" | "device" | "deviceTelemetry" | "deviceModel" | "modelVersion"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -703,6 +705,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    DeviceModel: {
+      payload: Prisma.$DeviceModelPayload<ExtArgs>
+      fields: Prisma.DeviceModelFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.DeviceModelFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceModelPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.DeviceModelFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceModelPayload>
+        }
+        findFirst: {
+          args: Prisma.DeviceModelFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceModelPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.DeviceModelFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceModelPayload>
+        }
+        findMany: {
+          args: Prisma.DeviceModelFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceModelPayload>[]
+        }
+        create: {
+          args: Prisma.DeviceModelCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceModelPayload>
+        }
+        createMany: {
+          args: Prisma.DeviceModelCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.DeviceModelCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceModelPayload>[]
+        }
+        delete: {
+          args: Prisma.DeviceModelDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceModelPayload>
+        }
+        update: {
+          args: Prisma.DeviceModelUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceModelPayload>
+        }
+        deleteMany: {
+          args: Prisma.DeviceModelDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.DeviceModelUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.DeviceModelUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceModelPayload>[]
+        }
+        upsert: {
+          args: Prisma.DeviceModelUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DeviceModelPayload>
+        }
+        aggregate: {
+          args: Prisma.DeviceModelAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateDeviceModel>
+        }
+        groupBy: {
+          args: Prisma.DeviceModelGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DeviceModelGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.DeviceModelCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DeviceModelCountAggregateOutputType> | number
+        }
+      }
+    }
+    ModelVersion: {
+      payload: Prisma.$ModelVersionPayload<ExtArgs>
+      fields: Prisma.ModelVersionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ModelVersionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModelVersionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ModelVersionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModelVersionPayload>
+        }
+        findFirst: {
+          args: Prisma.ModelVersionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModelVersionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ModelVersionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModelVersionPayload>
+        }
+        findMany: {
+          args: Prisma.ModelVersionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModelVersionPayload>[]
+        }
+        create: {
+          args: Prisma.ModelVersionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModelVersionPayload>
+        }
+        createMany: {
+          args: Prisma.ModelVersionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ModelVersionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModelVersionPayload>[]
+        }
+        delete: {
+          args: Prisma.ModelVersionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModelVersionPayload>
+        }
+        update: {
+          args: Prisma.ModelVersionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModelVersionPayload>
+        }
+        deleteMany: {
+          args: Prisma.ModelVersionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ModelVersionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ModelVersionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModelVersionPayload>[]
+        }
+        upsert: {
+          args: Prisma.ModelVersionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ModelVersionPayload>
+        }
+        aggregate: {
+          args: Prisma.ModelVersionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateModelVersion>
+        }
+        groupBy: {
+          args: Prisma.ModelVersionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ModelVersionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ModelVersionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ModelVersionCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -774,7 +924,8 @@ export const DeviceScalarFieldEnum = {
   isActive: 'isActive',
   createdAt: 'createdAt',
   userId: 'userId',
-  lastseen: 'lastseen'
+  lastseen: 'lastseen',
+  modelVersionId: 'modelVersionId'
 } as const
 
 export type DeviceScalarFieldEnum = (typeof DeviceScalarFieldEnum)[keyof typeof DeviceScalarFieldEnum]
@@ -785,10 +936,31 @@ export const DeviceTelemetryScalarFieldEnum = {
   deviceId: 'deviceId',
   timestamp: 'timestamp',
   data: 'data',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  modelVersionId: 'modelVersionId'
 } as const
 
 export type DeviceTelemetryScalarFieldEnum = (typeof DeviceTelemetryScalarFieldEnum)[keyof typeof DeviceTelemetryScalarFieldEnum]
+
+
+export const DeviceModelScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description'
+} as const
+
+export type DeviceModelScalarFieldEnum = (typeof DeviceModelScalarFieldEnum)[keyof typeof DeviceModelScalarFieldEnum]
+
+
+export const ModelVersionScalarFieldEnum = {
+  id: 'id',
+  version: 'version',
+  schema: 'schema',
+  mapping: 'mapping',
+  modelId: 'modelId'
+} as const
+
+export type ModelVersionScalarFieldEnum = (typeof ModelVersionScalarFieldEnum)[keyof typeof ModelVersionScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1040,6 +1212,8 @@ export type GlobalOmitConfig = {
   post?: Prisma.PostOmit
   device?: Prisma.DeviceOmit
   deviceTelemetry?: Prisma.DeviceTelemetryOmit
+  deviceModel?: Prisma.DeviceModelOmit
+  modelVersion?: Prisma.ModelVersionOmit
 }
 
 /* Types for Logging */

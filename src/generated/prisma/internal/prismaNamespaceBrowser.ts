@@ -54,7 +54,9 @@ export const ModelName = {
   User: 'User',
   Post: 'Post',
   Device: 'Device',
-  DeviceTelemetry: 'DeviceTelemetry'
+  DeviceTelemetry: 'DeviceTelemetry',
+  DeviceModel: 'DeviceModel',
+  ModelVersion: 'ModelVersion'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -105,7 +107,8 @@ export const DeviceScalarFieldEnum = {
   isActive: 'isActive',
   createdAt: 'createdAt',
   userId: 'userId',
-  lastseen: 'lastseen'
+  lastseen: 'lastseen',
+  modelVersionId: 'modelVersionId'
 } as const
 
 export type DeviceScalarFieldEnum = (typeof DeviceScalarFieldEnum)[keyof typeof DeviceScalarFieldEnum]
@@ -116,10 +119,31 @@ export const DeviceTelemetryScalarFieldEnum = {
   deviceId: 'deviceId',
   timestamp: 'timestamp',
   data: 'data',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  modelVersionId: 'modelVersionId'
 } as const
 
 export type DeviceTelemetryScalarFieldEnum = (typeof DeviceTelemetryScalarFieldEnum)[keyof typeof DeviceTelemetryScalarFieldEnum]
+
+
+export const DeviceModelScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description'
+} as const
+
+export type DeviceModelScalarFieldEnum = (typeof DeviceModelScalarFieldEnum)[keyof typeof DeviceModelScalarFieldEnum]
+
+
+export const ModelVersionScalarFieldEnum = {
+  id: 'id',
+  version: 'version',
+  schema: 'schema',
+  mapping: 'mapping',
+  modelId: 'modelId'
+} as const
+
+export type ModelVersionScalarFieldEnum = (typeof ModelVersionScalarFieldEnum)[keyof typeof ModelVersionScalarFieldEnum]
 
 
 export const SortOrder = {

@@ -27,6 +27,12 @@ export const createDeviceDashboardConfig = (
       serialNumber: device.serialNumber,
       name: device.name,
       type: device.type,
+
+      model: device.modelVersion?.modelId,
+      version: device.modelVersion?.version,
+      schema: device.modelVersion?.schema,
+      mapping: device.modelVersion?.mapping,
+
     };
   },
 

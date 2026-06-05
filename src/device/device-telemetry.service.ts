@@ -25,31 +25,41 @@ export class DeviceTelemetryService {
     console.log('[HOST] timestamp local:', timestamp.toLocaleString('sr-RS', {
       timeZone: 'Europe/Belgrade',
     }));
+
+    const device = await this.deviceRepository.findOne({
+        serialNumber: telemetry.deviceId,
+      });
+
+      if (!device) {
+        throw new Error(`Device not found: ${telemetry.deviceId}`);
+      }
+
     const savedTelemetry = await this.deviceRepository.createTelemetry({
         deviceId: telemetry.deviceId,
         timestamp,
         data: telemetry.data as Prisma.InputJsonValue,
+        modelVersionId: device.modelVersionId ?? undefined
      });
 
-  await this.deviceRepository.deleteOldTelemetryForDevice(
-    telemetry.deviceId,
-    5,
-  );
+    await this.deviceRepository.deleteOldTelemetryForDevice(
+      telemetry.deviceId,
+      5,
+    );
 
-  await this.deviceRepository.update({
-    where: {
-      serialNumber: telemetry.deviceId,
-    },
-    data: {
-      lastseen: timestamp,
-    },
-  });
+    await this.deviceRepository.update({
+      where: {
+        serialNumber: telemetry.deviceId,
+      },
+      data: {
+        lastseen: timestamp,
+      },
+    });
 
 
-      this.telemetryGateway.emitTelemetryUpdate({
-      deviceId: telemetry.deviceId,
-      timestamp: savedTelemetry.timestamp,
-      data: savedTelemetry.data as Record<string, unknown>,
+    this.telemetryGateway.emitTelemetryUpdate({
+        deviceId: telemetry.deviceId,
+        timestamp: savedTelemetry.timestamp,
+        data: savedTelemetry.data as Record<string, unknown>,
     });
 
   console.log('[HOST] Telemetry saved and emitted:', telemetry.deviceId);
@@ -64,4 +74,6 @@ export class DeviceTelemetryService {
   async getLatestTelemetry(deviceId: string) {
     return this.deviceRepository.findLatestTelemetryByDeviceId(deviceId);
   }
+
+ 
 }

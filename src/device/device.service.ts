@@ -33,6 +33,11 @@ export class DeviceService {
             user: {
                 connect: { id: targetId}
             },
+
+            modelVersion: {
+                    connect: { id: data.modelVersionId }
+                }
+
             });
         } catch(error:any)
         {

@@ -10,10 +10,18 @@ export class DeviceRepository {
   constructor(private prisma: PrismaService) {}
 
 
-    async findOne(where: Prisma.DeviceWhereUniqueInput): Promise<Device| null> {
+    async findOne(where: Prisma.DeviceWhereUniqueInput) {
         return this.prisma.device.findUnique({
             where,
-            include:{ user:true }
+            include:{ 
+                user:true, 
+                modelVersion:{
+                    include:{
+                        model:true
+                    }
+                }
+            
+            }
 
         });
     }
@@ -34,7 +42,14 @@ export class DeviceRepository {
             cursor,
             where,
             orderBy,
-            include: include || { user: true }
+            include: include || { 
+                user: true, 
+                modelVersion:{
+                    include:{
+                        model:true
+                    }
+                }
+            }
         });
     }
     
@@ -56,12 +71,14 @@ export class DeviceRepository {
         deviceId:string,
         timestamp:Date,
         data: Prisma.InputJsonValue;
+        modelVersionId?: string;
     }){
         return this.prisma.deviceTelemetry.create({
             data:{
                 deviceId: params.deviceId,
                 timestamp: params.timestamp,
                 data: params.data,
+                modelVersionId:params.modelVersionId
             },
         });
     }
@@ -113,5 +130,25 @@ export class DeviceRepository {
         },
     });
     }
+
+    async findModelVersionById(id: string) {
+        return this.prisma.modelVersion.findUnique({
+            where: { id }
+        });
+    }
+    async findDeviceWithModelVersion(serialNumber: string) {
+        return this.prisma.device.findUnique({
+            where: { serialNumber },
+            include: {
+            modelVersion: true
+            }
+        });
+    }
+
+
+    
+
+    
+
     
 }

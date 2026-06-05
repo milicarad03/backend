@@ -56,6 +56,10 @@ model Device {
   lastseen        DateTime @default(now())
   telemetry DeviceTelemetry[]
 
+  modelVersion   ModelVersion? @relation(fields: [modelVersionId], references: [id])
+  modelVersionId String?
+
+
 }
 model DeviceTelemetry {
   id             String   @id @default(uuid())
@@ -65,4 +69,32 @@ model DeviceTelemetry {
   data           Json
   createdAt      DateTime @default(now())
   device    Device   @relation(fields: [deviceId], references: [serialNumber], onDelete: Cascade)
+  modelVersionId String?
+  modelVersion ModelVersion? @relation(fields: [modelVersionId], references: [id])
+
+}
+
+model DeviceModel {
+  id        String   @id @default(uuid())
+  name      String   @unique 
+  description String?
+
+  versions  ModelVersion[]
+}
+
+model ModelVersion {
+  id        String   @id @default(uuid())
+
+  version   String   
+
+  schema    Json
+  mapping   Json
+
+  model     DeviceModel @relation(fields: [modelId], references: [name], onDelete: Cascade)
+  modelId   String
+
+  devices   Device[]
+
+  @@unique([modelId, version]) 
+  telemetry DeviceTelemetry[]
 }

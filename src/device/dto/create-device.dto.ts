@@ -18,4 +18,7 @@ export class CreateDeviceDto {
   @IsNumber()
   targetUserId?:number
 
+  @IsNotEmpty({ message: 'Model version is required' })
+  @IsString()
+  modelVersionId!: string;
 }
