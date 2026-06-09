@@ -46,6 +46,7 @@ describe('DeviceService', () => {
       name: 'Temperature Sensor',
       type: 'TEMP_SENSOR',
       targetUserId: 5,
+      modelVersionId: '95895489034859038490'
     };
 
     const createdDevice = {
@@ -79,6 +80,7 @@ describe('DeviceService', () => {
       serialNumber: 'sn-101',
       name: 'Humidity Sensor',
       type: 'HUMIDITY_SENSOR',
+      modelVersionId: '95895489034859038490'
     };
 
     const createdDevice = {
@@ -112,6 +114,7 @@ describe('DeviceService', () => {
       serialNumber: 'sn-100',
       name: 'Duplicate Sensor',
       type: 'TEMP_SENSOR',
+      modelVersionId: '95895489034859038490'
     };
 
     mockDeviceRepository.create.mockRejectedValue({
@@ -132,6 +135,7 @@ describe('DeviceService', () => {
       serialNumber: 'sn-100',
       name: 'Sensor',
       type: 'TEMP_SENSOR',
+      modelVersionId: '95895489034859038490'
     };
 
     mockDeviceRepository.create.mockRejectedValue({

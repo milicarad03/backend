@@ -1,4 +1,4 @@
-import { Injectable,HttpException,HttpStatus, BadRequestException,NotFoundException} from "@nestjs/common";
+import { Logger,Injectable,HttpException,HttpStatus, BadRequestException,NotFoundException} from "@nestjs/common";
 import { PrismaService } from "../prisma.service.js";
 import { User, Prisma } from "../generated/prisma/client.js";
 import * as bcrypt from 'bcrypt';
@@ -12,6 +12,7 @@ import {UpdateUserDto} from './dto/update-user.dto'
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
   constructor(
     private repository: UsersRepository,
     private jwtService:JwtService
@@ -35,17 +36,15 @@ export class UsersService {
     const existingUser = await this.repository.findOne({ email: data.email });
     
       if (existingUser) {
-        throw new HttpException(
-          'Korisnik sa ovim email-om već postoji!', 
-          HttpStatus.BAD_REQUEST
-          );
+        this.logger.warn(`User registration failed. Email already registered: ${data.email}`);
+        throw new HttpException('User with this email already exists!', HttpStatus.BAD_REQUEST);
         }
     const userCount = await this.repository.count();
   
     const initialRole = userCount === 0 ?  "ADMIN" : "USER";
     const initialStatus = initialRole === "ADMIN" ? "APPROVED" : "PENDING";
     
-
+    this.logger.log(`Creating user ${data.email}. Role assignment: ${initialRole}, Status: ${initialStatus}`);
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
       return this.repository.create({
@@ -61,6 +60,7 @@ export class UsersService {
     data: AdminUpdateUserDto | UpdateUserDto| Prisma.UserUpdateInput; }): Promise<User> {
     const { where, data } = params;
     const updateData = { ...data } as any; 
+    this.logger.log(`Updating account matrix fields for unique criteria: ${JSON.stringify(where)}`);
 
     if (updateData.password) {
       updateData.password = await bcrypt.hash(updateData.password, 10);
@@ -78,12 +78,16 @@ async handleApproval(userId: number, status: 'APPROVED' | 'REJECTED') {
   const user = await this.repository.findOne({ id: userId });
   
   if (!user) {
+    this.logger.error(`Failed status shift operation. Target account ID not found: ${userId}`);
     throw new NotFoundException(`Korisnik sa ID-em ${userId} nije pronađen.`);
   }
-  return this.repository.update({
-    where: { id: userId },
-    data: { status: status },
-  });
+  const updatedUser = await this.repository.update({
+      where: { id: userId },
+      data: { status: status },
+    });
+
+    this.logger.log(`Account status successfully altered. User ID: ${userId} shifted state to: ${status}`);
+    return updatedUser;
 }
 
  
@@ -98,11 +102,15 @@ async handleApproval(userId: number, status: 'APPROVED' | 'REJECTED') {
 
   async deleteUser(userId:number, requestingAdminId:number): Promise<User> {
     if (userId === requestingAdminId) {
+      this.logger.error(`Self-destruction block. Admin ID ${requestingAdminId} rejected from running loop-deletion on self.`);
       throw new BadRequestException('Ne možete obrisati sopstveni nalog!');
   }
     try {
-    return await this.repository.delete({ id: userId  });
+    const deleted= await this.repository.delete({ id: userId  });
+    this.logger.debug(`User record destroyed successfully from data tables. Deleted User ID: ${userId}`);
+    return deleted;
   } catch (error) {
+    this.logger.error(`Failed data purge. Target identity record missing or dead: ${userId}`);
     throw new NotFoundException(`Korisnik sa ID-em ${userId} nije pronađen.`);
   }
   }
@@ -118,6 +126,7 @@ async handleApproval(userId: number, status: 'APPROVED' | 'REJECTED') {
         return result as User;
       }
     }
+    this.logger.warn(`Cryptographic identity confirmation failed for target string signature: ${email}`);
     
     return null;
   }
@@ -129,11 +138,14 @@ async handleApproval(userId: number, status: 'APPROVED' | 'REJECTED') {
       throw new HttpException('Pogrešan email ili šifra', HttpStatus.UNAUTHORIZED);
     }
     if(user.status=="PENDING"){
+      this.logger.warn(`Authentication dropped. User account ${loginData.email} blocks login due to PENDING status validation.`);
       throw new HttpException('Account not yet approved by admin', HttpStatus.FORBIDDEN);
     }
     if(user.status=="REJECTED"){
+      this.logger.warn(`Authentication dropped. User account ${loginData.email} blocks login due to REJECTED status validation.`);
       throw new HttpException('Account rejected', HttpStatus.FORBIDDEN);
     }
+    this.logger.log(`User ${user.email} successfully logged in. Issuing JSON Web Token.`);
     const payload = { sub: user.id, email: user.email , role: user.role};
     const { password, ...safeUser } = user;
     return {

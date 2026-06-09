@@ -1,10 +1,11 @@
-import { Injectable} from "@nestjs/common";
+import { Injectable, Logger} from "@nestjs/common";
 import { PrismaService } from "../prisma.service.js";
 import { User, Prisma } from "../generated/prisma/client.js";
 
 
 @Injectable()
 export class UsersRepository {
+  private readonly logger = new Logger(UsersRepository.name);
   constructor(private prisma: PrismaService) {}
 
 
@@ -45,7 +46,9 @@ export class UsersRepository {
     }
 
   async delete(where:Prisma.UserWhereUniqueInput):Promise<User> {
-        return this.prisma.user.delete({where});
+      const deletedUser = await this.prisma.user.delete({ where });
+      this.logger.debug(`Prisma low-level query deleted user record. Database Table Key: ${deletedUser.id}`);
+      return deletedUser;
     }
 
 }

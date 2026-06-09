@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client.js';
 import { DeviceRepository } from './device.repository';
 import { DeviceTelemetryGateway } from './device-telemetry.gateway';
@@ -11,28 +11,26 @@ export type IncomingTelemetry = {
 
 @Injectable()
 export class DeviceTelemetryService {
+  private readonly logger = new Logger(DeviceTelemetryService.name);
   constructor(
     private readonly deviceRepository: DeviceRepository,
     private readonly telemetryGateway: DeviceTelemetryGateway,
   ) {}
 
   async handleTelemetry(telemetry: IncomingTelemetry) {
-    console.log('[HOST] (handleTelemetry)Telemetry received from plugin:', telemetry);
+   this.logger.debug(`Telemetry received from plugin for device: ${telemetry.deviceId}`);
 
     const timestamp = new Date(telemetry.timestamp);
-    console.log('[HOST] telemetry.timestamp raw:', telemetry.timestamp);
-    console.log('[HOST] timestamp.toISOString():', timestamp.toISOString());
-    console.log('[HOST] timestamp local:', timestamp.toLocaleString('sr-RS', {
-      timeZone: 'Europe/Belgrade',
-    }));
+    
 
     const device = await this.deviceRepository.findOne({
         serialNumber: telemetry.deviceId,
       });
 
       if (!device) {
-        throw new Error(`Device not found: ${telemetry.deviceId}`);
-      }
+       this.logger.error(`Failed to handle telemetry. Device not found: ${telemetry.deviceId}`);
+       throw new NotFoundException(`Device not found: ${telemetry.deviceId}`);
+    }
 
     const savedTelemetry = await this.deviceRepository.createTelemetry({
         deviceId: telemetry.deviceId,
@@ -40,6 +38,8 @@ export class DeviceTelemetryService {
         data: telemetry.data as Prisma.InputJsonValue,
         modelVersionId: device.modelVersionId ?? undefined
      });
+
+    this.logger.debug(`Cleaning up old telemetry records for device: ${telemetry.deviceId}`);
 
     await this.deviceRepository.deleteOldTelemetryForDevice(
       telemetry.deviceId,
@@ -62,16 +62,18 @@ export class DeviceTelemetryService {
         data: savedTelemetry.data as Record<string, unknown>,
     });
 
-  console.log('[HOST] Telemetry saved and emitted:', telemetry.deviceId);
+  this.logger.log(`Telemetry processed, saved and emitted for device: ${telemetry.deviceId}`);
 
   return savedTelemetry;
   }
 
   async getTelemetryHistory(deviceId: string) {
+    this.logger.log(`Fetching telemetry history for device: ${deviceId}`);
     return this.deviceRepository.findTelemetryByDeviceId(deviceId);
   }
 
   async getLatestTelemetry(deviceId: string) {
+    this.logger.log(`Fetching latest telemetry record for device: ${deviceId}`);
     return this.deviceRepository.findLatestTelemetryByDeviceId(deviceId);
   }
 

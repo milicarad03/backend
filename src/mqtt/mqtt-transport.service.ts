@@ -1,8 +1,5 @@
-// host-src/mqtt/mqtt-transport.service.ts
-
-import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleDestroy, OnModuleInit, Logger } from '@nestjs/common';
 import mqtt, { MqttClient } from 'mqtt';
-
 import { DeviceDashboardService } from 'serverplugin';
 
 export type TelemetryContext = {
@@ -23,8 +20,8 @@ type ProcessStatusCallback = (
 
 @Injectable()
 export class MqttTransportService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(MqttTransportService.name);
   private client: MqttClient | null = null;
-
   private readonly brokerUrl = 'mqtt://localhost:1883';
 
   constructor(private readonly pluginCore: DeviceDashboardService) {}
@@ -41,21 +38,17 @@ export class MqttTransportService implements OnModuleInit, OnModuleDestroy {
     this.client = mqtt.connect(this.brokerUrl);
 
     this.client.on('connect', () => {
-      console.log('[HOST MQTT] Uspešno povezan na MQTT broker');
+      this.logger.log(`Successfully connected to MQTT broker at ${this.brokerUrl}`);
 
       const topicsToSubscribe = this.pluginCore.getSubscriptionTopics();
 
       topicsToSubscribe.forEach((topic) => {
         this.client?.subscribe(topic, (error) => {
           if (error) {
-            console.error(
-              `[HOST MQTT] Greška pri pretplati na topic ${topic}:`,
-              error,
-            );
+            this.logger.error(`Failed to subscribe to MQTT topic: ${topic}`, error.stack);
             return;
           }
-
-          console.log(`[HOST MQTT] Dinamički pretplaćen na topic: ${topic}`);
+          this.logger.log(`Dynamically subscribed to MQTT topic: ${topic}`);
         });
       });
     });
@@ -67,30 +60,29 @@ export class MqttTransportService implements OnModuleInit, OnModuleDestroy {
         this.pluginCore.processTelemetry.bind(this.pluginCore),
         this.pluginCore.processStatus.bind(this.pluginCore),
       ).catch((error) => {
-        console.error('[HOST MQTT] Error handling message:', error);
+        this.logger.error(`Unhandled exception in MQTT message pipeline for topic ${topic}: ${error.message}`, error.stack);
       });
     });
 
     this.client.on('error', (error) => {
-      console.error('[HOST MQTT] MQTT connection error:', error.message);
+      this.logger.error(`MQTT client connection error: ${error.message}`, error.stack);
     });
 
     this.client.on('reconnect', () => {
-      console.warn('[HOST MQTT] Reconnecting to MQTT broker...');
+      this.logger.warn('MQTT broker connection lost. Attempting to reconnect...');
     });
 
     this.client.on('offline', () => {
-      console.warn('[HOST MQTT] MQTT client offline');
+      this.logger.warn('MQTT client switched to offline state.');
     });
 
     this.client.on('close', () => {
-      console.warn('[HOST MQTT] MQTT connection closed');
+      this.logger.warn('MQTT connection stream closed.');
     });
   }
 
   private extractDeviceIdFromTopic(topic: string): string | null {
     const match = topic.match(/^iot\/devices\/([^/]+)\/(telemetry|status)$/);
-
     return match ? match[1] : null;
   }
 
@@ -104,7 +96,7 @@ export class MqttTransportService implements OnModuleInit, OnModuleDestroy {
       const topicDeviceId = this.extractDeviceIdFromTopic(topic);
 
       if (!topicDeviceId) {
-        console.warn('[HOST MQTT] Nepodržan topic:', topic);
+        this.logger.warn(`Received message on unsupported MQTT topic syntax: ${topic}`);
         return;
       }
 
@@ -117,45 +109,41 @@ export class MqttTransportService implements OnModuleInit, OnModuleDestroy {
       };
 
       if (topic.endsWith('/telemetry')) {
-        console.log(
-          '[HOST MQTT] Primljena telemetrija, šaljem pluginu na validaciju...',
-        );
+        this.logger.debug(`Incoming telemetry stream payload detected for device: ${context.deviceId}`);
 
         const result = await processTelemetry(message, context);
 
         if (!result.approved) {
-          console.warn('[HOST MQTT] Plugin je odbio telemetry paket:', {
-            reason: result.reason,
-            deviceId: context.deviceId,
-            topic,
-          });
+          this.logger.warn(`Plugin validation rejected telemetry frame for device [${context.deviceId}]. Reason: ${result.reason || 'UNKNOWN'}`);
           return;
         }
 
-        console.log('[HOST MQTT] Telemetrija uspešno prosleđena pluginu.');
+        this.logger.debug(`Telemetry packet successfully verified and forwarded to plugin for device: ${context.deviceId}`);
         return;
       }
 
       if (topic.endsWith('/status')) {
-        console.log('[HOST MQTT] Primljen status, šaljem pluginu na obradu...');
+        this.logger.log(`Incoming operational status event update for device: ${context.deviceId}`);
 
         await processStatus(message, context);
 
-        console.log('[HOST MQTT] Status uspešno prosleđen pluginu.');
+        this.logger.debug(`Status event successfully processed by plugin for device: ${context.deviceId}`);
         return;
       }
 
-      console.warn('[HOST MQTT] Nepoznat tip topic-a:', topic);
+      this.logger.warn(`Unknown action type match for topic destination route: ${topic}`);
     } catch (error: any) {
-      console.error('[HOST MQTT] Nevalidan JSON payload:', {
-        topic,
-        error: error.message,
-      });
+      this.logger.error(`Failed to parse or process incoming MQTT payload on topic [${topic}]: ${error.message}`, error.stack);
     }
   }
 
   private disconnect() {
-    this.client?.end();
-    this.client = null;
+    if (this.client) {
+      this.logger.log('Gracefully disconnecting MQTT transport client network stream...');
+      this.client.end();
+      this.client = null;
+    }else {
+      this.logger.warn('Disconnect triggered but MQTT client instance was already uninitialized.');
+    }
   }
 }

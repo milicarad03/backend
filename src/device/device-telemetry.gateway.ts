@@ -7,7 +7,7 @@ import {
 } from '@nestjs/websockets';
 
 import { Server, Socket } from 'socket.io';
-
+import { Logger } from '@nestjs/common';
 export type TelemetryPayload = {
   deviceId: string;
   timestamp: string | Date;
@@ -21,6 +21,7 @@ export type TelemetryPayload = {
   },
 })
 export class DeviceTelemetryGateway {
+  private readonly logger = new Logger(DeviceTelemetryGateway.name);
   @WebSocketServer()
   server!: Server;  
 
@@ -33,7 +34,7 @@ export class DeviceTelemetryGateway {
 
     client.join(room);
 
-    console.log('[WS] Client subscribed to:', room);
+    this.logger.log(`Client subscribed to WebSocket room: ${room}`);
 
     return {
       event: 'device:subscribed',
@@ -48,6 +49,6 @@ export class DeviceTelemetryGateway {
 
     this.server.to(room).emit('telemetry:update', telemetry);
 
-    console.log('[WS] Telemetry emitted to room:', room);
+    this.logger.debug(`Telemetry emitted to room: ${room}`);
   }
 }

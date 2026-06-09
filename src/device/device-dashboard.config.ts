@@ -1,11 +1,12 @@
 import { DeviceRepository } from './device.repository';
 import { DeviceTelemetryService } from './device-telemetry.service';
-
+import { Logger } from '@nestjs/common';
 export type DeviceTelemetry = {
   deviceId: string;
   timestamp: string;
   data: Record<string, unknown>;
 };
+const logger = new Logger('DeviceDashboardConfig');
 
 export const createDeviceDashboardConfig = (
   deviceRepository: DeviceRepository,
@@ -19,6 +20,7 @@ export const createDeviceDashboardConfig = (
     });
 
     if (!device) {
+      logger.warn(`Device lookup failed during plugin configuration for serial: ${deviceId}`);
       return null;
     }
 
@@ -37,10 +39,7 @@ export const createDeviceDashboardConfig = (
   },
 
   onTelemetry: async (telemetry: DeviceTelemetry) => {
-    console.log('[HOST] telemetry received from plugin', telemetry);
-
+    logger.debug(`Forwarding telemetry from plugin to telemetry service for device: ${telemetry.deviceId}`);
     await deviceTelemetryService.handleTelemetry(telemetry);
-
-    console.log('[HOST] telemetry saved:', telemetry.deviceId);
   },
 });

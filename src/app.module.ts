@@ -15,6 +15,7 @@ import {PostModule} from './post/post.module'
 import {DeviceModule} from './device/device.module'
 import {DeviceDashboardModule} from 'serverplugin'
 import { CertificateRegistrationModule } from './certificates/certificate-registration.module';
+import { ModelVersionModule } from './model-version/model-version.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { CertificateRegistrationModule } from './certificates/certificate-regist
     PostModule,
     DeviceModule,
     CertificateRegistrationModule,
+    ModelVersionModule
   
   ],
   controllers: [AppController],
