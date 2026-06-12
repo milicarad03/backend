@@ -117,5 +117,12 @@ export class DeviceController {
     this.logger.log(`Toggle status requested for device: ${id} by user ID: ${req.user.userId}`);
     return this.deviceService.toggleDeviceStatus(id, req.user.userId);
   }
+  @Patch(":id/reassign")
+  @Roles(Role.ADMIN)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  async reassignDevice(@Param("id") id: string, @Body('targetUserId') targetUserId: number, @Req() req) {
+    this.logger.log(`Admin ID: ${req.user.userId} requested hardware transfer for device [${id}] to target user: ${targetUserId}`);
+    return this.deviceService.reassignDevice(id, targetUserId);
+  }
   
 }

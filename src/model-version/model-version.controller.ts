@@ -8,7 +8,7 @@ import { AuthGuard } from '@nestjs/passport';
 @Controller('model-versions')
 
 export class ModelVersionController {
-    private readonly logger = new Logger(ModelVersionController.name);
+  private readonly logger = new Logger(ModelVersionController.name);
 
   constructor(private modelVersionService: ModelVersionService) {}
 

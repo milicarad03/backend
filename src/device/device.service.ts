@@ -162,4 +162,16 @@ export class DeviceService {
       throw pluginError;
     }
   }
+  async reassignDevice(deviceSerial: string, newUserId: number) {
+  this.logger.log(`Reassigning device ${deviceSerial} to user ID: ${newUserId}`);
+  
+  return this.repository.update({
+    where: { serialNumber: deviceSerial },
+    data: { 
+      user: {
+        connect: { id: newUserId }
+      }
+    }
+  });
+}
 }
