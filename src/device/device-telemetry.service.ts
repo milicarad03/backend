@@ -2,6 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client.js';
 import { DeviceRepository } from './device.repository';
 import { DeviceTelemetryGateway } from './device-telemetry.gateway';
+import { DeviceStatus } from '../generated/prisma/client.js';
 
 export type IncomingTelemetry = {
   deviceId: string;
@@ -16,6 +17,29 @@ export class DeviceTelemetryService {
     private readonly deviceRepository: DeviceRepository,
     private readonly telemetryGateway: DeviceTelemetryGateway,
   ) {}
+
+  async handleStatusChange(deviceId: string, status: string) {
+    this.logger.log(`[SERVICE] Handling status change for ${deviceId} -> ${status}`);
+    
+
+    const device = await this.deviceRepository.findOne({ serialNumber: deviceId });
+    if (!device) {
+      this.logger.warn(`[SERVICE] Skipping status update. Device ${deviceId} does not exist in DB.`);
+      return; 
+    }
+
+  
+    await this.deviceRepository.update({
+      where: { serialNumber: deviceId },
+      data: {
+        status: status as DeviceStatus,
+        lastseen: new Date(), 
+      },
+    });
+    this.telemetryGateway.emitStatusUpdate(deviceId, status);
+
+    this.logger.debug(`[SERVICE] Status successfully persisted in DB for: ${deviceId}`);
+  }
 
   async handleTelemetry(telemetry: IncomingTelemetry) {
    this.logger.debug(`Telemetry received from plugin for device: ${telemetry.deviceId}`);
@@ -38,6 +62,7 @@ export class DeviceTelemetryService {
         data: telemetry.data as Prisma.InputJsonValue,
         modelVersionId: device.modelVersionId ?? undefined
      });
+     this.logger.log(`[DATABASE SAVE] Saved telemetry structure: ${JSON.stringify(savedTelemetry.data, null, 2)}`);
 
     this.logger.debug(`Cleaning up old telemetry records for device: ${telemetry.deviceId}`);
 
@@ -52,6 +77,7 @@ export class DeviceTelemetryService {
       },
       data: {
         lastseen: timestamp,
+        status: 'ONLINE',
       },
     });
 

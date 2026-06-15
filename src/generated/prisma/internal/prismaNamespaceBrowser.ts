@@ -108,6 +108,7 @@ export const DeviceScalarFieldEnum = {
   createdAt: 'createdAt',
   userId: 'userId',
   lastseen: 'lastseen',
+  status: 'status',
   modelVersionId: 'modelVersionId'
 } as const
 

@@ -1,6 +1,7 @@
 import { DeviceRepository } from './device.repository';
 import { DeviceTelemetryService } from './device-telemetry.service';
 import { Logger } from '@nestjs/common';
+import { DeviceStatus } from '../generated/prisma/client.js';
 import Redis from 'ioredis';
 export type DeviceTelemetry = {
   deviceId: string;
@@ -51,5 +52,10 @@ export const createDeviceDashboardConfig = (
   onTelemetry: async (telemetry: DeviceTelemetry) => {
     logger.debug(`Forwarding telemetry from plugin to telemetry service for device: ${telemetry.deviceId}`);
     await deviceTelemetryService.handleTelemetry(telemetry);
+  },
+  onStatusChange: async (deviceId: string, status: string) => {
+    logger.log(`[CONFIG HOOK] Routing status change for ${deviceId} to telemetry service`);
+    await deviceTelemetryService.handleStatusChange(deviceId, status);
+   
   },
 });

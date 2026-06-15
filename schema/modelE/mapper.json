@@ -1,0 +1,25 @@
+{
+  "fields": {
+    "invSerialNumber": { "path": "device.hardware.serialNumber" },
+    "invFirmware": { "path": "device.hardware.firmware" },
+    "currentMode": { "path": "device.status.operationalMode" },
+    "gridMainSwitch": { "path": "device.status.gridSwitch" },
+    "systemUptime": { "path": "device.status.uptimeSeconds" },
+    "surgeProtectorTripped": { "path": "device.safety.surgeProtectorEngaged" },
+    "hvacState": { "path": "device.safety.coolingStatus" },
+    "pvVoltage": { "path": "telemetry.pv_panels.dcVoltage" },
+    "pvCurrent": { "path": "telemetry.pv_panels.dcCurrent" },
+    "pvHealth": { "path": "telemetry.pv_panels.stringStatus" },
+    "batterySoc": { "path": "telemetry.battery.soc" },
+    "batterySoh": { "path": "telemetry.battery.soh" },
+    "batteryFlow": { "path": "telemetry.battery.chargeDirection" },
+    "batteryCycleCount": { "path": "telemetry.battery.cycles" },
+    "gridVoltageL1": { "path": "telemetry.grid_output.phaseA_voltage" },
+    "gridFrequency": { "path": "telemetry.grid_output.frequencyHz" },
+    "gridActivePower": { "path": "telemetry.grid_output.totalActivePowerW" },
+    "gridQuality": { "path": "telemetry.grid_output.gridQualityIndex" },
+    "internalCabinetTemp": { "path": "telemetry.environment.cabinetTemp" },
+    "coolingFanRpm": { "path": "telemetry.environment.fanSpeedRpm" },
+    "inverterEfficiency": { "path": "telemetry.environment.efficiency" }
+  }
+}

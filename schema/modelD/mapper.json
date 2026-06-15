@@ -1,0 +1,23 @@
+{
+  "fields": {
+    "firmwareVersion": { "path": "firmwareVersion" },
+    "systemStatus": { "path": "systemStatus" },
+    "compressorFrequency": { "path": "compressorFrequency" },
+    "coolantLevel": { "path": "coolantLevel" },
+    "valvePosition": { "path": "valvePosition" },
+    "vibrationIndex": { "path": "vibrationIndex" },
+    "errorCode": { "path": "errorCode" },
+    "activeAlarms": { "path": "activeAlarms" },
+    "powerFactor": { "path": "powerFactor" },
+    "ambientTemp": { "path": "ambientTemp" },
+    "returnLiquidTemp": { "path": "returnLiquidTemp" },
+    "dischargePressure": { "path": "dischargePressure" },
+    "suctionPressure": { "path": "suctionPressure" },
+    "flowRate": { "path": "flowRate" },
+    "totalEnergyKwh": { "path": "totalEnergyKwh" },
+    "oilPressureStatus": { "path": "oilPressureStatus" },
+    "pumpRuntimeHours": { "path": "pumpRuntimeHours" },
+    "maintenanceCountdown": { "path": "maintenanceCountdown" },
+    "networkSignalDb": { "path": "networkSignalDb" }
+  }
+}

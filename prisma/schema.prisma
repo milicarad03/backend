@@ -22,6 +22,11 @@ enum UserStatus{
   APPROVED
   REJECTED
 }
+enum DeviceStatus {
+  UNINITIALIZED
+  ONLINE
+  OFFLINE
+}
 model User { 
   id    Int     @id @default(autoincrement()) 
   email String  @unique
@@ -54,6 +59,7 @@ model Device {
   user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId          Int
   lastseen        DateTime @default(now())
+  status        DeviceStatus @default(UNINITIALIZED)
   telemetry DeviceTelemetry[]
 
   modelVersion   ModelVersion? @relation(fields: [modelVersionId], references: [id])

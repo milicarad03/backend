@@ -43,6 +43,13 @@ export class DeviceTelemetryGateway {
       },
     };
   }
+  @SubscribeMessage('devices:subscribe_statuses')
+  handleStatusesSubscribe(@ConnectedSocket() client: Socket) {
+    const room = 'devices:statuses';
+    client.join(room);
+    this.logger.log(`Client (probably DeviceTable) subscribed to global room: ${room}`);
+    return { event: 'devices:statuses_subscribed' };
+  }
 
   emitTelemetryUpdate(telemetry: TelemetryPayload) {
     const room = `device:${telemetry.deviceId}`;
@@ -50,5 +57,16 @@ export class DeviceTelemetryGateway {
     this.server.to(room).emit('telemetry:update', telemetry);
 
     this.logger.debug(`Telemetry emitted to room: ${room}`);
+  }
+
+  emitStatusUpdate(deviceId: string, status: string) {
+    const payload = { deviceId, status, timestamp: new Date() };
+
+    this.server.to('devices:statuses').emit('device:status_update', payload);
+
+
+    this.server.to(`device:${deviceId}`).emit('device:status_update', payload);
+
+    this.logger.debug(`Status update [${status}] emitted for device: ${deviceId}`);
   }
 }
