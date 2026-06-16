@@ -65,7 +65,6 @@ model Device {
   modelVersion   ModelVersion? @relation(fields: [modelVersionId], references: [id])
   modelVersionId String?
 
-
 }
 model DeviceTelemetry {
   id             String   @id @default(uuid())

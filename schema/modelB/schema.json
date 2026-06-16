@@ -2,11 +2,14 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "ModelB Telemetry Schema",
   "type": "object",
-  "required": ["data", "status"],
+  
   "properties": {
+    "schemaId": { 
+      "type": "string",
+      "const": "modelB" 
+    },
     "data": {
       "type": "object",
-      "required": ["temp", "hum", "press"],
       "properties": {
         "temp": {
           "type": "number",
@@ -28,7 +31,6 @@
     },
     "status": {
       "type": "object",
-      "required": ["ledState"],
       "properties": {
         "ledState": {
           "type": "boolean"

@@ -3,6 +3,7 @@ import { Prisma } from '../generated/prisma/client.js';
 import { DeviceRepository } from './device.repository';
 import { DeviceTelemetryGateway } from './device-telemetry.gateway';
 import { DeviceStatus } from '../generated/prisma/client.js';
+import _ from 'lodash';
 
 export type IncomingTelemetry = {
   deviceId: string;
@@ -55,11 +56,13 @@ export class DeviceTelemetryService {
        this.logger.error(`Failed to handle telemetry. Device not found: ${telemetry.deviceId}`);
        throw new NotFoundException(`Device not found: ${telemetry.deviceId}`);
     }
+    const last = await this.deviceRepository.findLatestTelemetryByDeviceId(telemetry.deviceId);
+    const mergedData = _.merge({}, last?.data ?? {}, telemetry.data);
 
     const savedTelemetry = await this.deviceRepository.createTelemetry({
         deviceId: telemetry.deviceId,
         timestamp,
-        data: telemetry.data as Prisma.InputJsonValue,
+        data: mergedData as Prisma.InputJsonValue,
         modelVersionId: device.modelVersionId ?? undefined
      });
      this.logger.log(`[DATABASE SAVE] Saved telemetry structure: ${JSON.stringify(savedTelemetry.data, null, 2)}`);

@@ -10,7 +10,7 @@ async function main() {
   logger.log('Starting database seeding process...');
 
   const modelsFolderPath = path.join(process.cwd(), 'schema');
-  const modeli = ['modelB', 'modelC', 'modelA', 'modelD', 'modelE'];
+  const modeli = ['modelB', 'modelC', 'modelA', 'modelD', 'modelE', 'modelF'];
 
   for (const modelName of modeli) {
     const folderZaModel = path.join(modelsFolderPath, modelName);
