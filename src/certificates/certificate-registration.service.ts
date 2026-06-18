@@ -11,6 +11,7 @@ import {
 import { tmpdir } from 'os';
 import { join } from 'path';
 import type { RegisterCertificateDto } from './certificate-registration.controller';
+import { DeviceService } from 'src/device/device.service';
 
 @Injectable()
 export class CertificateRegistrationService {
@@ -20,12 +21,17 @@ export class CertificateRegistrationService {
     'certs/operational/operational-ca.crt';
   private readonly operationalCaKeyPath =
     'certs/operational/operational-ca.key';
+   
 
   private extractCommonNameFromSubject(subject: string): string | null {
     const match = subject.match(/CN\s*=\s*([^,\n/]+)/);
 
     return match ? match[1].trim() : null;
   }
+  
+  constructor(
+  private readonly deviceService: DeviceService 
+) {}
 
   async registerDeviceCertificate(dto: RegisterCertificateDto) {
     this.logger.log('Received device certificate registration request.');
@@ -146,6 +152,9 @@ export class CertificateRegistrationService {
           '365',
           '-sha256',
         ]);
+      const serialOutput = execFileSync('openssl', ['x509', '-in', operationalDeviceCertPath, '-noout', '-serial']).toString();
+      const certSerialNumber = serialOutput.split('=')[1].trim();
+      await this.deviceService.markDeviceAsVerified(deviceId, certSerialNumber);
       } catch (opensslError: any) {
         this.logger.error(`Failed to sign operational certificate. OpenSSL Output: ${opensslError.stderr?.toString() || opensslError.message}`);
         throw new BadRequestException('OPERATIONAL_SIGNING_FAILED');

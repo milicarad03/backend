@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client.js';
 import { DeviceRepository } from './device.repository';
 import { DeviceTelemetryGateway } from './device-telemetry.gateway';
@@ -56,6 +56,10 @@ export class DeviceTelemetryService {
        this.logger.error(`Failed to handle telemetry. Device not found: ${telemetry.deviceId}`);
        throw new NotFoundException(`Device not found: ${telemetry.deviceId}`);
     }
+    if (!device.isVerified) {
+    this.logger.warn(`[SECURITY] Telemetry rejected: Device ${telemetry.deviceId} is not verified. Access denied.`);
+    throw new ForbiddenException(`Device ${telemetry.deviceId} is not verified. Please register your certificate.`);
+  }
     const last = await this.deviceRepository.findLatestTelemetryByDeviceId(telemetry.deviceId);
     const mergedData = _.merge({}, last?.data ?? {}, telemetry.data);
 

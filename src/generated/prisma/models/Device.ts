@@ -46,6 +46,9 @@ export type DeviceMinAggregateOutputType = {
   lastseen: Date | null
   status: $Enums.DeviceStatus | null
   modelVersionId: string | null
+  isVerified: boolean | null
+  certSerialNumber: string | null
+  verifiedAt: Date | null
 }
 
 export type DeviceMaxAggregateOutputType = {
@@ -60,6 +63,9 @@ export type DeviceMaxAggregateOutputType = {
   lastseen: Date | null
   status: $Enums.DeviceStatus | null
   modelVersionId: string | null
+  isVerified: boolean | null
+  certSerialNumber: string | null
+  verifiedAt: Date | null
 }
 
 export type DeviceCountAggregateOutputType = {
@@ -74,6 +80,9 @@ export type DeviceCountAggregateOutputType = {
   lastseen: number
   status: number
   modelVersionId: number
+  isVerified: number
+  certSerialNumber: number
+  verifiedAt: number
   _all: number
 }
 
@@ -98,6 +107,9 @@ export type DeviceMinAggregateInputType = {
   lastseen?: true
   status?: true
   modelVersionId?: true
+  isVerified?: true
+  certSerialNumber?: true
+  verifiedAt?: true
 }
 
 export type DeviceMaxAggregateInputType = {
@@ -112,6 +124,9 @@ export type DeviceMaxAggregateInputType = {
   lastseen?: true
   status?: true
   modelVersionId?: true
+  isVerified?: true
+  certSerialNumber?: true
+  verifiedAt?: true
 }
 
 export type DeviceCountAggregateInputType = {
@@ -126,6 +141,9 @@ export type DeviceCountAggregateInputType = {
   lastseen?: true
   status?: true
   modelVersionId?: true
+  isVerified?: true
+  certSerialNumber?: true
+  verifiedAt?: true
   _all?: true
 }
 
@@ -227,6 +245,9 @@ export type DeviceGroupByOutputType = {
   lastseen: Date
   status: $Enums.DeviceStatus
   modelVersionId: string | null
+  isVerified: boolean
+  certSerialNumber: string | null
+  verifiedAt: Date | null
   _count: DeviceCountAggregateOutputType | null
   _avg: DeviceAvgAggregateOutputType | null
   _sum: DeviceSumAggregateOutputType | null
@@ -264,6 +285,9 @@ export type DeviceWhereInput = {
   lastseen?: Prisma.DateTimeFilter<"Device"> | Date | string
   status?: Prisma.EnumDeviceStatusFilter<"Device"> | $Enums.DeviceStatus
   modelVersionId?: Prisma.StringNullableFilter<"Device"> | string | null
+  isVerified?: Prisma.BoolFilter<"Device"> | boolean
+  certSerialNumber?: Prisma.StringNullableFilter<"Device"> | string | null
+  verifiedAt?: Prisma.DateTimeNullableFilter<"Device"> | Date | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   telemetry?: Prisma.DeviceTelemetryListRelationFilter
   modelVersion?: Prisma.XOR<Prisma.ModelVersionNullableScalarRelationFilter, Prisma.ModelVersionWhereInput> | null
@@ -281,6 +305,9 @@ export type DeviceOrderByWithRelationInput = {
   lastseen?: Prisma.SortOrder
   status?: Prisma.SortOrder
   modelVersionId?: Prisma.SortOrderInput | Prisma.SortOrder
+  isVerified?: Prisma.SortOrder
+  certSerialNumber?: Prisma.SortOrderInput | Prisma.SortOrder
+  verifiedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
   telemetry?: Prisma.DeviceTelemetryOrderByRelationAggregateInput
   modelVersion?: Prisma.ModelVersionOrderByWithRelationInput
@@ -290,6 +317,7 @@ export type DeviceWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   serialNumber?: string
   apiKey?: string
+  certSerialNumber?: string
   AND?: Prisma.DeviceWhereInput | Prisma.DeviceWhereInput[]
   OR?: Prisma.DeviceWhereInput[]
   NOT?: Prisma.DeviceWhereInput | Prisma.DeviceWhereInput[]
@@ -301,10 +329,12 @@ export type DeviceWhereUniqueInput = Prisma.AtLeast<{
   lastseen?: Prisma.DateTimeFilter<"Device"> | Date | string
   status?: Prisma.EnumDeviceStatusFilter<"Device"> | $Enums.DeviceStatus
   modelVersionId?: Prisma.StringNullableFilter<"Device"> | string | null
+  isVerified?: Prisma.BoolFilter<"Device"> | boolean
+  verifiedAt?: Prisma.DateTimeNullableFilter<"Device"> | Date | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   telemetry?: Prisma.DeviceTelemetryListRelationFilter
   modelVersion?: Prisma.XOR<Prisma.ModelVersionNullableScalarRelationFilter, Prisma.ModelVersionWhereInput> | null
-}, "id" | "serialNumber" | "apiKey">
+}, "id" | "serialNumber" | "apiKey" | "certSerialNumber">
 
 export type DeviceOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -318,6 +348,9 @@ export type DeviceOrderByWithAggregationInput = {
   lastseen?: Prisma.SortOrder
   status?: Prisma.SortOrder
   modelVersionId?: Prisma.SortOrderInput | Prisma.SortOrder
+  isVerified?: Prisma.SortOrder
+  certSerialNumber?: Prisma.SortOrderInput | Prisma.SortOrder
+  verifiedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.DeviceCountOrderByAggregateInput
   _avg?: Prisma.DeviceAvgOrderByAggregateInput
   _max?: Prisma.DeviceMaxOrderByAggregateInput
@@ -340,6 +373,9 @@ export type DeviceScalarWhereWithAggregatesInput = {
   lastseen?: Prisma.DateTimeWithAggregatesFilter<"Device"> | Date | string
   status?: Prisma.EnumDeviceStatusWithAggregatesFilter<"Device"> | $Enums.DeviceStatus
   modelVersionId?: Prisma.StringNullableWithAggregatesFilter<"Device"> | string | null
+  isVerified?: Prisma.BoolWithAggregatesFilter<"Device"> | boolean
+  certSerialNumber?: Prisma.StringNullableWithAggregatesFilter<"Device"> | string | null
+  verifiedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Device"> | Date | string | null
 }
 
 export type DeviceCreateInput = {
@@ -352,6 +388,9 @@ export type DeviceCreateInput = {
   createdAt?: Date | string
   lastseen?: Date | string
   status?: $Enums.DeviceStatus
+  isVerified?: boolean
+  certSerialNumber?: string | null
+  verifiedAt?: Date | string | null
   user: Prisma.UserCreateNestedOneWithoutDevicesInput
   telemetry?: Prisma.DeviceTelemetryCreateNestedManyWithoutDeviceInput
   modelVersion?: Prisma.ModelVersionCreateNestedOneWithoutDevicesInput
@@ -369,6 +408,9 @@ export type DeviceUncheckedCreateInput = {
   lastseen?: Date | string
   status?: $Enums.DeviceStatus
   modelVersionId?: string | null
+  isVerified?: boolean
+  certSerialNumber?: string | null
+  verifiedAt?: Date | string | null
   telemetry?: Prisma.DeviceTelemetryUncheckedCreateNestedManyWithoutDeviceInput
 }
 
@@ -382,6 +424,9 @@ export type DeviceUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastseen?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.EnumDeviceStatusFieldUpdateOperationsInput | $Enums.DeviceStatus
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  certSerialNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutDevicesNestedInput
   telemetry?: Prisma.DeviceTelemetryUpdateManyWithoutDeviceNestedInput
   modelVersion?: Prisma.ModelVersionUpdateOneWithoutDevicesNestedInput
@@ -399,6 +444,9 @@ export type DeviceUncheckedUpdateInput = {
   lastseen?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.EnumDeviceStatusFieldUpdateOperationsInput | $Enums.DeviceStatus
   modelVersionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  certSerialNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   telemetry?: Prisma.DeviceTelemetryUncheckedUpdateManyWithoutDeviceNestedInput
 }
 
@@ -414,6 +462,9 @@ export type DeviceCreateManyInput = {
   lastseen?: Date | string
   status?: $Enums.DeviceStatus
   modelVersionId?: string | null
+  isVerified?: boolean
+  certSerialNumber?: string | null
+  verifiedAt?: Date | string | null
 }
 
 export type DeviceUpdateManyMutationInput = {
@@ -426,6 +477,9 @@ export type DeviceUpdateManyMutationInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastseen?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.EnumDeviceStatusFieldUpdateOperationsInput | $Enums.DeviceStatus
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  certSerialNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type DeviceUncheckedUpdateManyInput = {
@@ -440,6 +494,9 @@ export type DeviceUncheckedUpdateManyInput = {
   lastseen?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.EnumDeviceStatusFieldUpdateOperationsInput | $Enums.DeviceStatus
   modelVersionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  certSerialNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type DeviceListRelationFilter = {
@@ -464,6 +521,9 @@ export type DeviceCountOrderByAggregateInput = {
   lastseen?: Prisma.SortOrder
   status?: Prisma.SortOrder
   modelVersionId?: Prisma.SortOrder
+  isVerified?: Prisma.SortOrder
+  certSerialNumber?: Prisma.SortOrder
+  verifiedAt?: Prisma.SortOrder
 }
 
 export type DeviceAvgOrderByAggregateInput = {
@@ -482,6 +542,9 @@ export type DeviceMaxOrderByAggregateInput = {
   lastseen?: Prisma.SortOrder
   status?: Prisma.SortOrder
   modelVersionId?: Prisma.SortOrder
+  isVerified?: Prisma.SortOrder
+  certSerialNumber?: Prisma.SortOrder
+  verifiedAt?: Prisma.SortOrder
 }
 
 export type DeviceMinOrderByAggregateInput = {
@@ -496,6 +559,9 @@ export type DeviceMinOrderByAggregateInput = {
   lastseen?: Prisma.SortOrder
   status?: Prisma.SortOrder
   modelVersionId?: Prisma.SortOrder
+  isVerified?: Prisma.SortOrder
+  certSerialNumber?: Prisma.SortOrder
+  verifiedAt?: Prisma.SortOrder
 }
 
 export type DeviceSumOrderByAggregateInput = {
@@ -555,6 +621,10 @@ export type DateTimeFieldUpdateOperationsInput = {
 
 export type EnumDeviceStatusFieldUpdateOperationsInput = {
   set?: $Enums.DeviceStatus
+}
+
+export type NullableDateTimeFieldUpdateOperationsInput = {
+  set?: Date | string | null
 }
 
 export type DeviceCreateNestedOneWithoutTelemetryInput = {
@@ -623,6 +693,9 @@ export type DeviceCreateWithoutUserInput = {
   createdAt?: Date | string
   lastseen?: Date | string
   status?: $Enums.DeviceStatus
+  isVerified?: boolean
+  certSerialNumber?: string | null
+  verifiedAt?: Date | string | null
   telemetry?: Prisma.DeviceTelemetryCreateNestedManyWithoutDeviceInput
   modelVersion?: Prisma.ModelVersionCreateNestedOneWithoutDevicesInput
 }
@@ -638,6 +711,9 @@ export type DeviceUncheckedCreateWithoutUserInput = {
   lastseen?: Date | string
   status?: $Enums.DeviceStatus
   modelVersionId?: string | null
+  isVerified?: boolean
+  certSerialNumber?: string | null
+  verifiedAt?: Date | string | null
   telemetry?: Prisma.DeviceTelemetryUncheckedCreateNestedManyWithoutDeviceInput
 }
 
@@ -682,6 +758,9 @@ export type DeviceScalarWhereInput = {
   lastseen?: Prisma.DateTimeFilter<"Device"> | Date | string
   status?: Prisma.EnumDeviceStatusFilter<"Device"> | $Enums.DeviceStatus
   modelVersionId?: Prisma.StringNullableFilter<"Device"> | string | null
+  isVerified?: Prisma.BoolFilter<"Device"> | boolean
+  certSerialNumber?: Prisma.StringNullableFilter<"Device"> | string | null
+  verifiedAt?: Prisma.DateTimeNullableFilter<"Device"> | Date | string | null
 }
 
 export type DeviceCreateWithoutTelemetryInput = {
@@ -694,6 +773,9 @@ export type DeviceCreateWithoutTelemetryInput = {
   createdAt?: Date | string
   lastseen?: Date | string
   status?: $Enums.DeviceStatus
+  isVerified?: boolean
+  certSerialNumber?: string | null
+  verifiedAt?: Date | string | null
   user: Prisma.UserCreateNestedOneWithoutDevicesInput
   modelVersion?: Prisma.ModelVersionCreateNestedOneWithoutDevicesInput
 }
@@ -710,6 +792,9 @@ export type DeviceUncheckedCreateWithoutTelemetryInput = {
   lastseen?: Date | string
   status?: $Enums.DeviceStatus
   modelVersionId?: string | null
+  isVerified?: boolean
+  certSerialNumber?: string | null
+  verifiedAt?: Date | string | null
 }
 
 export type DeviceCreateOrConnectWithoutTelemetryInput = {
@@ -738,6 +823,9 @@ export type DeviceUpdateWithoutTelemetryInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastseen?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.EnumDeviceStatusFieldUpdateOperationsInput | $Enums.DeviceStatus
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  certSerialNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutDevicesNestedInput
   modelVersion?: Prisma.ModelVersionUpdateOneWithoutDevicesNestedInput
 }
@@ -754,6 +842,9 @@ export type DeviceUncheckedUpdateWithoutTelemetryInput = {
   lastseen?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.EnumDeviceStatusFieldUpdateOperationsInput | $Enums.DeviceStatus
   modelVersionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  certSerialNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type DeviceCreateWithoutModelVersionInput = {
@@ -766,6 +857,9 @@ export type DeviceCreateWithoutModelVersionInput = {
   createdAt?: Date | string
   lastseen?: Date | string
   status?: $Enums.DeviceStatus
+  isVerified?: boolean
+  certSerialNumber?: string | null
+  verifiedAt?: Date | string | null
   user: Prisma.UserCreateNestedOneWithoutDevicesInput
   telemetry?: Prisma.DeviceTelemetryCreateNestedManyWithoutDeviceInput
 }
@@ -781,6 +875,9 @@ export type DeviceUncheckedCreateWithoutModelVersionInput = {
   userId: number
   lastseen?: Date | string
   status?: $Enums.DeviceStatus
+  isVerified?: boolean
+  certSerialNumber?: string | null
+  verifiedAt?: Date | string | null
   telemetry?: Prisma.DeviceTelemetryUncheckedCreateNestedManyWithoutDeviceInput
 }
 
@@ -821,6 +918,9 @@ export type DeviceCreateManyUserInput = {
   lastseen?: Date | string
   status?: $Enums.DeviceStatus
   modelVersionId?: string | null
+  isVerified?: boolean
+  certSerialNumber?: string | null
+  verifiedAt?: Date | string | null
 }
 
 export type DeviceUpdateWithoutUserInput = {
@@ -833,6 +933,9 @@ export type DeviceUpdateWithoutUserInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastseen?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.EnumDeviceStatusFieldUpdateOperationsInput | $Enums.DeviceStatus
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  certSerialNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   telemetry?: Prisma.DeviceTelemetryUpdateManyWithoutDeviceNestedInput
   modelVersion?: Prisma.ModelVersionUpdateOneWithoutDevicesNestedInput
 }
@@ -848,6 +951,9 @@ export type DeviceUncheckedUpdateWithoutUserInput = {
   lastseen?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.EnumDeviceStatusFieldUpdateOperationsInput | $Enums.DeviceStatus
   modelVersionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  certSerialNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   telemetry?: Prisma.DeviceTelemetryUncheckedUpdateManyWithoutDeviceNestedInput
 }
 
@@ -862,6 +968,9 @@ export type DeviceUncheckedUpdateManyWithoutUserInput = {
   lastseen?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.EnumDeviceStatusFieldUpdateOperationsInput | $Enums.DeviceStatus
   modelVersionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  certSerialNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type DeviceCreateManyModelVersionInput = {
@@ -875,6 +984,9 @@ export type DeviceCreateManyModelVersionInput = {
   userId: number
   lastseen?: Date | string
   status?: $Enums.DeviceStatus
+  isVerified?: boolean
+  certSerialNumber?: string | null
+  verifiedAt?: Date | string | null
 }
 
 export type DeviceUpdateWithoutModelVersionInput = {
@@ -887,6 +999,9 @@ export type DeviceUpdateWithoutModelVersionInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastseen?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.EnumDeviceStatusFieldUpdateOperationsInput | $Enums.DeviceStatus
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  certSerialNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutDevicesNestedInput
   telemetry?: Prisma.DeviceTelemetryUpdateManyWithoutDeviceNestedInput
 }
@@ -902,6 +1017,9 @@ export type DeviceUncheckedUpdateWithoutModelVersionInput = {
   userId?: Prisma.IntFieldUpdateOperationsInput | number
   lastseen?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.EnumDeviceStatusFieldUpdateOperationsInput | $Enums.DeviceStatus
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  certSerialNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   telemetry?: Prisma.DeviceTelemetryUncheckedUpdateManyWithoutDeviceNestedInput
 }
 
@@ -916,6 +1034,9 @@ export type DeviceUncheckedUpdateManyWithoutModelVersionInput = {
   userId?: Prisma.IntFieldUpdateOperationsInput | number
   lastseen?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.EnumDeviceStatusFieldUpdateOperationsInput | $Enums.DeviceStatus
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  certSerialNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 
@@ -961,6 +1082,9 @@ export type DeviceSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   lastseen?: boolean
   status?: boolean
   modelVersionId?: boolean
+  isVerified?: boolean
+  certSerialNumber?: boolean
+  verifiedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   telemetry?: boolean | Prisma.Device$telemetryArgs<ExtArgs>
   modelVersion?: boolean | Prisma.Device$modelVersionArgs<ExtArgs>
@@ -979,6 +1103,9 @@ export type DeviceSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   lastseen?: boolean
   status?: boolean
   modelVersionId?: boolean
+  isVerified?: boolean
+  certSerialNumber?: boolean
+  verifiedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   modelVersion?: boolean | Prisma.Device$modelVersionArgs<ExtArgs>
 }, ExtArgs["result"]["device"]>
@@ -995,6 +1122,9 @@ export type DeviceSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   lastseen?: boolean
   status?: boolean
   modelVersionId?: boolean
+  isVerified?: boolean
+  certSerialNumber?: boolean
+  verifiedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   modelVersion?: boolean | Prisma.Device$modelVersionArgs<ExtArgs>
 }, ExtArgs["result"]["device"]>
@@ -1011,9 +1141,12 @@ export type DeviceSelectScalar = {
   lastseen?: boolean
   status?: boolean
   modelVersionId?: boolean
+  isVerified?: boolean
+  certSerialNumber?: boolean
+  verifiedAt?: boolean
 }
 
-export type DeviceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "serialNumber" | "name" | "type" | "apiKey" | "isActive" | "createdAt" | "userId" | "lastseen" | "status" | "modelVersionId", ExtArgs["result"]["device"]>
+export type DeviceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "serialNumber" | "name" | "type" | "apiKey" | "isActive" | "createdAt" | "userId" | "lastseen" | "status" | "modelVersionId" | "isVerified" | "certSerialNumber" | "verifiedAt", ExtArgs["result"]["device"]>
 export type DeviceInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   telemetry?: boolean | Prisma.Device$telemetryArgs<ExtArgs>
@@ -1048,6 +1181,9 @@ export type $DevicePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     lastseen: Date
     status: $Enums.DeviceStatus
     modelVersionId: string | null
+    isVerified: boolean
+    certSerialNumber: string | null
+    verifiedAt: Date | null
   }, ExtArgs["result"]["device"]>
   composites: {}
 }
@@ -1485,6 +1621,9 @@ export interface DeviceFieldRefs {
   readonly lastseen: Prisma.FieldRef<"Device", 'DateTime'>
   readonly status: Prisma.FieldRef<"Device", 'DeviceStatus'>
   readonly modelVersionId: Prisma.FieldRef<"Device", 'String'>
+  readonly isVerified: Prisma.FieldRef<"Device", 'Boolean'>
+  readonly certSerialNumber: Prisma.FieldRef<"Device", 'String'>
+  readonly verifiedAt: Prisma.FieldRef<"Device", 'DateTime'>
 }
     
 

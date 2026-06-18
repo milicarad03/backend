@@ -109,7 +109,7 @@ export class MqttTransportService implements OnModuleInit, OnModuleDestroy {
       };
 
       if (topic.endsWith('/telemetry')) {
-        this.logger.debug(`[DEBUG] Primljena sirova telemetrija za ${context.deviceId}: ${JSON.stringify(message, null, 2)}`);
+        this.logger.debug(`Received raw telemetry for ${context.deviceId}: ${JSON.stringify(message, null, 2)}`);
         this.logger.debug(`Incoming telemetry stream payload detected for device: ${context.deviceId}`);
 
         const result = await processTelemetry(message, context);

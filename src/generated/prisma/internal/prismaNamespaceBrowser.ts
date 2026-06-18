@@ -109,7 +109,10 @@ export const DeviceScalarFieldEnum = {
   userId: 'userId',
   lastseen: 'lastseen',
   status: 'status',
-  modelVersionId: 'modelVersionId'
+  modelVersionId: 'modelVersionId',
+  isVerified: 'isVerified',
+  certSerialNumber: 'certSerialNumber',
+  verifiedAt: 'verifiedAt'
 } as const
 
 export type DeviceScalarFieldEnum = (typeof DeviceScalarFieldEnum)[keyof typeof DeviceScalarFieldEnum]

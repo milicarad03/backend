@@ -64,6 +64,11 @@ model Device {
 
   modelVersion   ModelVersion? @relation(fields: [modelVersionId], references: [id])
   modelVersionId String?
+  
+  isVerified     Boolean  @default(false) 
+
+  certSerialNumber String? @unique
+  verifiedAt       DateTime?
 
 }
 model DeviceTelemetry {

@@ -174,4 +174,20 @@ export class DeviceService {
     }
   });
 }
+
+
+async markDeviceAsVerified(serialNumber: string, certSerialNumber: string): Promise<Device> {
+  this.logger.log(`Marking device ${serialNumber} as verified with cert serial ${certSerialNumber}.`);
+  
+  return this.repository.update({
+   
+    where: { serialNumber }, 
+    data: { 
+      isVerified: true, 
+      verifiedAt: new Date(),
+      
+      certSerialNumber: certSerialNumber, 
+    }
+  });
+}
 }
