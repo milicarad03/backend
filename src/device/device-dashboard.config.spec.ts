@@ -1,5 +1,7 @@
 import { createDeviceDashboardConfig } from './device-dashboard.config';
 
+
+
 describe('createDeviceDashboardConfig', () => {
   const mockDeviceRepository = {
     findOne: jest.fn(),
@@ -8,6 +10,11 @@ describe('createDeviceDashboardConfig', () => {
   const mockDeviceTelemetryService = {
     handleTelemetry: jest.fn(),
   };
+    const mockRedis = {
+    get: jest.fn(),
+    set: jest.fn(),
+    on: jest.fn().mockReturnThis(),
+  } as any;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -29,6 +36,7 @@ describe('createDeviceDashboardConfig', () => {
     const config = createDeviceDashboardConfig(
       mockDeviceRepository as any,
       mockDeviceTelemetryService as any,
+      mockRedis
     );
 
     const result = await config.findDeviceById('sn-100');
@@ -51,6 +59,7 @@ describe('createDeviceDashboardConfig', () => {
     const config = createDeviceDashboardConfig(
       mockDeviceRepository as any,
       mockDeviceTelemetryService as any,
+      mockRedis
     );
 
     const result = await config.findDeviceById('unknown-device');
@@ -79,6 +88,7 @@ describe('createDeviceDashboardConfig', () => {
     const config = createDeviceDashboardConfig(
       mockDeviceRepository as any,
       mockDeviceTelemetryService as any,
+      mockRedis
     );
 
     await config.onTelemetry(telemetry);
@@ -106,6 +116,7 @@ describe('createDeviceDashboardConfig', () => {
   const config = createDeviceDashboardConfig(
     mockDeviceRepository as any,
     mockDeviceTelemetryService as any,
+    mockRedis
   );
 
   await expect(config.onTelemetry(telemetry)).rejects.toThrow('DATABASE_ERROR');
@@ -114,4 +125,74 @@ describe('createDeviceDashboardConfig', () => {
     telemetry,
   );
  });
+
+  it('should return null when serial number is null or undefined', async () => {
+      const config = createDeviceDashboardConfig(
+        mockDeviceRepository as any,
+        mockDeviceTelemetryService as any,
+        mockRedis
+      );
+
+    
+      const resultNull = await config.findDeviceById(null as any);
+      expect(resultNull).toBeNull();
+
+ 
+      const resultUndefined = await config.findDeviceById(undefined as any);
+      expect(resultUndefined).toBeNull();
+
+     
+      expect(mockDeviceRepository.findOne).not.toHaveBeenCalled();
+    });
+    it('should propagate error when findDeviceById database lookup fails', async () => {
+    
+      mockDeviceRepository.findOne.mockRejectedValue(new Error('DB_TIMEOUT'));
+
+      const config = createDeviceDashboardConfig(
+        mockDeviceRepository as any,
+        mockDeviceTelemetryService as any,
+        mockRedis
+      );
+
+      
+      await expect(config.findDeviceById('sn-100')).rejects.toThrow('DB_TIMEOUT');
+    });
+
+    it('should handle telemetry even if data object is empty', async () => {
+      const telemetry = {
+        deviceId: 'sn-100',
+        timestamp: '2026-05-18T08:54:08.179Z',
+        data: {}, 
+      };
+
+      mockDeviceTelemetryService.handleTelemetry.mockResolvedValue(undefined);
+
+      const config = createDeviceDashboardConfig(
+        mockDeviceRepository as any,
+        mockDeviceTelemetryService as any,
+        mockRedis
+      );
+
+      await expect(config.onTelemetry(telemetry)).resolves.not.toThrow();
+      expect(mockDeviceTelemetryService.handleTelemetry).toHaveBeenCalledWith(telemetry);
+    });
+
+    it('should throw or handle error if telemetry is missing deviceId', async () => {
+      const invalidTelemetry = {
+        timestamp: '2026-05-18T08:54:08.179Z',
+        data: { temp: 20 },
+      } as any;
+
+      const config = createDeviceDashboardConfig(
+        mockDeviceRepository as any,
+        mockDeviceTelemetryService as any,
+        mockRedis
+      );
+
+      // Ovde zavisi od tvoje implementacije: da li servis treba da baci grešku ili samo da loguje
+      // Ako servis očekuje validan objekat, testiraj da li baca grešku:
+      await expect(config.onTelemetry(invalidTelemetry)).rejects.toThrow();
+    });
+
+  
 });

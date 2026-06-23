@@ -70,6 +70,7 @@ describe('DeviceService', () => {
       user: {
         connect: { id: 5 },
       },
+      modelVersion: { connect: { id: '95895489034859038490' } }
     });
 
     expect(result).toEqual(createdDevice);
@@ -91,6 +92,7 @@ describe('DeviceService', () => {
       userId: 1,
       isActive: true,
       createdAt: new Date(),
+      modelVersionId: '95895489034859038490'
     };
 
     mockDeviceRepository.create.mockResolvedValue(createdDevice);
@@ -104,6 +106,7 @@ describe('DeviceService', () => {
       user: {
         connect: { id: 1 },
       },
+      modelVersion: { connect: { id: '95895489034859038490' } }
     });
 
     expect(result).toEqual(createdDevice);
@@ -168,12 +171,13 @@ describe('DeviceService', () => {
       type: [],
       userIds: [],
     });
-
-    expect(mockDeviceRepository.findMany).toHaveBeenCalledWith({
-      where: {
-        userId: 10,
-      },
-    });
+   
+    expect(mockDeviceRepository.findMany).toHaveBeenCalledWith(
+    expect.objectContaining({
+      where: { userId: 10 },
+      include: { modelVersion: true, user: true }
+    })
+  );
 
     expect(result).toEqual({
       data: devices,
@@ -213,6 +217,7 @@ describe('DeviceService', () => {
           in: ['TEMP_SENSOR'],
         },
       },
+      include: { modelVersion: true, user: true }
     });
 
     expect(result.meta.total).toBe(1);
@@ -236,14 +241,17 @@ describe('DeviceService', () => {
       search: 'living',
     });
 
-    expect(mockDeviceRepository.findMany).toHaveBeenCalledWith({
-      where: {
-        OR: [
-          { name: { contains: 'living', mode: 'insensitive' } },
-          { serialNumber: { contains: 'living', mode: 'insensitive' } },
-        ],
-      },
-    });
+    expect(mockDeviceRepository.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          OR: [
+            { name: { contains: 'living', mode: 'insensitive' } },
+            { serialNumber: { contains: 'living', mode: 'insensitive' } }
+          ]
+        },
+         include: { modelVersion: true, user: true }
+      })
+    );
 
     expect(result.data).toEqual(devices);
   });
@@ -356,6 +364,61 @@ describe('DeviceService', () => {
     );
 
     expect(mockDeviceRepository.update).not.toHaveBeenCalled();
+  });
+
+  it('should reassign device to a new user', async () => {
+    const device = { id: 'd1', serialNumber: 'sn-100' };
+    mockDeviceRepository.update.mockResolvedValue(device);
+
+    await service.reassignDevice('sn-100', 2);
+
+    expect(mockDeviceRepository.update).toHaveBeenCalledWith({
+      where: { serialNumber: 'sn-100' },
+      data: { user: { connect: { id: 2 } } }
+    });
+  });
+
+  it('should mark device as verified', async () => {
+    const device = { serialNumber: 'sn-100', isVerified: true };
+    mockDeviceRepository.update.mockResolvedValue(device);
+
+    await service.markDeviceAsVerified('sn-100', 'CERT123');
+
+    expect(mockDeviceRepository.update).toHaveBeenCalledWith({
+      where: { serialNumber: 'sn-100' },
+      data: expect.objectContaining({
+        isVerified: true,
+        certSerialNumber: 'CERT123'
+      })
+    });
+  });
+  it('should throw NotFoundException when P2025 error occurs', async () => {
+    mockDeviceRepository.create.mockRejectedValue({ code: 'P2025' });
+
+    await expect(service.createDevice(1, { 
+      serialNumber: 'sn-100', name: 'N', type: 'T', modelVersionId: '1' 
+    })).rejects.toThrow(NotFoundException);
+  });
+
+
+  it('should allow ADMIN to filter by modelVersionIds', async () => {
+    mockDeviceRepository.findMany.mockResolvedValue([]);
+
+    await service.findDevices(1, 'ADMIN', { modelVersionIds: ['100', '200'] });
+
+    expect(mockDeviceRepository.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          modelVersionId: { in: [100, 200] }
+        }
+      })
+    );
+  });
+
+  it('should get all devices', async () => {
+    mockDeviceRepository.findMany.mockResolvedValue([{ id: 'd1' }]);
+    const result = await service.getAllDevices();
+    expect(result).toEqual([{ id: 'd1' }]);
   });
 
 });

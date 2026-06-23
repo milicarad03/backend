@@ -12,11 +12,18 @@ describe('DeviceRepository', () => {
       create: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
+      
+    
     },
+    modelVersion: {
+      findUnique: jest.fn(),
+    },
+   
     deviceTelemetry: {
       create: jest.fn(),
       findMany: jest.fn(),
       findFirst: jest.fn(),
+      deleteMany: jest.fn(),
     },
   };
 
@@ -54,13 +61,12 @@ describe('DeviceRepository', () => {
     const result = await repository.findOne({ id: 'device-1' });
 
     expect(mockPrismaService.device.findUnique).toHaveBeenCalledWith({
-      where: {
-        id: 'device-1',
-      },
-      include: {
-        user: true,
-      },
-    });
+    where: { id: 'device-1' },
+    include: { 
+      user: true, 
+      modelVersion: { include: { model: true } } 
+    },
+  });
 
     expect(result).toEqual(device);
   });
@@ -99,6 +105,7 @@ describe('DeviceRepository', () => {
       },
       include: {
         user: true,
+        modelVersion: { include: { model: true } }
       },
     });
 
@@ -243,6 +250,7 @@ describe('DeviceRepository', () => {
         deviceId: 'sn-100',
         timestamp: telemetryParams.timestamp,
         data: telemetryParams.data,
+        modelVersionId: undefined,
       },
     });
 
@@ -272,7 +280,7 @@ describe('DeviceRepository', () => {
       orderBy: {
         timestamp: 'desc',
       },
-      take: 20,
+      take: 5,
     });
 
     expect(result).toEqual(history);
@@ -302,5 +310,46 @@ describe('DeviceRepository', () => {
     });
 
     expect(result).toEqual(latest);
+  });
+
+  it('should delete old telemetry records', async () => {
+    mockPrismaService.deviceTelemetry.findMany.mockResolvedValue([{ id: '1' }]);
+    mockPrismaService.deviceTelemetry.deleteMany.mockResolvedValue({ count: 1 });
+
+    const result = await repository.deleteOldTelemetryForDevice('sn-100', 5);
+
+    expect(mockPrismaService.deviceTelemetry.deleteMany).toHaveBeenCalledWith({
+      where: { id: { in: ['1'] } },
+    });
+    expect(result.count).toBe(1);
+  });
+
+  it('should find model version by id', async () => {
+    const mockModel = { id: 'm1', name: 'v1' };
+    mockPrismaService.modelVersion.findUnique.mockResolvedValue(mockModel); 
+
+    const result = await repository.findModelVersionById('m1');
+    expect(result).toEqual(mockModel);
+  });
+
+  it('should throw an error if Prisma update fails', async () => {
+    const error = new Error('Database connection failed');
+    mockPrismaService.device.update.mockRejectedValue(error);
+
+    const params = {
+      where: { id: 'device-1' },
+      data: { isActive: false },
+    };
+
+    await expect(repository.update(params)).rejects.toThrow('Database connection failed');
+  });
+
+  it('should return an empty array if no telemetry found', async () => {
+    mockPrismaService.deviceTelemetry.findMany.mockResolvedValue([]);
+
+    const result = await repository.findTelemetryByDeviceId('non-existent');
+
+    expect(result).toEqual([]);
+    expect(mockPrismaService.deviceTelemetry.findMany).toHaveBeenCalled();
   });
 });

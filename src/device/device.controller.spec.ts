@@ -86,13 +86,12 @@ describe('DeviceController', () => {
       serialNumber: 'sn-100',
       name: 'Temperature Sensor',
       type: 'TEMP_SENSOR',
+      modelVersionId: '1',
     };
 
     const createdDevice = {
       id: 'device-1',
-      serialNumber: 'sn-100',
-      name: 'Temperature Sensor',
-      type: 'TEMP_SENSOR',
+      ...dto,
       userId: 1,
     };
 
