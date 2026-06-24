@@ -165,11 +165,32 @@ describe('UsersService', () => {
     });
     });
     it('should throw NotFound if delete fails', async () => {
-    mockRepository.delete.mockRejectedValue(new Error());
+        mockRepository.delete.mockRejectedValue(new Error());
 
-    await expect(service.deleteUser(1, 2))
-        .rejects.toThrow(NotFoundException);
+        await expect(service.deleteUser(1, 2))
+            .rejects.toThrow(NotFoundException);
     });
+    describe('promoteToAdmin', () => {
+        it('should call repository.update with role ADMIN', async () => {
+            mockRepository.update.mockResolvedValue({ id: 1, role: 'ADMIN' });
+            await service.promoteToAdmin(1);
+            expect(mockRepository.update).toHaveBeenCalledWith({
+                where: { id: 1 },
+                data: { role: 'ADMIN' }
+            });
+        });
+    });
+    it('should not hash password if not provided', async () => {
+        await service.updateUser({
+            where: { id: 1 },
+            data: { email: 'new@test.com' },
+        } as any);
 
+        expect(repository.update).toHaveBeenCalledWith(
+            expect.objectContaining({
+            data: expect.not.objectContaining({ password: expect.anything() }),
+            })
+        );
+    });
 
 });

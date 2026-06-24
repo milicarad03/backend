@@ -352,4 +352,45 @@ describe('DeviceRepository', () => {
     expect(result).toEqual([]);
     expect(mockPrismaService.deviceTelemetry.findMany).toHaveBeenCalled();
   });
+
+  it('should propagate error if deleteMany fails', async () => {
+    mockPrismaService.deviceTelemetry.findMany.mockResolvedValue([{ id: '1' }]);
+    mockPrismaService.deviceTelemetry.deleteMany.mockRejectedValue(new Error('DB_LOCKED'));
+
+    await expect(repository.deleteOldTelemetryForDevice('sn-100', 5))
+      .rejects.toThrow('DB_LOCKED');
+  });
+  it('should throw error if update targets non-existent record', async () => {
+    mockPrismaService.device.update.mockRejectedValue(new Error('Record to update not found'));
+
+    await expect(repository.update({ where: { id: 'fake' }, data: { isActive: false } }))
+      .rejects.toThrow('Record to update not found');
+  });
+  it('should throw error if deviceId is missing during telemetry creation', async () => {
+    mockPrismaService.deviceTelemetry.create.mockRejectedValue(new Error('Foreign key constraint failed'));
+
+    await expect(repository.createTelemetry({ deviceId: undefined as any, timestamp: new Date(), data: {} }))
+      .rejects.toThrow();
+  });
+ it('should return device with null modelVersion if not linked', async () => {
+    const deviceWithoutModel = {
+      id: 'device-1',
+      serialNumber: 'sn-100',
+      userId: 1,
+      user: { id: 1, email: 'test@example.com' },
+      modelVersion: null,
+    };
+
+    mockPrismaService.device.findUnique.mockResolvedValue(deviceWithoutModel);
+
+    const result = await repository.findOne({ id: 'device-1' });
+
+    // Dodaj ovu proveru da bi TypeScript znao da result nije null
+    expect(result).not.toBeNull(); 
+    
+    if (result) {
+      expect(result.modelVersion).toBeNull();
+      expect(result).toEqual(deviceWithoutModel);
+    }
+  });
 });

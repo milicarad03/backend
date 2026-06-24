@@ -19,6 +19,14 @@ export class CertificateRegistrationController {
   @Post('register')
   async registerDeviceCertificate(@Body() body: RegisterCertificateDto) {
     this.logger.log('HTTP POST /device-certificates/register - Incoming device registration request');
-    return this.certificateRegistrationService.registerDeviceCertificate(body);
+    try {
+    return await this.certificateRegistrationService.registerDeviceCertificate(body);
+  } catch (error) {
+   
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Registration failed: ${errorMessage}`);
+      
+      throw error;
+    }
   }
 }

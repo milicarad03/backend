@@ -141,6 +141,7 @@ export class MqttTransportService implements OnModuleInit, OnModuleDestroy {
   private disconnect() {
     if (this.client) {
       this.logger.log('Gracefully disconnecting MQTT transport client network stream...');
+      this.client.removeAllListeners();
       this.client.end();
       this.client = null;
     }else {

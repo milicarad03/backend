@@ -110,4 +110,20 @@ describe('UsersRepository', () => {
             expect.stringContaining('deleted user record')
         );
     });
+    it('should return null if user is not found', async () => {
+        mockPrismaService.user.findUnique.mockResolvedValue(null);
+        const result = await repository.findOne({ id: 999 });
+        expect(result).toBeNull();
+    });
+    it('should propagate error on update failure', async () => {
+        mockPrismaService.user.update.mockRejectedValue(new Error('UPDATE_FAIL'));
+        await expect(repository.update({ where: { id: 1 }, data: {} }))
+            .rejects.toThrow('UPDATE_FAIL');
+    });
+    it('should propagate error when trying to delete a non-existent user', async () => {
+        mockPrismaService.user.delete.mockRejectedValue(new Error('Record to delete does not exist'));
+        
+        await expect(repository.delete({ id: 999 }))
+            .rejects.toThrow('Record to delete does not exist');
+    });
 });

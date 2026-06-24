@@ -1,4 +1,4 @@
-import { Module, OnModuleDestroy, Inject} from '@nestjs/common';
+import { Module, OnModuleDestroy, Inject, Logger} from '@nestjs/common';
 import Redis from 'ioredis';
 
 @Module({
@@ -6,8 +6,14 @@ import Redis from 'ioredis';
     {
       provide: 'REDIS_CLIENT',
       useFactory: () => {
-        const client = new Redis({ host: 'localhost', port: 6379 });
-        client.on('connect', () => console.log('Connected to Redis'));
+        const logger = new Logger('RedisModule');
+        const client = new Redis({ 
+          host: process.env.REDIS_HOST || 'localhost',
+          port: parseInt(process.env.REDIS_PORT || '6379'),
+          retryStrategy: (times) => Math.min(times * 50, 2000),
+        });
+        client.on('connect', () => logger.log('Successfully connected to Redis'));
+        client.on('error', (err) => logger.error('Redis connection error:', err.message));
         return client;
       },
     },

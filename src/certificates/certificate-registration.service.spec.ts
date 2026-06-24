@@ -47,6 +47,17 @@ describe("CertificateRegistrationService", () => {
       if (args.includes("-serial")) {
         return "serial=ABC123\n";
       }
+
+
+      return "";
+    });
+  }
+  function mockOpenSSLFail() {
+    (execFileSync as jest.Mock).mockImplementation((cmd, args) => {
+    
+      if (args.includes("-req")) throw new Error("openssl signing error");
+      
+      if (args.includes("-subject")) return "subject=CN=device-123\n";
       return "";
     });
   }
@@ -147,7 +158,7 @@ describe("CertificateRegistrationService", () => {
 
     expect(rmSync).toHaveBeenCalled();
   });
-  //CLEANUP I AKO FAILUJE 
+ 
   it("should cleanup even on failure", async () => {
     const { rmSync } = require("fs");
 
@@ -161,4 +172,104 @@ describe("CertificateRegistrationService", () => {
 
     expect(rmSync).toHaveBeenCalled();
     });
+    it("should throw if CA file is missing/inaccessible", async () => {
+      
+      (execFileSync as jest.Mock).mockImplementation((cmd, args) => {
+          if (args.includes("-CAfile")) {
+              throw new Error("Unable to open file");
+          }
+      });
+
+      await expect(service.registerDeviceCertificate(validDto))
+          .rejects.toThrow(BadRequestException);
+  });
+
+  
+  it("should throw if reading certificate fails", async () => {
+    mockOpenSSLSuccess();
+
+    const fs = require("fs");
+    fs.readFileSync.mockImplementationOnce(() => {
+      throw new Error("read fail");
+    });
+
+    await expect(
+      service.registerDeviceCertificate(validDto)
+    ).rejects.toThrow("read fail");
+  });
+
+  it("should throw OPERATIONAL_SIGNING_FAILED on OpenSSL error", async () => {
+      mockOpenSSLFail(); 
+      await expect(service.registerDeviceCertificate(validDto))
+          .rejects.toThrow("OPERATIONAL_SIGNING_FAILED");
+  });
+
+
+  it("should throw DB_FAILED on DB error", async () => {
+      mockOpenSSLSuccess(); 
+      deviceServiceMock.markDeviceAsVerified.mockRejectedValue(new Error("DB FAIL")); 
+      await expect(service.registerDeviceCertificate(validDto))
+          .rejects.toThrow("DB_FAILED");
+  });
+
+  it("should throw if writing to temp directory fails", async () => {
+      const fs = require("fs");
+      fs.writeFileSync.mockImplementationOnce(() => {
+          throw new Error("Disk full or permission denied");
+      });
+
+      await expect(service.registerDeviceCertificate(validDto))
+          .rejects.toThrow("Disk full or permission denied");
+  });
+
+  it("should throw error if serial number is missing from OpenSSL output", async () => {
+      (execFileSync as jest.Mock).mockImplementation((cmd, args) => {
+          
+          if (args.includes("-req")) return "success"; 
+          
+          if (args.includes("-subject")) return "subject=CN=device-123\n";
+          
+      
+          if (args.includes("-serial")) return "serial=\n"; 
+          
+          return "";
+      });
+
+      await expect(service.registerDeviceCertificate(validDto))
+          .rejects.toThrow("CERTIFICATE_SERIAL_MISSING"); 
+  });
+
+  it("should log stderr when OpenSSL fails", async () => {
+      const loggerSpy = jest.spyOn(service['logger'], 'error');
+      
+      (execFileSync as jest.Mock).mockImplementation(() => {
+          const error = new Error("openssl failed");
+          (error as any).stderr = Buffer.from("CRITICAL_OSSL_ERROR");
+          throw error;
+      });
+
+      try {
+          await service.registerDeviceCertificate(validDto);
+      } catch (e) {
+          expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining("CRITICAL_OSSL_ERROR"));
+      }
+  });
+  it("should propagate error if temp directory creation fails", async () => {
+      const fs = require("fs");
+      fs.mkdtempSync.mockImplementationOnce(() => {
+          throw new Error("EACCES: permission denied");
+      });
+
+      await expect(service.registerDeviceCertificate(validDto))
+          .rejects.toThrow("EACCES: permission denied");
+  });
+  it("should propagate error if temp directory creation fails", async () => {
+      const fs = require("fs");
+      fs.mkdtempSync.mockImplementationOnce(() => {
+          throw new Error("EACCES: permission denied");
+      });
+
+      await expect(service.registerDeviceCertificate(validDto))
+          .rejects.toThrow("EACCES: permission denied");
+  });
 });

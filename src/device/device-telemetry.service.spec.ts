@@ -245,4 +245,43 @@ describe('DeviceTelemetryService', () => {
     })).resolves.not.toThrow();
   });
 
+  it('should throw an error if timestamp is invalid', async () => {
+    mockDeviceRepository.findOne.mockResolvedValue({ isVerified: true });
+    
+    const badTelemetry = {
+      deviceId: 'sn-100',
+      timestamp: 'not-a-date',
+      data: { temp: 20 }
+    };
+    await expect(service.handleTelemetry(badTelemetry as any)).rejects.toThrow();
+  });
+  it('should allow overwriting telemetry fields with null if needed', async () => {
+    const oldData = { temperature: 20, status: 'ok' };
+    const newData = { temperature: null }; // Želimo da obrišemo/resetujemo temperaturu
+    
+    mockDeviceRepository.findOne.mockResolvedValue({ isVerified: true });
+    mockDeviceRepository.findLatestTelemetryByDeviceId.mockResolvedValue({ data: oldData });
+    mockDeviceRepository.createTelemetry.mockResolvedValue({ data: { temperature: null, status: 'ok' } });
+
+    await service.handleTelemetry({
+      deviceId: 'sn-100',
+      timestamp: '2026-05-18T08:54:08.179Z',
+      data: newData as any
+    });
+
+    expect(mockDeviceRepository.createTelemetry).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { temperature: null, status: 'ok' }
+      })
+    );
+  });
+  
+  it('should log error if status update fails in DB', async () => {
+    mockDeviceRepository.findOne.mockResolvedValue({ id: 'device-1' });
+    mockDeviceRepository.update.mockRejectedValue(new Error('DB_FAILED'));
+
+  
+    await expect(service.handleStatusChange('sn-100', 'OFFLINE')).rejects.toThrow('DB_FAILED');
+  });
+
 });

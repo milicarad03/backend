@@ -12,6 +12,7 @@ describe('MqttTransportService', () => {
     let module: TestingModule;
     let messageHandler: any;
 
+
     beforeEach(async () => {
         mockPluginCore = {
             getSubscriptionTopics: jest.fn().mockReturnValue(['iot/devices/+/telemetry', 'iot/devices/+/status']),
@@ -23,6 +24,7 @@ describe('MqttTransportService', () => {
         subscribe: jest.fn((topic, cb) => cb(null)),
         on: jest.fn(),
         end: jest.fn(),
+        removeAllListeners: jest.fn(),
         };
 
         (mqtt.connect as jest.Mock).mockReturnValue(mockMqttClient);
@@ -143,6 +145,51 @@ describe('MqttTransportService', () => {
         expect(loggerSpy).toHaveBeenCalledWith(
             expect.stringContaining('Failed to parse or process incoming MQTT payload'),
             expect.any(String) 
+        );
+    });
+
+    it('should log error when MQTT client emits error event', () => {
+        const loggerSpy = jest.spyOn(service['logger'], 'error');
+        const errorCallback = mockMqttClient.on.mock.calls.find(call => call[0] === 'error')[1];
+        
+        const err = new Error('Broker connection refused');
+        errorCallback(err);
+
+        expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('MQTT client connection error'), err.stack);
+    });
+
+    it('should catch and log error for empty payload', async () => {
+        const loggerSpy = jest.spyOn(service['logger'], 'error');
+        
+     
+        await messageHandler('iot/devices/dev-123/telemetry', Buffer.from(''));
+        
+        expect(loggerSpy).toHaveBeenCalledWith(
+            expect.stringContaining('Failed to parse or process incoming MQTT payload'),
+            expect.any(String)
+        );
+    });
+
+    
+    it('should warn if disconnect is called when client is null', () => {
+        const loggerSpy = jest.spyOn(service['logger'], 'warn');
+        service['client'] = null; // Simuliramo stanje gde klijent ne postoji
+
+        service.onModuleDestroy();
+
+        expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('already uninitialized'));
+    });
+    it('should catch and log error if plugin throws an exception', async () => {
+        const loggerSpy = jest.spyOn(service['logger'], 'error');
+    
+        mockPluginCore.processTelemetry.mockRejectedValue(new Error('Plugin crashed'));
+
+        await messageHandler('iot/devices/dev-123/telemetry', Buffer.from('{}'));
+
+    
+        expect(loggerSpy).toHaveBeenCalledWith(
+            expect.stringContaining('Failed to parse or process incoming MQTT payload'),
+            expect.any(String)
         );
     });
 

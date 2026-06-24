@@ -188,9 +188,6 @@ describe('createDeviceDashboardConfig', () => {
         mockDeviceTelemetryService as any,
         mockRedis
       );
-
-      // Ovde zavisi od tvoje implementacije: da li servis treba da baci grešku ili samo da loguje
-      // Ako servis očekuje validan objekat, testiraj da li baca grešku:
       await expect(config.onTelemetry(invalidTelemetry)).rejects.toThrow();
     });
 

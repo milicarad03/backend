@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { DeviceController } from './device.controller';
 import { DeviceService } from './device.service';
 import { DeviceTelemetryService } from './device-telemetry.service';
+import { NotFoundException,ForbiddenException } from '@nestjs/common';
 
 describe('DeviceController', () => {
   let controller: DeviceController;
@@ -15,6 +16,7 @@ describe('DeviceController', () => {
     deleteIfAdmin: jest.fn(),
     toggleDeviceStatus: jest.fn(),
     testPluginDeviceCheck: jest.fn(),
+    reassignDevice:jest.fn(),
   };
 
   const mockDeviceTelemetryService = {
@@ -251,5 +253,66 @@ describe('DeviceController', () => {
     );
 
     expect(result).toEqual(pluginResult);
+  });
+  it('should throw NotFoundException when device does not exist', async () => {
+    mockDeviceService.getDevice.mockRejectedValue(new NotFoundException());
+
+    await expect(controller.getDeviceById('bad-id')).rejects.toThrow(NotFoundException);
+  });
+
+  it('should handle empty query params in getDevice', async () => {
+    const req = { user: { userId: 1, role: 'USER' } };
+    mockDeviceService.findDevices.mockResolvedValue([]);
+
+    await controller.getDevice(req, undefined, undefined, undefined);
+
+    expect(mockDeviceService.findDevices).toHaveBeenCalledWith(1, 'USER', {
+      status: undefined,
+      type: [],
+      userIds: [],
+    });
+  });
+  it('should reassign device', async () => {
+    const req = { user: { userId: 1 } };
+    const reassignmentResult = { id: 'device-1', userId: 2 };
+    mockDeviceService.reassignDevice.mockResolvedValue(reassignmentResult);
+
+    const result = await controller.reassignDevice('device-1', 2, req);
+
+    expect(mockDeviceService.reassignDevice).toHaveBeenCalledWith('device-1', 2);
+    expect(result).toEqual(reassignmentResult);
+  });
+
+  it('should throw ForbiddenException if user lacks permission to delete', async () => {
+    const req = { user: { userId: 1, role: 'USER' } }; 
+    mockDeviceService.deleteIfAdmin.mockRejectedValue(new ForbiddenException());
+
+    await expect(controller.deleteDevice('device-1', req)).rejects.toThrow(ForbiddenException);
+  });
+  it('should normalize multiple userIds and types', async () => {
+    const req = { user: { userId: 1, role: 'ADMIN' } };
+    mockDeviceService.findDevices.mockResolvedValue([]);
+
+    await controller.getDevice(req, 'ONLINE', ['SENS', 'ACTUATOR'], ['2', '3']);
+
+    expect(mockDeviceService.findDevices).toHaveBeenCalledWith(1, 'ADMIN', {
+      status: 'ONLINE',
+      type: ['SENS', 'ACTUATOR'],
+      userIds: ['2', '3'],
+    });
+  });
+
+  it('should propagate generic errors as Internal Server Error', async () => {
+ 
+    mockDeviceService.getDevice.mockRejectedValue(new Error('Unexpected Database Crash'));
+
+  
+    await expect(controller.getDeviceById('any-id')).rejects.toThrow('Unexpected Database Crash');
+  });
+  it('should propagate NotFoundException when toggling non-existent device', async () => {
+    const req = { user: { userId: 1 } };
+    mockDeviceService.toggleDeviceStatus.mockRejectedValue(new NotFoundException());
+
+    await expect(controller.toggleDevice('bad-id', req)).rejects.toThrow(NotFoundException);
   });
 });

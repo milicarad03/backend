@@ -5,13 +5,14 @@ import { ModelVersionRepository } from './model-version.repository';
 describe('ModelVersionService', () => {
   let service: ModelVersionService;
   let repository: ModelVersionRepository;
+  let module: TestingModule;
 
   const mockRepository = {
     findMany: jest.fn(),
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         ModelVersionService,
         {
@@ -25,7 +26,8 @@ describe('ModelVersionService', () => {
     repository = module.get<ModelVersionRepository>(ModelVersionRepository);
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    await module.close(); 
     jest.clearAllMocks();
   });
 
@@ -41,6 +43,24 @@ describe('ModelVersionService', () => {
         orderBy: { version: 'asc' },
       });
       expect(result).toEqual(mockResult);
+    });
+    
+    it('should propagate errors from the repository', async () => {
+      mockRepository.findMany.mockRejectedValue(new Error('Repository failure'));
+
+      await expect(service.findAll()).rejects.toThrow('Repository failure');
+    });
+
+
+    it('should log the debug message', async () => {
+      const loggerSpy = jest.spyOn(service['logger'], 'debug');
+      mockRepository.findMany.mockResolvedValue([]);
+
+      await service.findAll();
+
+      expect(loggerSpy).toHaveBeenCalledWith(
+        'Executing database query via repository to retrieve sorted model versions'
+      );
     });
   });
 });

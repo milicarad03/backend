@@ -12,6 +12,14 @@ export class DeviceService {
     private repository: DeviceRepository,
     private dashboardPlugin: DeviceDashboardService,
   ) {}
+  private async ensureDeviceExists(where: Prisma.DeviceWhereUniqueInput): Promise<Device> {
+    const device = await this.repository.findOne(where);
+    if (!device) {
+      this.logger.warn(`Device operation aborted: Record not found for criteria: ${JSON.stringify(where)}`);
+      throw new NotFoundException('Device not found');
+    }
+    return device;
+  }
 
   async getDevice(where: Prisma.DeviceWhereUniqueInput): Promise<Device | null> {
     return this.repository.findOne(where);
@@ -48,10 +56,12 @@ export class DeviceService {
   }
 
   async updateDevice(params: { where: Prisma.DeviceWhereUniqueInput; data: Prisma.DeviceUpdateInput; }): Promise<Device> {
+    await this.ensureDeviceExists(params.where);
     return this.repository.update(params);
   }
 
   async deleteDevice(where: Prisma.DeviceWhereUniqueInput): Promise<Device> {
+    await this.ensureDeviceExists(where);
     return this.repository.delete(where);
   }
 
@@ -116,12 +126,13 @@ export class DeviceService {
   }
 
   async deleteIfAdmin(deviceId: string, userId: number, role: string) {
-    const device = await this.repository.findOne({ id: deviceId });
+    const device = await this.ensureDeviceExists({ id: deviceId });
+    //const device = await this.repository.findOne({ id: deviceId });
 
-    if (!device) {
+   /* if (!device) {
       this.logger.warn(`Aborting administrative deletion task. Record not found: ${deviceId}`);
       throw new NotFoundException('Device not found');
-    }
+    }*/
 
     if (role !== 'ADMIN') {
       this.logger.error(`Unauthorized deletion payload block. Action denied for non-admin context user: ${userId}`);
@@ -134,11 +145,12 @@ export class DeviceService {
   }
 
   async toggleDeviceStatus(deviceId: string, userId: number): Promise<Device> {
-    const device = await this.repository.findOne({ id: deviceId });
+    /*const device = await this.repository.findOne({ id: deviceId });
     if (!device) {
       this.logger.warn(`Aborting power toggle task. Record not found: ${deviceId}`);
       throw new NotFoundException('Device not found');
-    }
+    }*/
+   const device = await this.ensureDeviceExists({ id: deviceId });
 
     if (device.userId !== userId) {
       this.logger.error(`Security guard block. User ID: ${userId} lacks ownership permissions for device target: ${deviceId}`);
@@ -163,6 +175,12 @@ export class DeviceService {
     }
   }
   async reassignDevice(deviceSerial: string, newUserId: number) {
+  /*  const device = await this.repository.findOne({ serialNumber: deviceSerial });
+    if (!device) {
+      this.logger.warn(`Device ${deviceSerial} not found for reassignment.`);
+      throw new NotFoundException(`Device ${deviceSerial} not found`);
+    }*/
+  await this.ensureDeviceExists({ serialNumber: deviceSerial });
   this.logger.log(`Reassigning device ${deviceSerial} to user ID: ${newUserId}`);
   
   return this.repository.update({
@@ -177,6 +195,7 @@ export class DeviceService {
 
 
 async markDeviceAsVerified(serialNumber: string, certSerialNumber: string): Promise<Device> {
+  await this.ensureDeviceExists({ serialNumber });
   this.logger.log(`Marking device ${serialNumber} as verified with cert serial ${certSerialNumber}.`);
   
   return this.repository.update({

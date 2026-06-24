@@ -46,6 +46,10 @@ export class DeviceTelemetryService {
    this.logger.debug(`Telemetry received from plugin for device: ${telemetry.deviceId}`);
 
     const timestamp = new Date(telemetry.timestamp);
+    if (isNaN(timestamp.getTime())) {
+      this.logger.error(`Invalid timestamp received: ${telemetry.timestamp}`);
+      throw new Error('INVALID_TIMESTAMP'); 
+    }
     
 
     const device = await this.deviceRepository.findOne({

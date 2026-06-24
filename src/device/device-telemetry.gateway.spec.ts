@@ -54,28 +54,72 @@ describe('DeviceTelemetryGateway', () => {
     expect(mockServer.emit).toHaveBeenCalledWith('telemetry:update', telemetry);
   });
 
-  it('should emit status update to global room and specific device room', () => {
+
+  it('should join global statuses room', () => {
+    const result = gateway.handleStatusesSubscribe(mockSocket);
+
+    expect(mockSocket.join).toHaveBeenCalledWith('devices:statuses');
+    expect(result).toEqual({ event: 'devices:statuses_subscribed' });
+  });
+
+  it('should handle subscription with missing deviceId', () => {
+    const body = { deviceId: '' }; 
+    const result = gateway.handleDeviceSubscribe(mockSocket, body);
+
+  
+    expect(mockSocket.join).toHaveBeenCalledWith('device:');
+  });
+  it('should emit status update to both rooms', () => {
     gateway.emitStatusUpdate('dev-123', 'online');
 
-    
+
     expect(mockServer.to).toHaveBeenCalledWith('devices:statuses');
     expect(mockServer.to).toHaveBeenCalledWith('device:dev-123');
-    expect(mockServer.emit).toHaveBeenNthCalledWith(
-    1,
-    'device:status_update',
-    expect.objectContaining({ deviceId: 'dev-123' })
-    );
-
-    expect(mockServer.emit).toHaveBeenNthCalledWith(
-    2,
-    'device:status_update',
-    expect.objectContaining({ deviceId: 'dev-123' })
-    );
+    
+  
+    expect(mockServer.emit).toHaveBeenCalledTimes(2);
+    expect(mockServer.emit).toHaveBeenCalledWith('device:status_update', expect.objectContaining({ 
+      deviceId: 'dev-123', 
+      status: 'online' 
+    }));
   });
-  it('should join global statuses room', () => {
-  const result = gateway.handleStatusesSubscribe(mockSocket);
+  it('should handle error if client fails to join room', () => {
+    mockSocket.join.mockImplementationOnce(() => {
+      throw new Error('SOCKET_JOIN_FAILED');
+    });
 
-  expect(mockSocket.join).toHaveBeenCalledWith('devices:statuses');
-  expect(result).toEqual({ event: 'devices:statuses_subscribed' });
-});
+    
+    expect(() => gateway.handleDeviceSubscribe(mockSocket, { deviceId: '123' }))
+      .toThrow('SOCKET_JOIN_FAILED');
+  });
+
+  it('should not throw if server.to returns an object without active sockets', () => {
+ 
+    mockServer.to.mockReturnValue({
+      emit: jest.fn(),
+    });
+
+    expect(() => {
+      gateway.emitTelemetryUpdate({
+        deviceId: 'unknown-device',
+        timestamp: new Date(),
+        data: {}
+      });
+    }).not.toThrow();
+  });
+  it('should handle telemetry with null or undefined data field', () => {
+    const telemetry = {
+      deviceId: 'dev-123',
+      timestamp: new Date(),
+      data: null as any, 
+    };
+
+    expect(() => gateway.emitTelemetryUpdate(telemetry)).not.toThrow();
+  });
+  it('should handle exceptionally long deviceId', () => {
+    const longId = 'a'.repeat(1000);
+    const result = gateway.handleDeviceSubscribe(mockSocket, { deviceId: longId });
+
+    expect(mockSocket.join).toHaveBeenCalledWith(`device:${longId}`);
+  });
 });

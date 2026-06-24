@@ -366,8 +366,12 @@ describe('DeviceService', () => {
     expect(mockDeviceRepository.update).not.toHaveBeenCalled();
   });
 
-  it('should reassign device to a new user', async () => {
+ it('should reassign device to a new user', async () => {
     const device = { id: 'd1', serialNumber: 'sn-100' };
+    
+ 
+    mockDeviceRepository.findOne.mockResolvedValue(device); 
+    
     mockDeviceRepository.update.mockResolvedValue(device);
 
     await service.reassignDevice('sn-100', 2);
@@ -378,20 +382,7 @@ describe('DeviceService', () => {
     });
   });
 
-  it('should mark device as verified', async () => {
-    const device = { serialNumber: 'sn-100', isVerified: true };
-    mockDeviceRepository.update.mockResolvedValue(device);
-
-    await service.markDeviceAsVerified('sn-100', 'CERT123');
-
-    expect(mockDeviceRepository.update).toHaveBeenCalledWith({
-      where: { serialNumber: 'sn-100' },
-      data: expect.objectContaining({
-        isVerified: true,
-        certSerialNumber: 'CERT123'
-      })
-    });
-  });
+ 
   it('should throw NotFoundException when P2025 error occurs', async () => {
     mockDeviceRepository.create.mockRejectedValue({ code: 'P2025' });
 
@@ -420,5 +411,103 @@ describe('DeviceService', () => {
     const result = await service.getAllDevices();
     expect(result).toEqual([{ id: 'd1' }]);
   });
+
+  it('should throw NotFoundException if ensureDeviceExists finds nothing', async () => {
+    mockDeviceRepository.findOne.mockResolvedValue(null);
+    
+    await expect(service.updateDevice({ where: { id: 'bad-id' }, data: {} }))
+      .rejects.toThrow(NotFoundException);
+  });
+  it('should handle findDevices with empty filters', async () => {
+  mockDeviceRepository.findMany.mockResolvedValue([]);
+  
+  const result = await service.findDevices(1, 'USER', {});
+  
+  expect(result.data).toEqual([]);
+  expect(mockDeviceRepository.findMany).toHaveBeenCalledWith(
+    expect.objectContaining({ where: { userId: 1 } })
+  );
+});
+  it('should throw NotFoundException if device is missing during reassignDevice', async () => {
+    mockDeviceRepository.findOne.mockResolvedValue(null);
+    
+    await expect(service.reassignDevice('sn-unknown', 1))
+      .rejects.toThrow(NotFoundException);
+  });
+
+
+  it('should throw ForbiddenException if user tries to mark device as verified without permission', async () => {
+
+    const device = { serialNumber: 'sn-100', userId: 10 };
+    mockDeviceRepository.findOne.mockResolvedValue(device);
+
+  });
+
+  it('should throw NotFoundException if ensureDeviceExists fails in deleteDevice', async () => {
+    mockDeviceRepository.findOne.mockResolvedValue(null);
+    
+    await expect(service.deleteDevice({ id: 'non-existent' }))
+      .rejects.toThrow(NotFoundException);
+  });
+
+  it('should throw NotFoundException if ensureDeviceExists fails in markDeviceAsVerified', async () => {
+    mockDeviceRepository.findOne.mockResolvedValue(null);
+    
+    await expect(service.markDeviceAsVerified('sn-100', 'CERT'))
+      .rejects.toThrow(NotFoundException);
+  });
+
+  it('should properly filter by status when provided', async () => {
+    mockDeviceRepository.findMany.mockResolvedValue([]);
+    
+    await service.findDevices(1, 'USER', { status: 'ACTIVE' });
+    
+    expect(mockDeviceRepository.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ status: 'ACTIVE' })
+      })
+    );
+  });
+
+  it('should ignore status filter when set to ALL', async () => {
+    mockDeviceRepository.findMany.mockResolvedValue([]);
+    
+    await service.findDevices(1, 'USER', { status: 'ALL' });
+    
+    expect(mockDeviceRepository.findMany).toHaveBeenCalledWith(
+      expect.not.objectContaining({
+        where: expect.objectContaining({ status: 'ALL' })
+      })
+    );
+  });
+  it('should mark device as verified successfully when cert is processed', async () => {
+    const device = { serialNumber: 'sn-100', isVerified: false };
+    
+  
+    mockDeviceRepository.findOne.mockResolvedValue(device);
+
+    mockDeviceRepository.update.mockResolvedValue({ ...device, isVerified: true });
+
+
+    const result = await service.markDeviceAsVerified('sn-100', 'CERT123');
+
+    
+    expect(mockDeviceRepository.update).toHaveBeenCalledWith({
+      where: { serialNumber: 'sn-100' },
+      data: expect.objectContaining({
+        isVerified: true,
+        certSerialNumber: 'CERT123'
+      })
+    });
+    expect(result.isVerified).toBe(true);
+  });
+
+it('should throw NotFoundException if trying to verify a non-existent device', async () => {
+
+  mockDeviceRepository.findOne.mockResolvedValue(null);
+
+  await expect(service.markDeviceAsVerified('ghost-sn', 'CERT'))
+    .rejects.toThrow(NotFoundException);
+});
 
 });

@@ -31,9 +31,13 @@ export class ModelVersionRepository {
 
 
   async findOne(where: Prisma.ModelVersionWhereUniqueInput): Promise<ModelVersion | null> {
-    
-    return this.prisma.modelVersion.findUnique({
-      where,
-    });
+    try {
+      return await this.prisma.modelVersion.findUnique({ where });
+    } catch (error) {
+      // Provera tipa pre pristupa svojstvima
+      const errorMessage = error instanceof Error ? error.stack : 'Unknown error';
+      this.logger.error(`Error finding model version: ${JSON.stringify(where)}`, errorMessage);
+      throw error;
+    }
   }
 }

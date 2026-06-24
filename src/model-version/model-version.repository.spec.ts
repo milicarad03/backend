@@ -5,6 +5,7 @@ import { PrismaService } from '../prisma.service';
 describe('ModelVersionRepository', () => {
   let repository: ModelVersionRepository;
   let prismaService: PrismaService;
+  let module: TestingModule;
 
   const mockPrismaService = {
     modelVersion: {
@@ -14,7 +15,7 @@ describe('ModelVersionRepository', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module= await Test.createTestingModule({
       providers: [
         ModelVersionRepository,
         {
@@ -28,7 +29,8 @@ describe('ModelVersionRepository', () => {
     prismaService = module.get<PrismaService>(PrismaService);
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    await module.close(); 
     jest.clearAllMocks();
   });
 
@@ -76,5 +78,38 @@ describe('ModelVersionRepository', () => {
       });
       expect(result).toEqual(mockRecord);
     });
+
+    it('should return null when model version is not found', async () => {
+      mockPrismaService.modelVersion.findUnique.mockResolvedValue(null);
+      const result = await repository.findOne({ id: 'non-existent' });
+      expect(result).toBeNull();
+    });
+
+    it('should throw and log error when database connection is lost', async () => {
+    
+      const dbError = new Error('Connection refused');
+      mockPrismaService.modelVersion.findMany.mockRejectedValue(dbError);
+      
+
+      await expect(repository.findMany()).rejects.toThrow('Connection refused');
+    });
+    it('should log the error when findOne fails', async () => {
+      const loggerSpy = jest.spyOn(repository['logger'], 'error'); // Pristupamo privatnom loggeru
+      const error = new Error('DB Connection Lost');
+      mockPrismaService.modelVersion.findUnique.mockRejectedValue(error);
+
+      try {
+        await repository.findOne({ id: '1' });
+      } catch (e) {
+     
+        expect(loggerSpy).toHaveBeenCalled();
+        expect(loggerSpy.mock.calls[0][0]).toContain('Error finding model version');
+      }
+    });
+  });
+  it('should throw an error if findMany fails', async () => {
+    mockPrismaService.modelVersion.findMany.mockRejectedValue(new Error('Query Failed'));
+    
+    await expect(repository.findMany({})).rejects.toThrow('Query Failed');
   });
 });
