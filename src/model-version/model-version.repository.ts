@@ -34,7 +34,7 @@ export class ModelVersionRepository {
     try {
       return await this.prisma.modelVersion.findUnique({ where });
     } catch (error) {
-      // Provera tipa pre pristupa svojstvima
+     
       const errorMessage = error instanceof Error ? error.stack : 'Unknown error';
       this.logger.error(`Error finding model version: ${JSON.stringify(where)}`, errorMessage);
       throw error;

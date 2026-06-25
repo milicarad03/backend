@@ -385,7 +385,7 @@ describe('DeviceRepository', () => {
 
     const result = await repository.findOne({ id: 'device-1' });
 
-    // Dodaj ovu proveru da bi TypeScript znao da result nije null
+    
     expect(result).not.toBeNull(); 
     
     if (result) {
