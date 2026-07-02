@@ -1,6 +1,7 @@
-import { Injectable, OnModuleDestroy, OnModuleInit, Logger } from '@nestjs/common';
+import { Injectable, OnModuleDestroy, OnModuleInit, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
 import mqtt, { MqttClient } from 'mqtt';
 import { DeviceDashboardService } from 'serverplugin';
+import { PluginErrorCode } from 'serverplugin';
 
 export type TelemetryContext = {
   deviceId: string;
@@ -101,6 +102,7 @@ export class MqttTransportService implements OnModuleInit, OnModuleDestroy {
       }
 
       const message = JSON.parse(payload.toString());
+      
 
       const context: TelemetryContext = {
         deviceId: topicDeviceId,
@@ -134,7 +136,64 @@ export class MqttTransportService implements OnModuleInit, OnModuleDestroy {
 
       this.logger.warn(`Unknown action type match for topic destination route: ${topic}`);
     } catch (error: any) {
-      this.logger.error(`Failed to parse or process incoming MQTT payload on topic [${topic}]: ${error.message}`, error.stack);
+      if (error instanceof NotFoundException) {
+        this.logger.warn(`[NOT_FOUND] ${error.message}`);
+        return;
+      } 
+      
+      if (error instanceof ForbiddenException) {
+        this.logger.warn(`[SECURITY] ${error.message}`);
+        return;
+      }
+      if (error.message === 'INVALID_TIMESTAMP') {
+        this.logger.warn(
+          '[VALIDATION] Device sent invalid timestamp.'
+        );
+        return;
+      }
+      const isPluginError = Object.values(PluginErrorCode).includes(error.message);
+
+        if (isPluginError) {
+          this.handlePluginError(error.message as PluginErrorCode);
+        } else {
+          this.logger.error(`[UNHANDLED_EXCEPTION] ${error.message}`, error.stack);
+        }
+      //this.logger.error(`Failed to parse or process incoming MQTT payload on topic [${topic}]: ${error.message}`, error.stack);
+    }
+  }
+  private handlePluginError(code: PluginErrorCode) {
+    switch (code) {
+      case PluginErrorCode.DATABASE_FAILURE:
+        this.logger.error("[CRITICAL] Database service is unavailable. Telemetry processing halted.");
+        break;
+
+      case PluginErrorCode.NORMALIZATION_FAILED:
+        this.logger.warn("[NORMALIZATION] Device data does not match mapping definitions. Please check the mapping schema.");
+        break;
+
+      case PluginErrorCode.HOOK_FAILED:
+        this.logger.error("[INTERNAL] Host application failed to process telemetry (onTelemetry hook error).");
+        break;
+
+      case PluginErrorCode.CONFIG_MISSING:
+        this.logger.warn("[CONFIG] Device is missing required mapping or schema configuration. Please check the /schema folder.");
+        break;
+
+      case PluginErrorCode.CONFIG_MISMATCH:
+        this.logger.warn("[CONFIG] Device model and schema ID mismatch. Please verify the device configuration.");
+        break;
+      case PluginErrorCode.INVALID_TIMESTAMP:
+        this.logger.warn("[VALIDATION] Telemetry timestamp could not be parsed.");
+        break;
+ 
+      case PluginErrorCode.SCHEMA_COMPILE_ERROR:
+        this.logger.error("[CRITICAL] JSON schema for device model failed to compile. Check schema file syntax.");
+        break;
+
+
+      default:
+        this.logger.error(`[UNKNOWN_ERROR] Plugin reported an unhandled error code: ${code}`);
+        break;
     }
   }
 

@@ -24,46 +24,62 @@ export const createDeviceDashboardConfig = (
   redisClient: Redis,
 ) => ({
   redis: redisClient,
-
-
   findDeviceById: async (deviceId: string) => {
     if (!deviceId) {
       return null;
     }
-    const device = await deviceRepository.findOne({
-      serialNumber: deviceId,
-    });
-   
+    try{
+      const device = await deviceRepository.findOne({serialNumber: deviceId});
+  
+      if (!device) {
+        logger.warn(`Device lookup failed during plugin configuration for serial: ${deviceId}`);
+        return null;
+      }
 
-    if (!device) {
-      logger.warn(`Device lookup failed during plugin configuration for serial: ${deviceId}`);
-      return null;
+      return {
+        id: device.id,
+        serialNumber: device.serialNumber,
+        name: device.name,
+        type: device.type,
+
+        model: device.modelVersion?.modelId,
+        version: device.modelVersion?.version,
+        schema: device.modelVersion?.schema,
+        mapping: device.modelVersion?.mapping,
+
+      };
+    }catch(err:any){
+    logger.error(`Failed loading device ${deviceId}: ${err.message}` );
+
+    throw err;
+
+          
     }
-
-    return {
-      id: device.id,
-      serialNumber: device.serialNumber,
-      name: device.name,
-      type: device.type,
-
-      model: device.modelVersion?.modelId,
-      version: device.modelVersion?.version,
-      schema: device.modelVersion?.schema,
-      mapping: device.modelVersion?.mapping,
-
-    };
   },
 
   onTelemetry: async (telemetry: DeviceTelemetry) => {
     if (!telemetry || !telemetry.deviceId) {
     throw new Error('INVALID_TELEMETRY_DATA');
-  }
-    logger.debug(`Forwarding telemetry from plugin to telemetry service for device: ${telemetry.deviceId}`);
-    await deviceTelemetryService.handleTelemetry(telemetry);
+    }
+    try{
+      logger.debug(`Forwarding telemetry from plugin to telemetry service for device: ${telemetry.deviceId}`);
+      await deviceTelemetryService.handleTelemetry(telemetry);
+    }catch(err:any){
+
+    logger.error(`[CONFIG HOOK] Telemetry processing failed for ${telemetry.deviceId}: ${err.message}`);
+    throw err;
+
+    }
   },
   onStatusChange: async (deviceId: string, status: string) => {
-    logger.log(`[CONFIG HOOK] Routing status change for ${deviceId} to telemetry service`);
-    await deviceTelemetryService.handleStatusChange(deviceId, status);
-   
+    try{
+      logger.log(`[CONFIG HOOK] Routing status change for ${deviceId} to telemetry service`);
+      await deviceTelemetryService.handleStatusChange(deviceId, status);
+    }catch(err:any){
+
+      logger.error(`[CONFIG HOOK] Status update failed for ${deviceId}: ${err.message}`);
+      throw err;
+
+    }
   },
 });

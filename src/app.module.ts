@@ -24,7 +24,7 @@ import { ModelVersionModule } from './model-version/model-version.module';
       isGlobal: true,
     }),
     JwtModule.register({
-      global: true, // da moze da se uvozi u svaki podmodul
+      global: true, 
       secret: process.env.TOKEN_SECRET, 
       signOptions: { expiresIn: '24h' }, 
     }),

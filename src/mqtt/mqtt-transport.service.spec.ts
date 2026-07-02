@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MqttTransportService } from './mqtt-transport.service';
 import { DeviceDashboardService } from 'serverplugin';
 import * as mqtt from 'mqtt';
+import { PluginErrorCode } from 'serverplugin';
 
 jest.mock('mqtt');
 
@@ -142,8 +143,9 @@ describe('MqttTransportService', () => {
         
         await messageHandler('iot/devices/dev-123/telemetry', Buffer.from('invalid-json'));
         
+       
         expect(loggerSpy).toHaveBeenCalledWith(
-            expect.stringContaining('Failed to parse or process incoming MQTT payload'),
+            expect.stringContaining('[UNHANDLED_EXCEPTION]'),
             expect.any(String) 
         );
     });
@@ -158,14 +160,12 @@ describe('MqttTransportService', () => {
         expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('MQTT client connection error'), err.stack);
     });
 
-    it('should catch and log error for empty payload', async () => {
+   it('should catch and log error for empty payload', async () => {
         const loggerSpy = jest.spyOn(service['logger'], 'error');
         
-     
         await messageHandler('iot/devices/dev-123/telemetry', Buffer.from(''));
-        
         expect(loggerSpy).toHaveBeenCalledWith(
-            expect.stringContaining('Failed to parse or process incoming MQTT payload'),
+            expect.stringContaining('[UNHANDLED_EXCEPTION]'),
             expect.any(String)
         );
     });
@@ -182,16 +182,40 @@ describe('MqttTransportService', () => {
     it('should catch and log error if plugin throws an exception', async () => {
         const loggerSpy = jest.spyOn(service['logger'], 'error');
     
+        // OVO JE VAŽNO: Ako hoćeš da uhvatiš UNHANDLED_EXCEPTION, 
+        // moraš baciti običan Error, a ne PluginErrorCode.
         mockPluginCore.processTelemetry.mockRejectedValue(new Error('Plugin crashed'));
 
         await messageHandler('iot/devices/dev-123/telemetry', Buffer.from('{}'));
 
-    
         expect(loggerSpy).toHaveBeenCalledWith(
-            expect.stringContaining('Failed to parse or process incoming MQTT payload'),
+            expect.stringContaining('[UNHANDLED_EXCEPTION]'),
             expect.any(String)
         );
     });
+    it('should catch PluginErrorCode and route to handlePluginError', async () => {
 
+        const loggerSpy = jest.spyOn(service['logger'], 'error');
+    
+        mockPluginCore.processTelemetry.mockRejectedValue(new Error('DATABASE_FAILURE'));
+
+      
+        await messageHandler('iot/devices/dev-123/telemetry', Buffer.from('{}'));
+
+     
+        expect(loggerSpy).toHaveBeenCalledWith(
+            expect.stringContaining("[CRITICAL] Database service is unavailable")
+        );
+    });
+    it('should catch PluginErrorCode.HOOK_FAILED during status processing', async () => {
+        const loggerSpy = jest.spyOn(service['logger'], 'error');
+        mockPluginCore.processStatus.mockRejectedValue(new Error(PluginErrorCode.HOOK_FAILED));
+
+        await messageHandler('iot/devices/dev-123/status', Buffer.from(JSON.stringify({ status: 'online' })));
+
+        expect(loggerSpy).toHaveBeenCalledWith(
+            expect.stringContaining("[INTERNAL] Host application failed to process telemetry")
+        );
+    });
 
 });
