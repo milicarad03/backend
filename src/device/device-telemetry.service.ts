@@ -3,6 +3,7 @@ import { Prisma } from '../generated/prisma/client.js';
 import { DeviceRepository } from './device.repository';
 import { DeviceTelemetryGateway } from './device-telemetry.gateway';
 import { DeviceStatus } from '../generated/prisma/client.js';
+import { EventEmitter } from 'events';
 import _ from 'lodash';
 
 export type IncomingTelemetry = {
@@ -14,10 +15,25 @@ export type IncomingTelemetry = {
 @Injectable()
 export class DeviceTelemetryService {
   private readonly logger = new Logger(DeviceTelemetryService.name);
+  private readonly statusEmitter = new EventEmitter();
   constructor(
     private readonly deviceRepository: DeviceRepository,
     private readonly telemetryGateway: DeviceTelemetryGateway,
   ) {}
+  //OVO KONTROLER POZIVA KAD CEKA ODGOVOR NA PUBLISH START TELEMETRY
+  async waitForDeviceStatus(deviceId: string, timeout: number): Promise<boolean> {
+    return new Promise((resolve) => {
+      const timer = setTimeout(() => {
+        this.statusEmitter.removeAllListeners(`status:${deviceId}`);
+        resolve(false); // Vraća false ako istekne vreme
+      }, timeout);
+
+      this.statusEmitter.once(`status:${deviceId}`, (status) => {
+        clearTimeout(timer);
+        resolve(status === 'ONLINE');
+      });
+    });
+  }
   //dodat try/catch
 
   async handleStatusChange(deviceId: string, status: string) {
@@ -37,6 +53,7 @@ export class DeviceTelemetryService {
       },
     });
     this.telemetryGateway.emitStatusUpdate(deviceId, status);
+    this.statusEmitter.emit(`status:${deviceId}`, status);
 
     this.logger.debug(`[SERVICE] Status successfully persisted in DB for: ${deviceId}`);
     } catch (err: any) {

@@ -3,6 +3,7 @@ import { DeviceTelemetryService } from './device-telemetry.service';
 import { Logger } from '@nestjs/common';
 import { DeviceStatus } from '../generated/prisma/client.js';
 import Redis from 'ioredis';
+import { MqttPublisherService } from 'src/mqtt/mqtt-publisher.service';
 
 export type DeviceTelemetry = {
   deviceId: string;
@@ -22,7 +23,10 @@ export const createDeviceDashboardConfig = (
   deviceRepository: DeviceRepository,
   deviceTelemetryService: DeviceTelemetryService,
   redisClient: Redis,
+  mqttPublisher: MqttPublisherService,
+
 ) => ({
+  
   redis: redisClient,
   findDeviceById: async (deviceId: string) => {
     if (!deviceId) {
@@ -46,6 +50,7 @@ export const createDeviceDashboardConfig = (
         version: device.modelVersion?.version,
         schema: device.modelVersion?.schema,
         mapping: device.modelVersion?.mapping,
+        status: device.status,
 
       };
     }catch(err:any){
@@ -82,4 +87,10 @@ export const createDeviceDashboardConfig = (
 
     }
   },
+ sendCommand: async (deviceId: string, command: string, payload?: any) => {
+   await mqttPublisher.publish(`iot/devices/${deviceId}/commands`, {
+     command,
+     payload, 
+   });
+}
 });

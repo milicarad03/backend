@@ -36,6 +36,7 @@ export class MqttTransportService implements OnModuleInit, OnModuleDestroy {
   }
 
   private connect() {
+    if (this.client) return;
     this.client = mqtt.connect(this.brokerUrl);
 
     this.client.on('connect', () => {
@@ -161,6 +162,11 @@ export class MqttTransportService implements OnModuleInit, OnModuleDestroy {
       //this.logger.error(`Failed to parse or process incoming MQTT payload on topic [${topic}]: ${error.message}`, error.stack);
     }
   }
+//DODATO ZA KOMANDE
+async publish(topic: string, message: any) {
+  if (!this.client) throw new Error("MQTT client not connected");
+  this.client.publish(topic, JSON.stringify(message));
+}
   private handlePluginError(code: PluginErrorCode) {
     switch (code) {
       case PluginErrorCode.DATABASE_FAILURE:

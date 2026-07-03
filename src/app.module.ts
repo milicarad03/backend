@@ -16,6 +16,7 @@ import {DeviceModule} from './device/device.module'
 import {DeviceDashboardModule} from 'serverplugin'
 import { CertificateRegistrationModule } from './certificates/certificate-registration.module';
 import { ModelVersionModule } from './model-version/model-version.module';
+import { MqttModule } from './mqtt/mqtt.module';
 
 @Module({
   imports: [
@@ -32,8 +33,8 @@ import { ModelVersionModule } from './model-version/model-version.module';
     PostModule,
     DeviceModule,
     CertificateRegistrationModule,
-    ModelVersionModule
-  
+    ModelVersionModule,
+    MqttModule
   ],
   controllers: [AppController],
   providers: [AppService,JwtStrategy],

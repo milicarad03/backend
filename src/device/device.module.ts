@@ -6,9 +6,12 @@ import { DeviceDataModule } from './device-data.module';
 import { DeviceDashboardModule } from 'serverplugin';
 import { DeviceTelemetryService } from './device-telemetry.service';
 import { createDeviceDashboardConfig } from './device-dashboard.config';
-import { MqttTransportService } from '../mqtt/mqtt-transport.service';
 import { RedisModule } from './redis.module';
 import Redis from 'ioredis';
+import { MqttModule } from 'src/mqtt/mqtt.module';
+import { MqttPublisherService } from '../mqtt/mqtt-publisher.service';
+import { MqttTransportService } from 'src/mqtt/mqtt-transport.service';
+
 export type DeviceTelemetry = {
   deviceId: string;
   timestamp: string;
@@ -20,15 +23,15 @@ export type DeviceTelemetry = {
   imports: [
     DeviceDataModule,
     RedisModule,
+    MqttModule,
     DeviceDashboardModule.registerAsync({
-      imports: [DeviceDataModule, RedisModule],
-      useFactory: (repo, telService, redis) => createDeviceDashboardConfig(repo, telService, redis),
-      inject: [DeviceRepository, DeviceTelemetryService, 'REDIS_CLIENT'],
+      imports: [DeviceDataModule, RedisModule, MqttModule],
+      useFactory: (repo, telService, redis,  mqttPublisher,) => createDeviceDashboardConfig(repo, telService, redis,mqttPublisher),
+      inject: [DeviceRepository, DeviceTelemetryService, 'REDIS_CLIENT',MqttPublisherService],
     }),
   ],
   controllers: [DeviceController],
-  providers: [
-    DeviceService, MqttTransportService],
+  providers: [DeviceService, MqttTransportService],
   exports: [DeviceService],
 })
 export class DeviceModule {}

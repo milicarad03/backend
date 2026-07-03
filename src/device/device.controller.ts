@@ -1,7 +1,7 @@
 import { 
   Controller, Get, Param, Post, Body, Delete, 
   Req, UseGuards, Patch, 
-  ParseIntPipe, Query, Logger
+  ParseIntPipe, Query, Logger, HttpException, HttpStatus
 } from "@nestjs/common";
 import { DeviceService } from "./device.service.js";
 import { Device as DeviceModel } from "../generated/prisma/client.js";
@@ -11,12 +11,16 @@ import { RolesGuard } from '../roles.guard';
 import { AuthGuard } from '@nestjs/passport';
 import { CreateDeviceDto } from './dto/create-device.dto';
 import { DeviceTelemetryService } from './device-telemetry.service';
+import { MqttTransportService } from "src/mqtt/mqtt-transport.service";
+import { DeviceDashboardService } from "serverplugin";
 @Controller('device')
 export class DeviceController {
   private readonly logger = new Logger(DeviceController.name);
   constructor(
     private readonly deviceService: DeviceService,
     private readonly deviceTelemetryService:DeviceTelemetryService,
+    private readonly mqttTransportService:MqttTransportService,
+    private readonly deviceDashboardService:DeviceDashboardService
   ) {}
 
  
@@ -124,5 +128,28 @@ export class DeviceController {
     this.logger.log(`Admin ID: ${req.user.userId} requested hardware transfer for device [${id}] to target user: ${targetUserId}`);
     return this.deviceService.reassignDevice(id, targetUserId);
   }
-  
+  // U DeviceController.ts
+  @Post(':id/command')
+  @Roles(Role.USER, Role.ADMIN)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  async sendDeviceCommand(
+    @Param('id') id: string, 
+    @Body() body: { command: string, payload: any }
+  ) {
+    this.logger.log(`Command [${body.command}] sent to device [${id}]`);
+    
+    // Pretpostavljam da imaš referencu na mqtt transport servis u konstruktoru
+   /* await this.mqttTransportService.publish(`iot/devices/${id}/commands`, {
+      command: body.command,
+      payload: body.payload
+    });*/
+    await this.deviceDashboardService.triggerDeviceTelemetry(id, body.payload.state);
+    const isOnline = await this.deviceTelemetryService.waitForDeviceStatus(id, 5000);
+
+    if (!isOnline) {
+      throw new HttpException('Device unreachable', HttpStatus.REQUEST_TIMEOUT);
+    }
+      
+    return { success: true };
+  }
 }
