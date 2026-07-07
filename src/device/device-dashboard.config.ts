@@ -88,6 +88,15 @@ export const createDeviceDashboardConfig = (
     }
   },
  sendCommand: async (deviceId: string, command: string, payload?: any) => {
+
+  /*logger.error(
+    `[MQTT SEND]
+     device=${deviceId}
+     command=${command}
+     payload=${JSON.stringify(payload)}
+     stack=${new Error().stack}`
+  );*/
+
    await mqttPublisher.publish(`iot/devices/${deviceId}/commands`, {
      command,
      payload, 

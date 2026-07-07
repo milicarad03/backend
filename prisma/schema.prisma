@@ -27,6 +27,11 @@ enum DeviceStatus {
   ONLINE
   OFFLINE
 }
+
+enum TelemetryState {
+  ACTIVE
+  IDLE
+}
 model User { 
   id    Int     @id @default(autoincrement()) 
   email String  @unique
@@ -60,6 +65,7 @@ model Device {
   userId          Int
   lastseen        DateTime @default(now())
   status        DeviceStatus @default(UNINITIALIZED)
+  telemetryState  TelemetryState @default(IDLE)
   telemetry DeviceTelemetry[]
 
   modelVersion   ModelVersion? @relation(fields: [modelVersionId], references: [id])

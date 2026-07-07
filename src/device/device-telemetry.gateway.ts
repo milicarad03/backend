@@ -25,6 +25,19 @@ export class DeviceTelemetryGateway {
   @WebSocketServer()
   server!: Server;  
 
+  handleConnection(client: Socket) {
+    this.logger.log(
+      `Connected ${client.id}. Active: ${this.server.sockets.sockets.size}`
+    );
+  }
+
+  handleDisconnect(client: Socket) {
+    this.logger.log(
+      `Disconnected ${client.id}. Active: ${this.server.sockets.sockets.size}`
+    );
+  }
+
+
   @SubscribeMessage('device:subscribe')
   handleDeviceSubscribe(
     @ConnectedSocket() client: Socket,

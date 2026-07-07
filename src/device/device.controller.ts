@@ -1,7 +1,7 @@
 import { 
   Controller, Get, Param, Post, Body, Delete, 
   Req, UseGuards, Patch, 
-  ParseIntPipe, Query, Logger, HttpException, HttpStatus
+  ParseIntPipe, Query, Logger, HttpException, HttpStatus, ForbiddenException, NotFoundException
 } from "@nestjs/common";
 import { DeviceService } from "./device.service.js";
 import { Device as DeviceModel } from "../generated/prisma/client.js";
@@ -128,28 +128,56 @@ export class DeviceController {
     this.logger.log(`Admin ID: ${req.user.userId} requested hardware transfer for device [${id}] to target user: ${targetUserId}`);
     return this.deviceService.reassignDevice(id, targetUserId);
   }
-  // U DeviceController.ts
+ 
   @Post(':id/command')
   @Roles(Role.USER, Role.ADMIN)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   async sendDeviceCommand(
     @Param('id') id: string, 
-    @Body() body: { command: string, payload: any }
+    @Body() body: { command: string, payload: any },
+    @Req() req
   ) {
-    this.logger.log(`Command [${body.command}] sent to device [${id}]`);
-    
-    // Pretpostavljam da imaš referencu na mqtt transport servis u konstruktoru
-   /* await this.mqttTransportService.publish(`iot/devices/${id}/commands`, {
-      command: body.command,
-      payload: body.payload
-    });*/
-    await this.deviceDashboardService.triggerDeviceTelemetry(id, body.payload.state);
-    const isOnline = await this.deviceTelemetryService.waitForDeviceStatus(id, 5000);
+    this.logger.warn(
+        `[COMMAND RECEIVED]
+        device=${id}
+        body=${JSON.stringify(body)}
+        stack=${new Error().stack}`
+      );
 
-    if (!isOnline) {
-      throw new HttpException('Device unreachable', HttpStatus.REQUEST_TIMEOUT);
+
+    this.logger.log(`Command [${body.command}] sent to device [${id}]`);
+  
+    
+    try {
+      await this.deviceDashboardService.triggerDeviceTelemetry(
+        id,
+        body.payload.state,
+      );
+
+      return { success: true };
+    } catch (err: any) {
+
+      if (err.message === 'DEVICE_NOT_FOUND') {
+          throw new NotFoundException(
+            `Device ${id} not found`
+          );
+      }
+
+
+      if (err.message === 'DEVICE_OFFLINE') {
+        throw new ForbiddenException(
+          `Device ${id} is currently OFFLINE. Cannot perform action.`
+        );
+      }
+
+      if (err.message === 'DEVICE_UNINITIALIZED') {
+        throw new ForbiddenException(
+          `Device ${id} is not initialized. Please complete setup.`
+        );
+      }
+
+      throw err;
     }
-      
-    return { success: true };
   }
+
 }

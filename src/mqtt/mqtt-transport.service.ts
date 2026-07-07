@@ -163,9 +163,23 @@ export class MqttTransportService implements OnModuleInit, OnModuleDestroy {
     }
   }
 //DODATO ZA KOMANDE
-async publish(topic: string, message: any) {
+/*async publish(topic: string, message: any) {
   if (!this.client) throw new Error("MQTT client not connected");
   this.client.publish(topic, JSON.stringify(message));
+}*/
+async publish(topic: string, message: any) {
+
+  if (!this.client || !this.client.connected) {
+    this.logger.warn(`MQTT client is offline, ignoring command to topic: ${topic}`);
+    return;
+  }
+  
+  return new Promise<void>((resolve, reject) => {
+    this.client!.publish(topic, JSON.stringify(message), (err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
 }
   private handlePluginError(code: PluginErrorCode) {
     switch (code) {

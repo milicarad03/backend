@@ -108,6 +108,7 @@ export class DeviceTelemetryService {
       data: {
         lastseen: timestamp,
         status: 'ONLINE',
+       // telemetryState: 'ACTIVE',
       },
     });
 
