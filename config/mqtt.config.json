@@ -1,0 +1,10 @@
+{
+  "subscriptions": [
+    "iot/devices/+/telemetry",
+    "iot/devices/+/status"
+  ],
+  "publish": {
+    "command": "iot/devices/%s/commands",
+    "response": "iot/devices/%s/response"
+  }
+}

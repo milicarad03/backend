@@ -97,7 +97,7 @@ export const createDeviceDashboardConfig = (
      stack=${new Error().stack}`
   );*/
 
-   await mqttPublisher.publish(`iot/devices/${deviceId}/commands`, {
+   await mqttPublisher.publish('command', deviceId, {
      command,
      payload, 
    });

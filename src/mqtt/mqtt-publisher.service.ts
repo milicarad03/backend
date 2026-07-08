@@ -1,5 +1,8 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import mqtt, { MqttClient } from 'mqtt';
+import * as config from '../../config/mqtt.config.json';
+
+
 
 @Injectable()
 export class MqttPublisherService implements OnModuleInit, OnModuleDestroy {
@@ -7,6 +10,13 @@ export class MqttPublisherService implements OnModuleInit, OnModuleDestroy {
 
   private client: MqttClient | null = null;
   private readonly brokerUrl = 'mqtt://localhost:1883';
+
+
+  private getTopic(key: string, deviceId: string): string {
+    const template = config.publish[key];
+    return template.replace('%s', deviceId);
+  }
+ 
 
   onModuleInit() {
     this.client = mqtt.connect(this.brokerUrl);
@@ -27,7 +37,8 @@ export class MqttPublisherService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async publish(topic: string, payload: unknown): Promise<void> {
+  async publish(topicKey: string, deviceId:string, payload: unknown): Promise<void> {
+    const topic = this.getTopic(topicKey, deviceId);
     if (!this.client) {
       throw new Error('MQTT_PUBLISHER_NOT_CONNECTED');
     }

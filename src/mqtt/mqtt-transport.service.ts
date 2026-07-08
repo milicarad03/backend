@@ -2,6 +2,8 @@ import { Injectable, OnModuleDestroy, OnModuleInit, Logger, NotFoundException, F
 import mqtt, { MqttClient } from 'mqtt';
 import { DeviceDashboardService } from 'serverplugin';
 import { PluginErrorCode } from 'serverplugin';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export type TelemetryContext = {
   deviceId: string;
@@ -34,7 +36,18 @@ export class MqttTransportService implements OnModuleInit, OnModuleDestroy {
   onModuleDestroy() {
     this.disconnect();
   }
+  private loadTopics(): string[] {
+  const configPath = path.join(
+    process.cwd(),
+    '/config/mqtt.config.json'
+  );
 
+  const config = JSON.parse(
+    fs.readFileSync(configPath, 'utf8')
+  );
+
+  return config.subscriptions ?? [];
+}
   private connect() {
     if (this.client) return;
     this.client = mqtt.connect(this.brokerUrl);
@@ -42,7 +55,8 @@ export class MqttTransportService implements OnModuleInit, OnModuleDestroy {
     this.client.on('connect', () => {
       this.logger.log(`Successfully connected to MQTT broker at ${this.brokerUrl}`);
 
-      const topicsToSubscribe = this.pluginCore.getSubscriptionTopics();
+      //const topicsToSubscribe = this.pluginCore.getSubscriptionTopics();
+      const topicsToSubscribe = this.loadTopics();
 
       topicsToSubscribe.forEach((topic) => {
         this.client?.subscribe(topic, (error) => {

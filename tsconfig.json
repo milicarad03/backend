@@ -2,6 +2,7 @@
   "compilerOptions": {
     "module": "CommonJs",
     "moduleResolution": "Node",
+   "resolveJsonModule": true,
     
     "esModuleInterop": true,
     "isolatedModules": true,
