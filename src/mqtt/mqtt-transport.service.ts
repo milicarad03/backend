@@ -4,6 +4,7 @@ import { DeviceDashboardService } from 'serverplugin';
 import { PluginErrorCode } from 'serverplugin';
 import * as fs from 'fs';
 import * as path from 'path';
+import { MqttPublisherService } from './mqtt-publisher.service';
 
 export type TelemetryContext = {
   deviceId: string;
@@ -27,7 +28,10 @@ export class MqttTransportService implements OnModuleInit, OnModuleDestroy {
   private client: MqttClient | null = null;
   private readonly brokerUrl = 'mqtt://localhost:1883';
 
-  constructor(private readonly pluginCore: DeviceDashboardService) {}
+  constructor(
+    private readonly pluginCore: DeviceDashboardService,
+    private readonly mqttPublisher :MqttPublisherService
+  ) {}
 
   onModuleInit() {
     this.connect();
@@ -132,7 +136,22 @@ export class MqttTransportService implements OnModuleInit, OnModuleDestroy {
         const result = await processTelemetry(message, context);
 
         if (!result.approved) {
+
           this.logger.warn(`Plugin validation rejected telemetry frame for device [${context.deviceId}]. Reason: ${result.reason || 'UNKNOWN'}`);
+          
+          if (result.reason === 'INVALID_TELEMETRY_SCHEMA'  ||  result.reason === 'CONFIG_MISMATCH') {
+
+              await this.mqttPublisher.publish(
+                'command',
+                context.deviceId,
+                {
+                  command: 'STOP_DEVICE',
+                  reason: 'INVALID_TELEMETRY_SCHEMA',
+                },
+              );
+            }
+
+          
           return;
         }
 

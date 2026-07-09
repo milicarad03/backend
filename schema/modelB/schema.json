@@ -2,14 +2,86 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "ModelB Telemetry Schema",
   "type": "object",
-  
-  "properties": {
-    "schemaId": { 
-      "type": "string",
-      "const": "modelB" 
+  "required": ["schemaId"],
+
+  "commands": {
+    "SET_LED": {
+      "payload": {
+        "type": "object",
+        "required": ["value"],
+        "properties": {
+          "value": {
+            "type": "boolean"
+          }
+        },
+          "additionalProperties": false
+      }
     },
+
+    "SET_LED_COLOR": {
+      "payload": {
+        "type": "object",
+        "required": ["color"],
+        "properties": {
+          "color": {
+            "type": "string",
+            "enum": [
+              "RED",
+              "GREEN",
+              "BLUE",
+              "YELLOW",
+              "WHITE"
+            ]
+          }
+        },
+          "additionalProperties": false
+      }
+    },
+
+    "SET_STATE": {
+      "payload": {
+        "type": "object",
+        "required": ["state"],
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "IDLE"
+            ]
+          }
+        },
+          "additionalProperties": false
+      }
+    },
+    "SET_MODE": {
+      "payload": {
+        "type": "object",
+        "required": ["value"],
+        "properties": {
+          "value": {
+            "type": "string",
+            "enum": [
+              "AUTO",
+              "RUNNING",
+              "SERVICE"
+            ]
+          }
+        },
+          "additionalProperties": false
+      }
+    }
+  },
+
+  "properties": {
+    "schemaId": {
+      "type": "string",
+      "const": "modelB"
+    },
+
     "data": {
       "type": "object",
+  
       "properties": {
         "temp": {
           "type": "number",
@@ -29,11 +101,23 @@
       },
       "additionalProperties": false
     },
+
     "status": {
       "type": "object",
+     
       "properties": {
         "ledState": {
           "type": "boolean"
+        },
+        "ledColor": {
+          "type": "string",
+          "enum": [
+            "RED",
+            "GREEN",
+            "BLUE",
+            "YELLOW",
+            "WHITE"
+          ]
         }
       },
       "additionalProperties": false

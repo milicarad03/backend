@@ -11,6 +11,9 @@
     },
     "led": {
       "path": "status.ledState"
+    },
+    "ledColor": {
+      "path": "status.ledColor"
     }
   }
 }
