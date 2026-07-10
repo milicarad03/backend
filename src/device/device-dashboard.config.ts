@@ -101,5 +101,13 @@ export const createDeviceDashboardConfig = (
      command,
      payload, 
    });
-}
+},
+ getLatestTelemetry: async (deviceId: string) => {
+    try {
+      return await deviceTelemetryService.getLatestTelemetry(deviceId);
+    } catch (err: any) {
+      logger.error(`[CONFIG HOOK] getLatestTelemetry failed for ${deviceId}: ${err.message}`);
+      return null;
+    }
+  },
 });

@@ -129,7 +129,7 @@ export class DeviceController {
     return this.deviceService.reassignDevice(id, targetUserId);
   }
  
-  @Post(':id/command')
+  /*@Post(':id/command')
   @Roles(Role.USER, Role.ADMIN)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   async sendDeviceCommand(
@@ -178,6 +178,48 @@ export class DeviceController {
 
       throw err;
     }
+  }*/
+@Post(':id/command')
+@Roles(Role.USER, Role.ADMIN)
+@UseGuards(AuthGuard('jwt'), RolesGuard)
+async sendDeviceCommand( @Param('id') id: string,
+  @Body() body: {
+    command: string;
+    payload: any;
   }
+) {
+  try {
+  await this.deviceDashboardService.executeCommand(
+      id,
+      body.command,
+      body.payload
+    );
 
+    return {
+      success: true
+    };
+
+  } catch (err: any) {
+
+    if (err.message === 'DEVICE_NOT_FOUND') {
+      throw new NotFoundException(
+        `Device ${id} not found`
+      );
+    }
+
+    if (err.message === 'DEVICE_OFFLINE') {
+      throw new ForbiddenException(
+        `Device ${id} is currently OFFLINE`
+      );
+    }
+
+    if (err.message === 'DEVICE_UNINITIALIZED') {
+      throw new ForbiddenException(
+        `Device ${id} is not initialized`
+      );
+    }
+
+    throw err;
+  }
+}
 }
