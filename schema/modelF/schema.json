@@ -1,6 +1,137 @@
 {
   "title": "IndustrialAirCompressorTelemetry",
   "type": "object",
+  "required": ["schemaId"],
+   "commands": {
+  "SET_STATE": {
+    "payload": {
+      "type": "object",
+      "required": ["state"],
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": ["ACTIVE", "IDLE"]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+
+  "SET_OPERATIONAL_MODE": {
+    "payload": {
+      "type": "object",
+      "required": ["mode"],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "OFF",
+            "STANDBY",
+            "GRID_TIED",
+            "OFF_GRID",
+            "FAULT_ISOLATION"
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+
+  "SET_GRID_SWITCH": {
+    "payload": {
+      "type": "object",
+      "required": ["value"],
+      "properties": {
+        "value": {
+          "type": "string",
+          "enum": ["ON", "OFF"]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+
+  "SET_BATTERY_MODE": {
+    "payload": {
+      "type": "object",
+      "required": ["mode"],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "CHARGING",
+            "DISCHARGING",
+            "STAGNANT"
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "SET_OPERATING_PROFILE": {
+  "payload": {
+    "type": "object",
+    "required": [
+      "mode",
+      "pressure",
+      "safety",
+      "schedule"
+    ],
+    "properties": {
+      "mode": {
+        "type": "string",
+        "enum": [
+          "ECONOMY",
+          "NORMAL",
+          "BOOST"
+        ]
+      },
+
+      "pressure": {
+        "type": "object",
+        "required": ["target"],
+        "properties": {
+          "target": {
+            "type": "number",
+            "minimum": 2,
+            "maximum": 16
+          }
+        }
+      },
+
+      "safety": {
+        "type": "object",
+        "required": [
+          "maxTemperature",
+          "maxVibration"
+        ],
+        "properties": {
+          "maxTemperature": {
+            "type": "number"
+          },
+          "maxVibration": {
+            "type": "number"
+          }
+        }
+      },
+
+      "schedule": {
+        "type": "object",
+        "required": ["durationMinutes"],
+        "properties": {
+          "durationMinutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1440
+          }
+        }
+      }
+    },
+    "additionalProperties": false
+  }
+}
+},
+ 
  
   "properties": {
      "schemaId": { 
@@ -21,7 +152,8 @@
           "type": "object",
           "properties": {
             "mode": { "type": "string", "enum": ["LOADED", "UNLOADED", "STANDBY", "FAULT"] },
-            "uptime_seconds": { "type": "integer", "minimum": 0 }
+            "uptime_seconds": { "type": "integer", "minimum": 0 },
+            "operatingProfile": {"type": "string", "enum": [ "ECONOMY", "NORMAL", "BOOST"]}
           }
         }
       }
