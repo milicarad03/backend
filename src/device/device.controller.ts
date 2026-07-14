@@ -183,11 +183,7 @@ export class DeviceController {
 @Roles(Role.USER, Role.ADMIN)
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 async sendDeviceCommand( @Param('id') id: string,
-  @Body() body: {
-    command: string;
-    payload: any;
-  }
-) {
+  @Body() body: { command: string; payload: any;}) {
   try {
   await this.deviceDashboardService.executeCommand(
       id,
@@ -221,5 +217,13 @@ async sendDeviceCommand( @Param('id') id: string,
 
     throw err;
   }
+}
+
+@Get(':id/command-metadata')
+@Roles(Role.USER, Role.ADMIN)
+@UseGuards(AuthGuard('jwt'), RolesGuard)
+async getCommandMetadata(
+  @Param('id') id: string) {
+  return this.deviceDashboardService.getCommandMetadata(id);
 }
 }

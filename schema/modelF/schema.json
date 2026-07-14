@@ -107,10 +107,14 @@
         ],
         "properties": {
           "maxTemperature": {
-            "type": "number"
+            "type": "number",
+            "minimum": 40,
+            "maximum": 120
           },
           "maxVibration": {
-            "type": "number"
+            "type": "number",
+            "minimum": 0,
+            "maximum": 25
           }
         }
       },

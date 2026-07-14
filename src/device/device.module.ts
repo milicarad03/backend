@@ -26,7 +26,7 @@ export type DeviceTelemetry = {
     MqttModule,
     DeviceDashboardModule.registerAsync({
       imports: [DeviceDataModule, RedisModule, MqttModule],
-      useFactory: (repo, telService, redis,  mqttPublisher,) => createDeviceDashboardConfig(repo, telService, redis,mqttPublisher),
+      useFactory: (repo, telService, redis,  mqttPublisher) => createDeviceDashboardConfig(repo, telService, redis,mqttPublisher),
       inject: [DeviceRepository, DeviceTelemetryService, 'REDIS_CLIENT',MqttPublisherService],
     }),
   ],

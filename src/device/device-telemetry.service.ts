@@ -92,7 +92,7 @@ export class DeviceTelemetryService {
         data: mergedData as Prisma.InputJsonValue,
         modelVersionId: device.modelVersionId ?? undefined
      });
-    this.logger.log(`[DATABASE SAVE] Saved telemetry structure: ${JSON.stringify(savedTelemetry.data, null, 2)}`);
+    this.logger.log(`[DATABASE SAVE] Saved telemetry structure: ${JSON.stringify(savedTelemetry, null, 2)}`);
 
     this.logger.debug(`Cleaning up old telemetry records for device: ${telemetry.deviceId}`);
 
