@@ -73,10 +73,16 @@ export class MqttTransportService implements OnModuleInit, OnModuleDestroy {
       });
     });
 
-    this.client.on('message', (topic, payload) => {
+    this.client.on('message', (topic, payload, packet : any) => {
+      if (packet.retain) {
+          this.logger.warn(
+            `[RETAINED] ${topic}`
+          );
+        }
       this.handleMessage(
         topic,
         payload,
+        packet,
         this.pluginCore.processTelemetry.bind(this.pluginCore),
         this.pluginCore.processStatus.bind(this.pluginCore),
       ).catch((error) => {
@@ -109,6 +115,7 @@ export class MqttTransportService implements OnModuleInit, OnModuleDestroy {
   private async handleMessage(
     topic: string,
     payload: Buffer,
+    packet: mqtt.Packet,
     processTelemetry: ProcessTelemetryCallback,
     processStatus: ProcessStatusCallback,
   ) {
@@ -160,6 +167,15 @@ export class MqttTransportService implements OnModuleInit, OnModuleDestroy {
       }
 
       if (topic.endsWith('/status')) {
+
+        const publishPacket = packet as any;
+
+        if (publishPacket.retain) {
+          this.logger.debug(
+            `Ignoring retained status for ${context.deviceId}`,
+          );
+          return;
+        }
         this.logger.log(`Incoming operational status event update for device: ${context.deviceId}`);
 
         await processStatus(message, context);
