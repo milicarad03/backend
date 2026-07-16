@@ -3,6 +3,8 @@ import { DeviceController } from './device.controller';
 import { DeviceService } from './device.service';
 import { DeviceTelemetryService } from './device-telemetry.service';
 import { NotFoundException,ForbiddenException } from '@nestjs/common';
+import { MqttTransportService } from '../mqtt/mqtt-transport.service';
+import { DeviceDashboardService } from 'serverplugin';
 
 describe('DeviceController', () => {
   let controller: DeviceController;
@@ -23,6 +25,15 @@ describe('DeviceController', () => {
     getTelemetryHistory: jest.fn(),
     getLatestTelemetry: jest.fn(),
   };
+  const mockMqttTransportService = {
+  publish: jest.fn(),
+};
+
+const mockDeviceDashboardService = {
+  executeCommand: jest.fn(),
+  getCommandMetadata: jest.fn(),
+};
+
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -38,7 +49,15 @@ describe('DeviceController', () => {
           provide: DeviceTelemetryService,
           useValue: mockDeviceTelemetryService,
         },
-      ],
+        {
+          provide: MqttTransportService,
+          useValue: mockMqttTransportService,
+        },
+        {
+          provide: DeviceDashboardService,
+          useValue: mockDeviceDashboardService,
+        },
+      ]
     }).compile();
 
     controller = module.get<DeviceController>(DeviceController);
@@ -314,5 +333,51 @@ describe('DeviceController', () => {
     mockDeviceService.toggleDeviceStatus.mockRejectedValue(new NotFoundException());
 
     await expect(controller.toggleDevice('bad-id', req)).rejects.toThrow(NotFoundException);
+  });
+
+  it('should execute device command', async () => {
+    mockDeviceDashboardService.executeCommand.mockResolvedValue(
+      undefined,
+    );
+
+    const result = await controller.sendDeviceCommand(
+      'sn-100',
+      {
+        command: 'SET_LED',
+        payload: { value: true },
+      },
+    );
+
+    expect(
+      mockDeviceDashboardService.executeCommand,
+    ).toHaveBeenCalledWith(
+      'sn-100',
+      'SET_LED',
+      { value: true },
+    );
+
+    expect(result).toEqual({
+      success: true,
+    });
+  });
+  it('should return command metadata', async () => {
+    const metadata = [
+      {
+        command: 'SET_LED',
+      },
+    ];
+
+    mockDeviceDashboardService.getCommandMetadata.mockResolvedValue(
+      metadata,
+    );
+
+    const result =
+      await controller.getCommandMetadata('sn-100');
+
+    expect(
+      mockDeviceDashboardService.getCommandMetadata,
+    ).toHaveBeenCalledWith('sn-100');
+
+    expect(result).toEqual(metadata);
   });
 });

@@ -74,7 +74,7 @@ export class MqttTransportService implements OnModuleInit, OnModuleDestroy {
     });
 
     this.client.on('message', (topic, payload, packet : any) => {
-      if (packet.retain) {
+      if (packet?.retain) {
           this.logger.warn(
             `[RETAINED] ${topic}`
           );
@@ -170,7 +170,7 @@ export class MqttTransportService implements OnModuleInit, OnModuleDestroy {
 
         const publishPacket = packet as any;
 
-        if (publishPacket.retain) {
+        if (publishPacket?.retain) {
           this.logger.debug(
             `Ignoring retained status for ${context.deviceId}`,
           );

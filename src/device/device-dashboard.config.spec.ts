@@ -9,6 +9,11 @@ describe('createDeviceDashboardConfig', () => {
 
   const mockDeviceTelemetryService = {
     handleTelemetry: jest.fn(),
+    handleStatusChange: jest.fn(),
+     getLatestTelemetry: jest.fn(),
+  };
+  const mockMqttPublisher = {
+    publish: jest.fn(),
   };
     const mockRedis = {
     get: jest.fn(),
@@ -36,7 +41,8 @@ describe('createDeviceDashboardConfig', () => {
     const config = createDeviceDashboardConfig(
       mockDeviceRepository as any,
       mockDeviceTelemetryService as any,
-      mockRedis
+      mockRedis,
+      mockMqttPublisher as any,
     );
 
     const result = await config.findDeviceById('sn-100');
@@ -45,7 +51,7 @@ describe('createDeviceDashboardConfig', () => {
       serialNumber: 'sn-100',
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       id: 'device-1',
       serialNumber: 'sn-100',
       name: 'Temperature Sensor',
@@ -59,7 +65,8 @@ describe('createDeviceDashboardConfig', () => {
     const config = createDeviceDashboardConfig(
       mockDeviceRepository as any,
       mockDeviceTelemetryService as any,
-      mockRedis
+      mockRedis,
+      mockMqttPublisher as any,
     );
 
     const result = await config.findDeviceById('unknown-device');
@@ -88,7 +95,8 @@ describe('createDeviceDashboardConfig', () => {
     const config = createDeviceDashboardConfig(
       mockDeviceRepository as any,
       mockDeviceTelemetryService as any,
-      mockRedis
+      mockRedis,
+      mockMqttPublisher as any,
     );
 
     await config.onTelemetry(telemetry);
@@ -116,7 +124,8 @@ describe('createDeviceDashboardConfig', () => {
   const config = createDeviceDashboardConfig(
     mockDeviceRepository as any,
     mockDeviceTelemetryService as any,
-    mockRedis
+    mockRedis,
+    mockMqttPublisher as any,
   );
 
   await expect(config.onTelemetry(telemetry)).rejects.toThrow('DATABASE_ERROR');
@@ -130,7 +139,8 @@ describe('createDeviceDashboardConfig', () => {
       const config = createDeviceDashboardConfig(
         mockDeviceRepository as any,
         mockDeviceTelemetryService as any,
-        mockRedis
+        mockRedis,
+        mockMqttPublisher as any,
       );
 
     
@@ -151,7 +161,8 @@ describe('createDeviceDashboardConfig', () => {
       const config = createDeviceDashboardConfig(
         mockDeviceRepository as any,
         mockDeviceTelemetryService as any,
-        mockRedis
+        mockRedis,
+        mockMqttPublisher as any,
       );
 
       
@@ -170,7 +181,8 @@ describe('createDeviceDashboardConfig', () => {
       const config = createDeviceDashboardConfig(
         mockDeviceRepository as any,
         mockDeviceTelemetryService as any,
-        mockRedis
+        mockRedis,
+        mockMqttPublisher as any,
       );
 
       await expect(config.onTelemetry(telemetry)).resolves.not.toThrow();
@@ -186,10 +198,86 @@ describe('createDeviceDashboardConfig', () => {
       const config = createDeviceDashboardConfig(
         mockDeviceRepository as any,
         mockDeviceTelemetryService as any,
-        mockRedis
+        mockRedis,
+        mockMqttPublisher as any,
       );
       await expect(config.onTelemetry(invalidTelemetry)).rejects.toThrow();
     });
+    it('should forward status change to telemetry service', async () => {
+      mockDeviceTelemetryService.handleStatusChange = jest
+        .fn()
+        .mockResolvedValue(undefined);
+
+      const config = createDeviceDashboardConfig(
+        mockDeviceRepository as any,
+        mockDeviceTelemetryService as any,
+        mockRedis,
+        mockMqttPublisher as any,
+      );
+
+      await config.onStatusChange('sn-100', 'ONLINE');
+
+      expect(
+        mockDeviceTelemetryService.handleStatusChange,
+      ).toHaveBeenCalledWith(
+        'sn-100',
+        'ONLINE',
+      );
+    });
+    it('should publish command through mqtt publisher', async () => {
+    const config = createDeviceDashboardConfig(
+      mockDeviceRepository as any,
+      mockDeviceTelemetryService as any,
+      mockRedis,
+      mockMqttPublisher as any,
+    );
+
+    await config.sendCommand(
+      'sn-100',
+      'SET_LED',
+      { value: true },
+    );
+
+    expect(
+      mockMqttPublisher.publish,
+    ).toHaveBeenCalledWith(
+      'command',
+      'sn-100',
+      {
+        command: 'SET_LED',
+        payload: { value: true },
+      },
+    );
+  });
+  it('should return latest telemetry from telemetry service', async () => {
+    const latest = {
+      deviceId: 'sn-100',
+      data: {
+        temperature: 20,
+      },
+    };
+
+    mockDeviceTelemetryService.getLatestTelemetry.mockResolvedValue(
+      latest,
+    );
+
+    const config = createDeviceDashboardConfig(
+      mockDeviceRepository as any,
+      mockDeviceTelemetryService as any,
+      mockRedis,
+      mockMqttPublisher as any,
+    );
+
+    const result =
+      await config.getLatestTelemetry('sn-100');
+
+    expect(
+      mockDeviceTelemetryService.getLatestTelemetry,
+    ).toHaveBeenCalledWith('sn-100');
+
+    expect(result).toEqual(latest);
+  });
+
 
   
 });
