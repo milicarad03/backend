@@ -11,6 +11,16 @@
     },
     "led": {
       "path": "telemetry.led"
+    },
+    "historicalTelemetry": {
+      "path": "historicalTelemetry",
+      "itemMapping": {
+      "timestamp": "timestamp",
+      "temperature": "temperature",
+      "humidity": "humidity",
+      "pressure": "pressure",
+      "led": "led"
+      }
     }
   }
 }
