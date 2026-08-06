@@ -5,6 +5,7 @@ import { DeviceTelemetryGateway } from './device-telemetry.gateway';
 import { DeviceStatus } from '../generated/prisma/client.js';
 import { EventEmitter } from 'events';
 import _ from 'lodash';
+import { InvalidTimestampException } from 'serverplugin';
 
 export type IncomingTelemetry = {
   deviceId: string;
@@ -64,12 +65,19 @@ export class DeviceTelemetryService {
   }
 
   async handleTelemetry(telemetry: IncomingTelemetry) {
+    //await this.deviceRepository.deleteTelemetryByDeviceId("sn-100");
+  this.logger.error(`[RAW PAYLOAD] ${JSON.stringify(telemetry.data, null, 2)}`);
    this.logger.debug(`Telemetry received from plugin for device: ${telemetry.deviceId}`);
 
     const timestamp = new Date(telemetry.timestamp);
-    if (isNaN(timestamp.getTime())) {
+   /* if (isNaN(timestamp.getTime())) {
       this.logger.error(`Invalid timestamp received: ${telemetry.timestamp}`);
       throw new Error('INVALID_TIMESTAMP'); 
+    }*/
+   if (isNaN(timestamp.getTime())) {
+      this.logger.error(`Invalid timestamp received: ${telemetry.timestamp}`);
+
+      throw new InvalidTimestampException();
     }
     
 
@@ -83,8 +91,91 @@ export class DeviceTelemetryService {
       this.logger.warn(`[SECURITY] Telemetry rejected: Device ${telemetry.deviceId} is not verified. Access denied.`);
       throw new ForbiddenException(`Device ${telemetry.deviceId} is not verified. Please register your certificate.`);
     }
+
+     // const historicalTelemetry = telemetry.data.historicalTelemetry || [];
+     // const currentData = _.omit(telemetry.data, 'historicalTelemetry');
+
+
+
     const last = await this.deviceRepository.findLatestTelemetryByDeviceId(telemetry.deviceId);
-    const mergedData = _.merge({}, last?.data ?? {}, telemetry.data);
+    //const lastData = _.omit( (last?.data as any) ?? {},  "historicalTelemetry");
+    const historicalTelemetry = telemetry.data.historicalTelemetry;
+  //  const lastData = (last?.data as Record<string, any>) ?? {};
+    const lastData = _.omit( (last?.data as Record<string, any>) ?? {},"historicalTelemetry");
+
+      const mergedData: Record<string, any> = {
+        ...lastData
+      };
+      const currentData = _.omit(telemetry.data, "historicalTelemetry");
+
+    const mergedCurrent = _.merge(
+      {},
+      lastData,
+      currentData
+    );
+    const history =
+      telemetry.data.historicalTelemetry as Record<string, any>;
+
+    if (history) {
+
+    Object.entries(history).forEach(([field, values]) => {
+
+      if (!Array.isArray(mergedData[field])) {
+        mergedData[field] = [];
+      }
+
+      mergedData[field].push(...(values as any[]));
+    });
+    }
+    Object.entries(telemetry.data).forEach(
+      ([field, value]) => {
+
+        if (field === "historicalTelemetry") {
+          return;
+        }
+
+        mergedData[field] ??= [];
+        if (!Array.isArray(mergedData[field])) {
+          mergedData[field] = [];
+        }
+
+        mergedData[field].push([
+          value,
+          telemetry.timestamp
+        ]);
+      
+      }
+    );
+     Object.keys(mergedData).forEach(field => {
+
+      if (!Array.isArray(mergedData[field])) {
+        return;
+      }
+
+      const unique = new Map();
+
+      mergedData[field].forEach((point: any) => {
+        unique.set(point[1], point);
+      });
+
+      mergedData[field] = [...unique.values()]
+        .sort(
+          (a: any, b: any) =>
+            new Date(a[1]).getTime() -
+            new Date(b[1]).getTime()
+        )
+        .slice(-500);
+
+  });
+
+  /*  const mergedData = {
+      ...mergedCurrent,
+      historicalTelemetry
+    };*/
+    //const mergedData = _.merge({}, last?.data ?? {}, telemetry.data);
+    // Merge samo TRENUTNE podatke
+    this.logger.error(`[MERGED DATA] ${JSON.stringify(mergedData, null, 2)}`);
+
 
     const savedTelemetry = await this.deviceRepository.createTelemetry({
         deviceId: telemetry.deviceId,

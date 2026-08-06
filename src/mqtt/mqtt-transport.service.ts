@@ -1,10 +1,23 @@
 import { Injectable, OnModuleDestroy, OnModuleInit, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
 import mqtt, { MqttClient } from 'mqtt';
 import { DeviceDashboardService } from 'serverplugin';
-import { PluginErrorCode } from 'serverplugin';
+//import { PluginErrorCode } from 'serverplugin';
 import * as fs from 'fs';
 import * as path from 'path';
 import { MqttPublisherService } from './mqtt-publisher.service';
+import {
+  DeviceNotFoundException,
+  DeviceOfflineException,
+  DeviceUninitializedException,
+  ConfigMissingException,
+  ConfigMismatchException,
+  NormalizationFailedException,
+  HookFailedException,
+  InvalidTimestampException,
+  SchemaCompileException,
+  DatabaseFailureException,
+  CommandValidationException,
+} from 'serverplugin';
 
 export type TelemetryContext = {
   deviceId: string;
@@ -171,9 +184,7 @@ export class MqttTransportService implements OnModuleInit, OnModuleDestroy {
         const publishPacket = packet as any;
 
         if (publishPacket?.retain) {
-          this.logger.debug(
-            `Ignoring retained status for ${context.deviceId}`,
-          );
+          this.logger.debug(`Ignoring retained status for ${context.deviceId}`,);
           return;
         }
         this.logger.log(`Incoming operational status event update for device: ${context.deviceId}`);
@@ -195,19 +206,66 @@ export class MqttTransportService implements OnModuleInit, OnModuleDestroy {
         this.logger.warn(`[SECURITY] ${error.message}`);
         return;
       }
-      if (error.message === 'INVALID_TIMESTAMP') {
-        this.logger.warn(
-          '[VALIDATION] Device sent invalid timestamp.'
-        );
+      if (error instanceof InvalidTimestampException) {
+        this.logger.warn('[VALIDATION] Device sent invalid timestamp.');
         return;
       }
-      const isPluginError = Object.values(PluginErrorCode).includes(error.message);
+      if (error instanceof DeviceOfflineException) {
+        this.logger.warn(error.message);
+        return;
+      }
+
+      if (error instanceof DeviceUninitializedException) {
+        this.logger.warn(error.message);
+        return;
+      }
+
+      if (error instanceof ConfigMissingException) {
+        this.logger.warn(error.message);
+        return;
+      }
+
+      if (error instanceof ConfigMismatchException) {
+        this.logger.warn(error.message);
+        return;
+      }
+
+      if (error instanceof DatabaseFailureException) {
+        this.logger.error(error.message);
+        return;
+      }
+
+      if (error instanceof SchemaCompileException) {
+        this.logger.error(error.message);
+        return;
+      }
+      if (error instanceof NormalizationFailedException) {
+        this.logger.warn('[NORMALIZATION] Device data does not match mapping definitions.');
+        return;
+      }
+
+      if (error instanceof HookFailedException) {
+        this.logger.error('[INTERNAL] Host application failed to process telemetry.');
+        return;
+      }
+
+      if (error instanceof CommandValidationException) {
+        this.logger.warn(error.message);
+        return;
+      }
+
+      if (error instanceof DeviceNotFoundException) {
+        this.logger.warn(error.message);
+        return;
+      }
+      this.logger.error(`[UNHANDLED_EXCEPTION] ${error.message}`, error.stack);
+    /*  const isPluginError = Object.values(PluginErrorCode).includes(error.message);
 
         if (isPluginError) {
           this.handlePluginError(error.message as PluginErrorCode);
         } else {
           this.logger.error(`[UNHANDLED_EXCEPTION] ${error.message}`, error.stack);
-        }
+        }*/
       //this.logger.error(`Failed to parse or process incoming MQTT payload on topic [${topic}]: ${error.message}`, error.stack);
     }
   }
@@ -226,7 +284,7 @@ async publish(topic: string, message: any) {
     });
   });
 }
-  private handlePluginError(code: PluginErrorCode) {
+  /*private handlePluginError(code: PluginErrorCode) {
     switch (code) {
       case PluginErrorCode.DATABASE_FAILURE:
         this.logger.error("[CRITICAL] Database service is unavailable. Telemetry processing halted.");
@@ -260,7 +318,7 @@ async publish(topic: string, message: any) {
         this.logger.error(`[UNKNOWN_ERROR] Plugin reported an unhandled error code: ${code}`);
         break;
     }
-  }
+  }*/
 
   private disconnect() {
     if (this.client) {

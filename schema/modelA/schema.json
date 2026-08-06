@@ -3,9 +3,7 @@
   "title": "DeviceDashboard Telemetry Schema",
   "description": "Šema za validaciju dolaznih poruka sa simulatora Model A",
   "type": "object",
-    "commands": {
-
-
+  "commands": {
     "SET_STATE": {
       "payload": {
         "type": "object",
@@ -13,25 +11,32 @@
         "properties": {
           "state": {
             "type": "string",
-            "enum": [
-              "ACTIVE",
-              "IDLE"
-            ]
+            "enum": ["ACTIVE", "IDLE"]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+     "SET_LED": {
+      "payload": {
+        "type": "object",
+        "required": ["value"],
+        "properties": {
+          "value": {
+            "type": "boolean"
           }
         },
           "additionalProperties": false
       }
     }
   },
-  
   "properties": {
     "schemaId": { 
       "type": "string",
-      "const": "modelA" 
+      "const": "modelA"
     },
     "telemetry": {
       "type": "object",
-      
       "properties": {
         "temperature": {
           "type": "number",
@@ -54,46 +59,79 @@
       },
       "additionalProperties": false
     },
-     
     "historicalTelemetry": {
-      "type": "array",
-      "minItems": 1,
-      "maxItems": 24,
-      "items": {
-        "type": "object",
-        "properties": {
-          "timestamp": {
-            "type": "string"
-          },
-          "temperature": {
-            "type": "number",
-            "minimum": -50,
-            "maximum": 100
-          },
-          "humidity": {
-            "type": "number",
-            "minimum": 0,
-            "maximum": 100
-          },
-          "pressure": {
-            "type": "number",
-            "minimum": 300,
-            "maximum": 1200
-          },
-          "led": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "timestamp",
-          "temperature",
-          "humidity",
-          "pressure",
-          "led"
+      "type": "object",
+      "properties": {
+        "temperature": {
+          "type": "array",
+          "maxItems": 24,
 
-        ],
-        "additionalProperties": false
-      }
+          "items": {
+            "type": "array",
+
+            "prefixItems": [
+              {
+                "type": "number",
+                "minimum": -50,
+                "maximum": 100
+              },
+              {
+                "type": "string"
+              }
+            ],
+
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          }
+      
+        },
+        "humidity": {
+          "type": "array",
+          "maxItems": 24,
+          "items": {
+            "type": "array",
+          "prefixItems": [
+            { "type": "number", "minimum": 0, "maximum": 100 },
+            { "type": "string" }
+          ],
+          "items": false,
+            "minItems": 2,
+            "maxItems": 2
+        }
+        },
+        "pressure": {
+          "type": "array",
+          "maxItems": 24,
+          "items": {
+          "type": "array",
+          "prefixItems": [
+            { "type": "number", "minimum": 300, "maximum": 1200 },
+            { "type": "string" }
+          ],
+          "items": false,
+           "minItems": 2,
+            "maxItems": 2
+        }
+        },
+        "led": {
+          "type": "array",
+          "maxItems": 24,
+          "items": {
+          "type": "array",
+          "prefixItems": [
+            { "type": "boolean" },
+            { "type": "string" }
+          ],
+          "items": false,
+           "minItems": 2,
+            "maxItems": 2
+        }
+        }
+      },
+      "required": ["temperature", "humidity", "pressure", "led"],
+      "additionalProperties": false
+      
     }
   },
   "additionalProperties": false

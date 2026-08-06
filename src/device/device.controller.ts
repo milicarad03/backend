@@ -13,6 +13,20 @@ import { CreateDeviceDto } from './dto/create-device.dto';
 import { DeviceTelemetryService } from './device-telemetry.service';
 import { MqttTransportService } from "src/mqtt/mqtt-transport.service";
 import { DeviceDashboardService } from "serverplugin";
+import {
+  DeviceNotFoundException,
+  DeviceOfflineException,
+  DeviceUninitializedException,
+  ConfigMissingException,
+  ConfigMismatchException,
+  NormalizationFailedException,
+  HookFailedException,
+  InvalidTimestampException,
+  SchemaCompileException,
+  DatabaseFailureException,
+  CommandValidationException,
+} from 'serverplugin';
+
 @Controller('device')
 export class DeviceController {
   private readonly logger = new Logger(DeviceController.name);
@@ -146,22 +160,22 @@ async sendDeviceCommand( @Param('id') id: string,
     };
 
   } catch (err: any) {
-
-    if (err.message === 'DEVICE_NOT_FOUND') {
-      throw new NotFoundException(
-        `Device ${id} not found`
-      );
+    if (err instanceof DeviceNotFoundException) {
+      throw new NotFoundException(err.message);
     }
 
-    if (err.message === 'DEVICE_OFFLINE') {
-      throw new ForbiddenException(
-        `Device ${id} is currently OFFLINE`
-      );
+    if (err instanceof DeviceOfflineException) {
+      throw new ForbiddenException(err.message);
     }
 
-    if (err.message === 'DEVICE_UNINITIALIZED') {
-      throw new ForbiddenException(
-        `Device ${id} is not initialized`
+    if (err instanceof DeviceUninitializedException) {
+      throw new ForbiddenException(err.message);
+    }
+
+    if (err instanceof CommandValidationException) {
+      throw new HttpException(
+        err.message,
+        HttpStatus.BAD_REQUEST
       );
     }
 

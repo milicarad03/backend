@@ -116,4 +116,10 @@ export class DeviceRepository {
       include: { modelVersion: true }
     });
   }
+  async deleteTelemetryByDeviceId(deviceId: string) {
+  return this.prisma.deviceTelemetry.deleteMany({
+    where: { deviceId }
+  });
+}
+
 }

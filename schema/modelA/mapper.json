@@ -10,17 +10,10 @@
       "path": "telemetry.pressure"
     },
     "led": {
-      "path": "telemetry.led"
+      "path": "status.ledState"
     },
     "historicalTelemetry": {
-      "path": "historicalTelemetry",
-      "itemMapping": {
-      "timestamp": "timestamp",
-      "temperature": "temperature",
-      "humidity": "humidity",
-      "pressure": "pressure",
-      "led": "led"
-      }
+      "path": "historicalTelemetry"
     }
   }
 }
