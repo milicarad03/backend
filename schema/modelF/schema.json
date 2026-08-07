@@ -211,6 +211,208 @@
           }
         }
       }
-    }
+    },
+    "historicalTelemetry": {
+        "type": "object",
+        "properties": {
+
+          "oil_level": {
+            "type": "array",
+            "maxItems": 24,
+            "items": {
+              "type": "array",
+              "prefixItems": [
+                { "type": "number", "minimum": 0, "maximum": 100 },
+                { "type": "string" }
+              ],
+              "items": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
+          },
+
+          "vibration": {
+            "type": "array",
+            "maxItems": 24,
+            "items": {
+              "type": "array",
+              "prefixItems": [
+                { "type": "number", "minimum": 0, "maximum": 25 },
+                { "type": "string" }
+              ],
+              "items": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
+          },
+
+          "p1": {
+            "type": "array",
+            "maxItems": 24,
+            "items": {
+              "type": "array",
+              "prefixItems": [
+                { "type": "number", "minimum": 0, "maximum": 8.0 },
+                { "type": "string" }
+              ],
+              "items": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
+          },
+
+          "p2": {
+            "type": "array",
+            "maxItems": 24,
+            "items": {
+              "type": "array",
+              "prefixItems": [
+                { "type": "number", "minimum": 0, "maximum": 16.0 },
+                { "type": "string" }
+              ],
+              "items": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
+          },
+
+          "tempIn": {
+            "type": "array",
+            "maxItems": 24,
+            "items": {
+              "type": "array",
+              "prefixItems": [
+                { "type": "number", "minimum": 10, "maximum": 50 },
+                { "type": "string" }
+              ],
+              "items": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
+          },
+
+          "tempOut": {
+            "type": "array",
+            "maxItems": 24,
+            "items": {
+              "type": "array",
+              "prefixItems": [
+                { "type": "number", "minimum": 40, "maximum": 120 },
+                { "type": "string" }
+              ],
+              "items": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
+          },
+
+          "load": {
+            "type": "array",
+            "maxItems": 24,
+            "items": {
+              "type": "array",
+              "prefixItems": [
+                { "type": "number", "minimum": 0, "maximum": 100 },
+                { "type": "string" }
+              ],
+              "items": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
+          },
+
+          "kw": {
+            "type": "array",
+            "maxItems": 24,
+            "items": {
+              "type": "array",
+              "prefixItems": [
+                { "type": "number", "minimum": 0, "maximum": 250 },
+                { "type": "string" }
+              ],
+              "items": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
+          },
+
+          "voltage": {
+            "type": "array",
+            "maxItems": 24,
+            "items": {
+              "type": "array",
+              "prefixItems": [
+                { "type": "number", "minimum": 380, "maximum": 440 },
+                { "type": "string" }
+              ],
+              "items": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
+          },
+
+          "pf": {
+            "type": "array",
+            "maxItems": 24,
+            "items": {
+              "type": "array",
+              "prefixItems": [
+                { "type": "number", "minimum": 0.7, "maximum": 1.0 },
+                { "type": "string" }
+              ],
+              "items": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
+          },
+
+          "flow": {
+            "type": "array",
+            "maxItems": 24,
+            "items": {
+              "type": "array",
+              "prefixItems": [
+                { "type": "number", "minimum": 0, "maximum": 50.0 },
+                { "type": "string" }
+              ],
+              "items": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
+          },
+
+          "total_runtime": {
+            "type": "array",
+            "maxItems": 24,
+            "items": {
+              "type": "array",
+              "prefixItems": [
+                { "type": "integer", "minimum": 0 },
+                { "type": "string" }
+              ],
+              "items": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
+          },
+
+          "energy_kwh": {
+            "type": "array",
+            "maxItems": 24,
+            "items": {
+              "type": "array",
+              "prefixItems": [
+                { "type": "number", "minimum": 0 },
+                { "type": "string" }
+              ],
+              "items": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
+          }
+        },
+
+        "additionalProperties": false
+      }
   }
 }

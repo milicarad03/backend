@@ -1,13 +1,16 @@
 {
   "fields": {
     "temperature": {
-      "path": "data.temp"
+      "path": "data.temp",
+      "historyPath": "historicalTelemetry.temp"
     },
     "humidity": {
-      "path": "data.hum"
+      "path": "data.hum",
+      "historyPath": "historicalTelemetry.hum"
     },
     "pressure": {
-      "path": "data.press"
+      "path": "data.press",
+      "historyPath": "historicalTelemetry.press"
     },
     "led": {
       "path": "status.ledState"

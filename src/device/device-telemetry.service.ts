@@ -65,7 +65,7 @@ export class DeviceTelemetryService {
   }
 
   async handleTelemetry(telemetry: IncomingTelemetry) {
-    //await this.deviceRepository.deleteTelemetryByDeviceId("sn-100");
+  //  await this.deviceRepository.deleteTelemetryByDeviceId("device-2");
   this.logger.error(`[RAW PAYLOAD] ${JSON.stringify(telemetry.data, null, 2)}`);
    this.logger.debug(`Telemetry received from plugin for device: ${telemetry.deviceId}`);
 
@@ -164,7 +164,7 @@ export class DeviceTelemetryService {
             new Date(a[1]).getTime() -
             new Date(b[1]).getTime()
         )
-        .slice(-500);
+        .slice(-50);
 
   });
 

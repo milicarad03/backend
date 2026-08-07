@@ -18,6 +18,8 @@
       }
     },
      "SET_LED": {
+      "x-state-path": "telemetry.led",
+      "x-payload-field": "value",
       "payload": {
         "type": "object",
         "required": ["value"],
@@ -113,23 +115,9 @@
            "minItems": 2,
             "maxItems": 2
         }
-        },
-        "led": {
-          "type": "array",
-          "maxItems": 24,
-          "items": {
-          "type": "array",
-          "prefixItems": [
-            { "type": "boolean" },
-            { "type": "string" }
-          ],
-          "items": false,
-           "minItems": 2,
-            "maxItems": 2
-        }
         }
       },
-      "required": ["temperature", "humidity", "pressure", "led"],
+      "required": ["temperature", "humidity", "pressure"],
       "additionalProperties": false
       
     }

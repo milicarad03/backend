@@ -1,19 +1,19 @@
 {
   "fields": {
     "temperature": {
-      "path": "telemetry.temperature"
+      "path": "telemetry.temperature",
+      "historyPath": "historicalTelemetry.temperature"
     },
     "humidity": {
-      "path": "telemetry.humidity"
+      "path": "telemetry.humidity",
+      "historyPath": "historicalTelemetry.humidity"
     },
     "pressure": {
-      "path": "telemetry.pressure"
+      "path": "telemetry.pressure",
+      "historyPath": "historicalTelemetry.pressure"
     },
     "led": {
-      "path": "status.ledState"
-    },
-    "historicalTelemetry": {
-      "path": "historicalTelemetry"
+      "path": "telemetry.led"
     }
   }
 }
