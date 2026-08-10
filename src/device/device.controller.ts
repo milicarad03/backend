@@ -152,10 +152,7 @@ export class DeviceController {
       modelVersionId: string;
     },
   ) {
-    this.logger.log(
-      `Admin requested model version stage for device ${id}. Target modelVersionId: ${body.modelVersionId}`,
-    );
-
+    this.logger.log( `Admin requested model version stage for device ${id}. Target modelVersionId: ${body.modelVersionId}`,);
     return this.deviceService.applyModelVersion(
       id,
       body.modelVersionId,

@@ -231,31 +231,22 @@ async applyModelVersion(
   }
 
   if (!device.modelVersion) {
-    throw new ConflictException(
-      'DEVICE_HAS_NO_MODEL_VERSION',
-    );
+    throw new ConflictException( 'DEVICE_HAS_NO_MODEL_VERSION');
   }
 
-  if (
-    device.modelVersion.modelId !==
-    targetVersion.modelId
-  ) {
+  if ( device.modelVersion.modelId !== targetVersion.modelId) {
     throw new ConflictException(
       'TARGET_VERSION_BELONGS_TO_DIFFERENT_MODEL',
     );
   }
 
-  if (
-    device.modelVersionId ===
-    targetVersion.id
-  ) {
+  if (device.modelVersionId === targetVersion.id) {
     throw new ConflictException(
       'DEVICE_ALREADY_USES_MODEL_VERSION',
     );
   }
 
-  const previousModelVersionId =
-    device.modelVersionId;
+  const previousModelVersionId =device.modelVersionId;
 
   let databaseSwitched = false;
 

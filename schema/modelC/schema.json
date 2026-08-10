@@ -1,5 +1,6 @@
 {
   "type": "object",
+  "required": ["schemaId"],
   "properties": {
     "schemaId": { 
       "type": "string",

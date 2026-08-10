@@ -14,15 +14,10 @@ import {
 } from '@nestjs/platform-express';
 
 import { ModelVersionService } from './model-version.service';
-
 import { Role } from '../../enums/role.enum';
-
 import { Roles } from '../roles.decorator';
-
 import { RolesGuard } from '../roles.guard';
-
 import { AuthGuard } from '@nestjs/passport';
-
 import {UploadModelVersionDto} from './dto/upload-model-version.dto';
 
 @Controller('model-versions')
@@ -61,8 +56,6 @@ export class ModelVersionController {
       {
         limits: {
           files: 2,
-
-          // maksimalno 2 MB po fajlu
           fileSize:
             2 * 1024 * 1024,
         },
@@ -86,9 +79,7 @@ export class ModelVersionController {
       }>;
     },
   ) {
-    this.logger.log(
-      `HTTP POST /model-versions/upload - Uploading ${dto.modelName}:${dto.version}`,
-    );
+    this.logger.log(`HTTP POST /model-versions/upload - Uploading ${dto.modelName}:${dto.version}`, );
 
     return this.modelVersionService.uploadVersion(
       dto,
