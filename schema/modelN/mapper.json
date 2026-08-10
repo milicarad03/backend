@@ -1,0 +1,22 @@
+{
+  "fields": {
+    "temperature": {
+      "path": "metrics.environment.temperature"
+    },
+    "humidity": {
+      "path": "metrics.environment.humidity"
+    },
+    "pressure": {
+      "path": "metrics.environment.pressure"
+    },
+    "led": {
+      "path": "device.status.led"
+    },
+    "mode": {
+      "path": "device.status.mode"
+    },
+    "battery": {
+      "path": "device.battery.level"
+    }
+  }
+}

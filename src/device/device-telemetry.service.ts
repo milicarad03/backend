@@ -103,10 +103,10 @@ export class DeviceTelemetryService {
   //  const lastData = (last?.data as Record<string, any>) ?? {};
     const lastData = _.omit( (last?.data as Record<string, any>) ?? {},"historicalTelemetry");
 
-      const mergedData: Record<string, any> = {
+    const mergedData: Record<string, any> = {
         ...lastData
       };
-      const currentData = _.omit(telemetry.data, "historicalTelemetry");
+    const currentData = _.omit(telemetry.data, "historicalTelemetry");
 
     const mergedCurrent = _.merge(
       {},
@@ -118,14 +118,14 @@ export class DeviceTelemetryService {
 
     if (history) {
 
-    Object.entries(history).forEach(([field, values]) => {
+      Object.entries(history).forEach(([field, values]) => {
 
-      if (!Array.isArray(mergedData[field])) {
-        mergedData[field] = [];
-      }
+        if (!Array.isArray(mergedData[field])) {
+          mergedData[field] = [];
+        }
 
-      mergedData[field].push(...(values as any[]));
-    });
+        mergedData[field].push(...(values as any[]));
+      });
     }
     Object.entries(telemetry.data).forEach(
       ([field, value]) => {

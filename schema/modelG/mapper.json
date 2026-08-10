@@ -1,0 +1,77 @@
+{
+  "fields": {
+    "serialNumber": {
+      "path": "system.identity.serial"
+    },
+    "firmware": {
+      "path": "system.identity.firmware"
+    },
+    "opMode": {
+      "path": "system.status.mode"
+    },
+    "uptime": {
+      "path": "system.status.uptime_seconds"
+    },
+    "errorCode": {
+      "path": "diagnostics.faults.code"
+    },
+    "activeAlarms": {
+      "path": "diagnostics.faults.alarms"
+    },
+    "oilLevel": {
+      "path": "diagnostics.health.oil_level",
+      "historyPath": "historicalTelemetry.oil_level"
+    },
+    "vibration": {
+      "path": "diagnostics.health.vibration",
+      "historyPath": "historicalTelemetry.vibration"
+    },
+    "pressStage1": {
+      "path": "performance.stages.p1",
+      "historyPath": "historicalTelemetry.p1"
+    },
+    "pressStage2": {
+      "path": "performance.stages.p2",
+      "historyPath": "historicalTelemetry.p2"
+    },
+    "tempInlet": {
+      "path": "performance.stages.tempIn",
+      "historyPath": "historicalTelemetry.tempIn"
+    },
+    "tempOutlet": {
+      "path": "performance.stages.tempOut",
+      "historyPath": "historicalTelemetry.tempOut"
+    },
+    "motorLoad": {
+      "path": "performance.electrical.load",
+      "historyPath": "historicalTelemetry.load"
+    },
+    "powerDraw": {
+      "path": "performance.electrical.kw",
+      "historyPath": "historicalTelemetry.kw"
+    },
+    "lineVoltage": {
+      "path": "performance.electrical.voltage",
+      "historyPath": "historicalTelemetry.voltage"
+    },
+    "powerFactor": {
+      "path": "performance.electrical.pf",
+      "historyPath": "historicalTelemetry.pf"
+    },
+    "airflow": {
+      "path": "performance.output.flow",
+      "historyPath": "historicalTelemetry.flow"
+    },
+    "totalRuntime": {
+      "path": "performance.output.total_runtime",
+      "historyPath": "historicalTelemetry.total_runtime"
+    },
+    "totalEnergy": {
+      "path": "performance.output.energy_kwh",
+      "historyPath": "historicalTelemetry.energy_kwh"
+    },
+    "deviceType": {
+      "path": "system.identity.serial"
+    }
+  }
+}

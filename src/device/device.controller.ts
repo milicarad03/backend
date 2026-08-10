@@ -142,6 +142,25 @@ export class DeviceController {
     this.logger.log(`Admin ID: ${req.user.userId} requested hardware transfer for device [${id}] to target user: ${targetUserId}`);
     return this.deviceService.reassignDevice(id, targetUserId);
   }
+
+  @Patch(':id/model-version')
+  @Roles(Role.ADMIN)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  async updateDeviceModelVersion(
+    @Param('id') id: string,
+    @Body() body: {
+      modelVersionId: string;
+    },
+  ) {
+    this.logger.log(
+      `Admin requested model version stage for device ${id}. Target modelVersionId: ${body.modelVersionId}`,
+    );
+
+    return this.deviceService.applyModelVersion(
+      id,
+      body.modelVersionId,
+    );
+  }
  
 @Post(':id/command')
 @Roles(Role.USER, Role.ADMIN)
