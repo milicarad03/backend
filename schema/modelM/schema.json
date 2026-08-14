@@ -1,0 +1,527 @@
+{
+  "title": "IndustrialAirCompressorTelemetry",
+  "type": "object",
+  "commands": {
+  "SET_STATE": {
+    "payload": {
+      "type": "object",
+      "required": ["state"],
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": ["ACTIVE", "IDLE"]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+
+  "SET_OPERATIONAL_MODE": {
+    "payload": {
+      "type": "object",
+      "required": ["mode"],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "OFF",
+            "STANDBY",
+            "GRID_TIED",
+            "OFF_GRID",
+            "FAULT_ISOLATION"
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+
+  "SET_GRID_SWITCH": {
+    "payload": {
+      "type": "object",
+      "required": ["value"],
+      "properties": {
+        "value": {
+          "type": "string",
+          "enum": ["ON", "OFF"]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+
+  "SET_BATTERY_MODE": {
+    "payload": {
+      "type": "object",
+      "required": ["mode"],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "CHARGING",
+            "DISCHARGING",
+            "STAGNANT"
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "SET_OPERATING_PROFILE": {
+  "payload": {
+    "type": "object",
+    "required": [
+      "mode",
+      "pressure",
+      "safety",
+      "schedule"
+    ],
+    "properties": {
+      "mode": {
+        "type": "string",
+        "enum": [
+          "ECONOMY",
+          "NORMAL",
+          "BOOST"
+        ]
+      },
+
+      "pressure": {
+        "type": "object",
+        "required": ["target"],
+        "properties": {
+          "target": {
+            "type": "number",
+            "minimum": 2,
+            "maximum": 16
+          }
+        }
+      },
+
+      "safety": {
+        "type": "object",
+        "required": [
+          "maxTemperature",
+          "maxVibration"
+        ],
+        "properties": {
+          "maxTemperature": {
+            "type": "number",
+             "minimum": 40,
+            "maximum": 120
+          },
+          "maxVibration": {
+            "type": "number",
+             "minimum": 0,
+            "maximum": 25
+          }
+        }
+      },
+
+      "schedule": {
+        "type": "object",
+        "required": ["durationMinutes"],
+        "properties": {
+          "durationMinutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1440
+          }
+        }
+      }
+    },
+    "additionalProperties": false
+  }
+}
+},
+ "required": ["schemaId"],
+ 
+  "properties": {
+     "schemaId": { 
+      "type": "string",
+      "const": "modelB",
+      "x-reporting": {
+          "ACTIVE": 6000,
+          "IDLE": 120000
+        }
+    },
+    "system": {
+      "type": "object",
+      "properties": {
+        "identity": {
+          "type": "object",
+          "properties": {
+            "serial": { "type": "string", "pattern": "^CP-[0-9]{5}-X$" ,   
+            "x-reporting": {
+              "ACTIVE": 6000,
+              "IDLE": 120000
+            }},
+            
+            "firmware": { "type": "string",
+             "x-reporting": {
+              "ACTIVE": 6000,
+              "IDLE": 120000
+            }}
+          }
+        },
+        "status": {
+          "type": "object",
+          "properties": {
+            "mode": { "type": "string", "enum": ["LOADED", "UNLOADED", "STANDBY", "FAULT"],
+             "x-reporting": {
+              "ACTIVE": 6000,
+              "IDLE": 120000
+            } },
+            "uptime_seconds": { "type": "integer", "minimum": 0,
+             "x-reporting": {
+              "ACTIVE": 6000,
+              "IDLE": null
+            }},
+            "operatingProfile": {"type": "string", "enum": [ "ECONOMY", "NORMAL", "BOOST"
+          ],"x-reporting": {
+              "ACTIVE": 6000,
+              "IDLE": null
+            }
+          }
+
+          }
+        }
+      }
+    },
+    "diagnostics": {
+      "type": "object",
+      "properties": {
+        "faults": {
+          "type": "object",
+          "properties": {
+            "code": { "type": "string", "pattern": "^ERR-[0-9]{3}$" ,   
+            "x-reporting": {
+              "ACTIVE": 6000,
+              "IDLE": 120000
+            }},
+            "alarms": { "type": "array", "maxItems": 5, "items": { "type": "string" },
+             "x-reporting": {
+              "ACTIVE": 6000,
+              "IDLE": 120000
+            }}
+          }
+        },
+        "health": {
+          "type": "object",
+          "properties": {
+            "oil_level": { "type": "number", "minimum": 0, "maximum": 100,
+             "x-reporting": {
+              "ACTIVE": 6000,
+              "IDLE": 120000
+            }},
+            "vibration": { "type": "number", "minimum": 0, "maximum": 25.0,
+             "x-reporting": {
+              "ACTIVE": 6000,
+              "IDLE": 120000
+            }}
+          }
+        }
+      }
+    },
+    "performance": {
+      "type": "object",
+      "properties": {
+        "stages": {
+          "type": "object",
+          "properties": {
+            "p1": { "type": "number", "minimum": 0, "maximum": 8.0,
+             "x-reporting": {
+              "ACTIVE": 6000,
+              "IDLE": null
+            }},
+            "p2": { "type": "number", "minimum": 0, "maximum": 16.0,
+             "x-reporting": {
+              "ACTIVE": 6000,
+              "IDLE": null
+            }},
+            "tempIn": { "type": "number", "minimum": 10, "maximum": 50,
+             "x-reporting": {
+              "ACTIVE": 6000,
+              "IDLE": null
+            }},
+            "tempOut": { "type": "number", "minimum": 40, "maximum": 120,
+            "x-reporting": {
+                "ACTIVE": 6000,
+                "IDLE": null
+              }}
+          }
+        },
+        "electrical": {
+          "type": "object",
+          "properties": {
+            "load": { "type": "number", "minimum": 0, "maximum": 100,
+            "x-reporting": {
+              "ACTIVE": 6000,
+              "IDLE": null
+            }},
+            
+            "kw": { "type": "number", "minimum": 0, "maximum": 250,
+            "x-reporting": {
+                "ACTIVE": 6000,
+                "IDLE": null
+              }},
+            "voltage": { "type": "number", "minimum": 380, "maximum": 440,
+            "x-reporting": {
+              "ACTIVE": 6000,
+              "IDLE": null
+            }},
+            
+            "pf": { "type": "number", "minimum": 0.7, "maximum": 1.0,
+            "x-reporting": {
+                "ACTIVE": 6000,
+                "IDLE": null
+              }}
+            
+          }
+        },
+        "output": {
+          "type": "object",
+          "properties": {
+            "flow": { "type": "number", "minimum": 0, "maximum": 50.0,
+            "x-reporting": {
+              "ACTIVE": 6000,
+              "IDLE": null
+            }},
+            
+            
+            "total_runtime": { "type": "integer", "minimum": 0,
+            "x-reporting": {
+                "ACTIVE": 6000,
+                "IDLE": null
+              }},
+            "energy_kwh": { "type": "number", "minimum": 0,
+            "x-reporting": {
+                "ACTIVE": 6000,
+                "IDLE": null
+              }}
+          }
+        }
+      }
+    },
+    "historicalTelemetry": {
+      "type": "object",
+      "properties": {
+
+        "oil_level": {
+          "type": "array",
+          "maxItems": 24,
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              { "type": "number", "minimum": 0, "maximum": 100 },
+              { "type": "string" }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "x-buffering": { "interval": 10000 }
+        },
+
+        "vibration": {
+          "type": "array",
+          "maxItems": 24,
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              { "type": "number", "minimum": 0, "maximum": 25 },
+              { "type": "string" }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "x-buffering": { "interval": 15000 }
+        },
+
+        "p1": {
+          "type": "array",
+          "maxItems": 24,
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              { "type": "number", "minimum": 0, "maximum": 8.0 },
+              { "type": "string" }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "x-buffering": { "interval": 15000 }
+        },
+
+        "p2": {
+          "type": "array",
+          "maxItems": 24,
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              { "type": "number", "minimum": 0, "maximum": 16.0 },
+              { "type": "string" }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "x-buffering": { "interval": 5000 }
+        },
+
+        "tempIn": {
+          "type": "array",
+          "maxItems": 24,
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              { "type": "number", "minimum": 10, "maximum": 50 },
+              { "type": "string" }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "x-buffering": { "interval": 10000 }
+        },
+
+        "tempOut": {
+          "type": "array",
+          "maxItems": 24,
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              { "type": "number", "minimum": 40, "maximum": 120 },
+              { "type": "string" }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "x-buffering": { "interval": 10000 }
+        },
+
+        "load": {
+          "type": "array",
+          "maxItems": 24,
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              { "type": "number", "minimum": 0, "maximum": 100 },
+              { "type": "string" }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "x-buffering": { "interval": 10000 }
+        },
+
+        "kw": {
+          "type": "array",
+          "maxItems": 24,
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              { "type": "number", "minimum": 0, "maximum": 250 },
+              { "type": "string" }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "x-buffering": { "interval": 20000 }
+        },
+
+        "voltage": {
+          "type": "array",
+          "maxItems": 24,
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              { "type": "number", "minimum": 380, "maximum": 440 },
+              { "type": "string" }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "x-buffering": { "interval": 17000 }
+        },
+
+        "pf": {
+          "type": "array",
+          "maxItems": 24,
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              { "type": "number", "minimum": 0.7, "maximum": 1.0 },
+              { "type": "string" }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "x-buffering": { "interval": 5000 }
+        },
+
+        "flow": {
+          "type": "array",
+          "maxItems": 24,
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              { "type": "number", "minimum": 0, "maximum": 50.0 },
+              { "type": "string" }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "x-buffering": { "interval": 10000 }
+        },
+
+        "total_runtime": {
+          "type": "array",
+          "maxItems": 24,
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              { "type": "integer", "minimum": 0 },
+              { "type": "string" }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "x-buffering": { "interval": 15000 }
+        },
+
+        "energy_kwh": {
+          "type": "array",
+          "maxItems": 24,
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              { "type": "number", "minimum": 0 },
+              { "type": "string" }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "x-buffering": { "interval": 10000 }
+        }
+      },
+
+      "additionalProperties": false,
+
+      "x-reporting": {
+        "ACTIVE": null,
+        "IDLE": 120000
+      }
+    }
+  }
+}
