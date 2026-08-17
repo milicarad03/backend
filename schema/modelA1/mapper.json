@@ -47,7 +47,17 @@
             "component": "value-card",
             "bind": "led",
             "title": "LED State"
+          },
+          {
+          "id": "visible-test",
+          "component": "value-card",
+          "bind": "temperature",
+          "title": "VISIBLE ONLY WHEN LED IS ON",
+          "visibleWhen": {
+            "bind": "led",
+            "equals": true
           }
+        }
         ]
       },
       {

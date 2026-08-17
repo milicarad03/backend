@@ -1,0 +1,180 @@
+{
+  "fields": {
+    "serialNumber": {
+      "path": "system.identity.serial"
+    },
+    "firmware": {
+      "path": "system.identity.firmware"
+    },
+    "opMode": {
+      "path": "system.status.mode"
+    },
+    "uptime": {
+      "path": "system.status.uptime_seconds"
+    },
+    "errorCode": {
+      "path": "diagnostics.faults.code"
+    },
+    "activeAlarms": {
+      "path": "diagnostics.faults.alarms"
+    },
+    "oilLevel": {
+      "path": "diagnostics.health.oil_level",
+      "historyPath": "historicalTelemetry.oil_level"
+    },
+    "vibration": {
+      "path": "diagnostics.health.vibration",
+      "historyPath": "historicalTelemetry.vibration"
+    },
+    "pressStage1": {
+      "path": "performance.stages.p1",
+      "historyPath": "historicalTelemetry.p1"
+    },
+    "pressStage2": {
+      "path": "performance.stages.p2",
+      "historyPath": "historicalTelemetry.p2"
+    },
+    "tempInlet": {
+      "path": "performance.stages.tempIn",
+      "historyPath": "historicalTelemetry.tempIn"
+    },
+    "tempOutlet": {
+      "path": "performance.stages.tempOut",
+      "historyPath": "historicalTelemetry.tempOut"
+    },
+    "motorLoad": {
+      "path": "performance.electrical.load",
+      "historyPath": "historicalTelemetry.load"
+    },
+    "powerDraw": {
+      "path": "performance.electrical.kw",
+      "historyPath": "historicalTelemetry.kw"
+    },
+    "lineVoltage": {
+      "path": "performance.electrical.voltage",
+      "historyPath": "historicalTelemetry.voltage"
+    },
+    "powerFactor": {
+      "path": "performance.electrical.pf",
+      "historyPath": "historicalTelemetry.pf"
+    },
+    "airflow": {
+      "path": "performance.output.flow",
+      "historyPath": "historicalTelemetry.flow"
+    },
+    "totalRuntime": {
+      "path": "performance.output.total_runtime",
+      "historyPath": "historicalTelemetry.total_runtime"
+    },
+    "totalEnergy": {
+      "path": "performance.output.energy_kwh",
+      "historyPath": "historicalTelemetry.energy_kwh"
+    },
+    "deviceType": {
+      "path": "system.identity.serial"
+    }
+  },
+
+"dashboard": {
+  "sections": [
+    {
+      "id": "overview",
+      "title": "COMPRESSOR OVERVIEW",
+      "columns": 4,
+      "items": [
+        {
+          "id": "uptime",
+          "component": "value-card",
+          "bind": "uptime",
+          "title": "Uptime"
+        },
+        {
+          "id": "mode",
+          "component": "value-card",
+          "bind": "opMode",
+          "title": "Operating Mode"
+        },
+        {
+          "id": "airflow",
+          "component": "value-card",
+          "bind": "airflow",
+          "title": "Airflow"
+        },
+        {
+          "id": "power",
+          "component": "value-card",
+          "bind": "powerDraw",
+          "title": "Power Draw"
+        },
+        {
+        "id": "oil-level",
+        "component": "oil-gauge-test",
+        "bind": "oilLevel",
+        "title": "Oil Level"
+        },
+        {
+        "id": "oil-warning",
+        "component": "value-card",
+        "bind": "oilLevel",
+        "title": "LOW OIL WARNING",
+            "visibleWhen": {
+                "bind": "opMode",
+                "equals": "FAULT"
+            }
+        }
+      ]
+    },
+    {
+      "id": "history",
+      "title": "TELEMETRY HISTORY",
+      "columns": 4,
+      "items": [
+        {
+          "id": "uptime-chart",
+          "component": "line-chart",
+          "bind": "uptime",
+          "title": "Uptime History",
+          "colSpan": 2
+        },
+        {
+          "id": "uptime-table",
+          "component": "table",
+          "bind": "uptime",
+          "title": "Uptime Table",
+          "colSpan": 2
+        }
+      ]
+    },
+    {
+    "id": "controls",
+    "title": "COMPRESSOR CONTROLS",
+    "columns": 4,
+    "items": [
+        {
+        "id": "target-pressure",
+        "component": "numeric-input",
+        "title": "Target Pressure",
+        "command": "SET_TARGET_PRESSURE",
+        "commandField": "value",
+        "min": 2,
+        "max": 16,
+        "step": 1
+        }
+    ]
+    },
+    {
+    "id": "complex controls",
+    "title": "COMPRESSOR CONTROLS",
+    "columns": 0,
+    "items": [
+        {
+        "id": "operating-profile",
+        "component": "command-form",
+        "title": "Operating Profile",
+        "command": "SET_OPERATING_PROFILE"
+        }
+    ]
+    }
+  ]
+}
+}
