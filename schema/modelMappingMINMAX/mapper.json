@@ -22,9 +22,25 @@
       "path": "diagnostics.health.oil_level",
       "historyPath": "historicalTelemetry.oil_level"
     },
+    
     "vibration": {
       "path": "diagnostics.health.vibration",
       "historyPath": "historicalTelemetry.vibration"
+    },
+
+    "vibrationHistory": {
+      "path": "historicalTelemetry.vibration",
+      "operation": "array"
+    },
+
+    "vibrationMin": {
+      "path": "historicalTelemetry.vibration",
+      "operation": "min"
+    },
+
+    "vibrationMax": {
+      "path": "historicalTelemetry.vibration",
+      "operation": "max"
     },
     "pressStage1": {
       "path": "performance.stages.p1",
@@ -110,6 +126,7 @@
         {
         "id": "oil-level",
         "component": "oil-gauge",
+        "bind": "oilLevel",
         "title": "Oil Level",
         "unit": "%"
         },
@@ -191,6 +208,32 @@
         "command": "SET_OPERATING_PROFILE"
         }
     ]
+    },
+    {
+      "id": "mapping-demo",
+      "title": "MAPPING OPERATIONS",
+      "columns": 3,
+      "items": [
+        {
+          "id": "vibration-min",
+          "component": "value-card",
+          "bind": "vibrationMin",
+          "title": "Minimum Vibration"
+        },
+        {
+          "id": "vibration-max",
+          "component": "value-card",
+          "bind": "vibrationMax",
+          "title": "Maximum Vibration"
+        },
+        {
+          "id": "vibration-history",
+          "component": "table",
+          "bind": "vibrationHistory",
+          "title": "Vibration Samples",
+          "colSpan": 3
+        }
+      ]
     }
   ]
 }

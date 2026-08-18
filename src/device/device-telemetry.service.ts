@@ -66,7 +66,7 @@ export class DeviceTelemetryService {
 
   async handleTelemetry(telemetry: IncomingTelemetry) {
   //  await this.deviceRepository.deleteTelemetryByDeviceId("device-2");
-  this.logger.error(`[RAW PAYLOAD] ${JSON.stringify(telemetry.data, null, 2)}`);
+ // this.logger.error(`[RAW PAYLOAD] ${JSON.stringify(telemetry.data, null, 2)}`);
    this.logger.debug(`Telemetry received from plugin for device: ${telemetry.deviceId}`);
 
     const timestamp = new Date(telemetry.timestamp);
@@ -174,7 +174,7 @@ export class DeviceTelemetryService {
     };*/
     //const mergedData = _.merge({}, last?.data ?? {}, telemetry.data);
     // Merge samo TRENUTNE podatke
-    this.logger.error(`[MERGED DATA] ${JSON.stringify(mergedData, null, 2)}`);
+  //  this.logger.error(`[MERGED DATA] ${JSON.stringify(mergedData, null, 2)}`);
 
 
     const savedTelemetry = await this.deviceRepository.createTelemetry({
