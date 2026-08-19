@@ -115,6 +115,13 @@ export class DeviceTelemetryService {
     );
     const history =
       telemetry.data.historicalTelemetry as Record<string, any>;
+      this.logger.error(
+  `[HISTORY] ${JSON.stringify(
+    telemetry.data.historicalTelemetry,
+    null,
+    2
+  )}`
+);
 
     if (history) {
 
