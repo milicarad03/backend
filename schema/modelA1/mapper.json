@@ -93,7 +93,18 @@
             "title": "LED Control",
             "command": "SET_LED",
             "commandField": "value"
+          },
+          {
+            "id": "stream-control",
+            "component": "switch",
+            "title": "Telemetry Stream",
+            "bind": "streamState",
+            "command": "SET_STATE",
+            "commandField": "state",
+            "onValue": "ACTIVE",
+            "offValue": "IDLE"
           }
+                    
         ]
       }
     ]
