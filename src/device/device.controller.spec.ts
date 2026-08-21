@@ -19,6 +19,7 @@ describe('DeviceController', () => {
     toggleDeviceStatus: jest.fn(),
     testPluginDeviceCheck: jest.fn(),
     reassignDevice:jest.fn(),
+    applyModelVersion: jest.fn()
   };
 
   const mockDeviceTelemetryService = {
@@ -380,4 +381,19 @@ const mockDeviceDashboardService = {
 
     expect(result).toEqual(metadata);
   });
+  it('should update device model version', async () => {
+  const deviceId = 'device-123';
+  const body = { modelVersionId: 'version-2' };
+  const expectedResult = { success: true, staged: true };
+
+  mockDeviceService.applyModelVersion.mockResolvedValue(expectedResult);
+
+  const result = await controller.updateDeviceModelVersion(deviceId, body);
+
+  expect(mockDeviceService.applyModelVersion).toHaveBeenCalledWith(
+    deviceId,
+    body.modelVersionId,
+  );
+  expect(result).toEqual(expectedResult);
+});
 });

@@ -3,6 +3,8 @@ import {ConflictException,ForbiddenException,InternalServerErrorException,NotFou
 import { DeviceService } from './device.service';
 import { DeviceRepository } from './device.repository';
 import { DeviceDashboardService } from 'serverplugin';
+import { MqttTransportService } from '../mqtt/mqtt-transport.service';
+import { DeviceStatus } from '../generated/prisma/client';
 
 describe('DeviceService', () => {
   let service: DeviceService;
@@ -14,10 +16,16 @@ describe('DeviceService', () => {
     update: jest.fn(),
     delete: jest.fn(),
     createTelemetry: jest.fn(),
+    findModelVersionById: jest.fn()
   };
 
   const mockDashboardPlugin = {
     checkDevice: jest.fn(),
+    invalidateDeviceCache: jest.fn()
+  };
+
+  const mockMqttTransportService = {
+    sendCommandAndWaitForResponse: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -33,6 +41,10 @@ describe('DeviceService', () => {
         {
           provide: DeviceDashboardService,
           useValue: mockDashboardPlugin,
+        },
+        {
+          provide: MqttTransportService,
+          useValue: mockMqttTransportService,
         },
       ],
     }).compile();
@@ -509,5 +521,94 @@ it('should throw NotFoundException if trying to verify a non-existent device', a
   await expect(service.markDeviceAsVerified('ghost-sn', 'CERT'))
     .rejects.toThrow(NotFoundException);
 });
+describe('applyModelVersion', () => {
+    const mockDevice = {
+      id: 'device-123',
+      serialNumber: 'sn-123',
+      status: DeviceStatus.ONLINE,
+      modelVersionId: 'version-1',
+      modelVersion: {
+        id: 'version-1',
+        modelId: 'model-a',
+        version: '1.0'
+      }
+    };
 
+    const mockTargetVersion = {
+      id: 'version-2',
+      modelId: 'model-a',
+      version: '2.0',
+      schema: '{}',
+      mapping: '{}'
+    };
+
+    beforeEach(() => {
+      mockDeviceRepository.findOne.mockResolvedValue(mockDevice);
+      mockDeviceRepository.findModelVersionById.mockResolvedValue(mockTargetVersion);
+    });
+
+    it('should successfully apply new model version', async () => {
+      // Uspešan stage i restart
+      mockMqttTransportService.sendCommandAndWaitForResponse
+        .mockResolvedValueOnce({ success: true }) // Za STAGE
+        .mockResolvedValueOnce({ success: true }); // Za RESTART
+
+      const result = await service.applyModelVersion(mockDevice.id, mockTargetVersion.id);
+
+      expect(mockMqttTransportService.sendCommandAndWaitForResponse).toHaveBeenCalledTimes(2);
+      
+      expect(mockMqttTransportService.sendCommandAndWaitForResponse).toHaveBeenNthCalledWith(
+        1, mockDevice.serialNumber, 'STAGE_MODEL_VERSION', expect.any(Object), 15000
+      );
+      
+      expect(mockDeviceRepository.update).toHaveBeenCalledWith({
+        where: { id: mockDevice.id },
+        data: { modelVersion: { connect: { id: mockTargetVersion.id } } }
+      });
+      
+      expect(mockDashboardPlugin.invalidateDeviceCache).toHaveBeenCalledWith(mockDevice.serialNumber);
+
+      expect(result).toEqual({
+        success: true,
+        staged: true,
+        restartRequired: true,
+        deviceId: mockDevice.id,
+        serialNumber: mockDevice.serialNumber,
+        model: mockTargetVersion.modelId,
+        version: mockTargetVersion.version,
+        modelVersionId: mockTargetVersion.id,
+      });
+    });
+
+    it('should rollback database if RESTART command fails', async () => {
+      // Uspešan stage, ali RESTART puca
+      mockMqttTransportService.sendCommandAndWaitForResponse
+        .mockResolvedValueOnce({ success: true }) // Za STAGE
+        .mockResolvedValueOnce({ success: false, error: 'TIMEOUT' }); // Za RESTART
+
+      await expect(
+        service.applyModelVersion(mockDevice.id, mockTargetVersion.id)
+      ).rejects.toThrow(ConflictException);
+
+      // Trebalo bi da se pozove update 2 puta: prvi put za promenu, drugi put za rollback
+      expect(mockDeviceRepository.update).toHaveBeenCalledTimes(2);
+      
+      expect(mockDeviceRepository.update).toHaveBeenLastCalledWith({
+        where: { id: mockDevice.id },
+        data: { modelVersion: { connect: { id: mockDevice.modelVersionId } } } // vraća na staru
+      });
+
+      // Invalidacija keša bi trebalo da se desi ponovo prilikom rollback-a
+      expect(mockDashboardPlugin.invalidateDeviceCache).toHaveBeenCalledTimes(2);
+    });
+    
+    it('should throw ForbiddenException if device is not ONLINE', async () => {
+       const offlineDevice = { ...mockDevice, status: DeviceStatus.OFFLINE };
+       mockDeviceRepository.findOne.mockResolvedValueOnce(offlineDevice);
+       
+       await expect(
+        service.applyModelVersion(mockDevice.id, mockTargetVersion.id)
+       ).rejects.toThrow(ForbiddenException);
+    });
+  });
 });
