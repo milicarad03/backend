@@ -38,6 +38,11 @@ export type Device = Prisma.DeviceModel
  */
 export type DeviceTelemetry = Prisma.DeviceTelemetryModel
 /**
+ * Model CommandAudit
+ * 
+ */
+export type CommandAudit = Prisma.CommandAuditModel
+/**
  * Model DeviceModel
  * 
  */

@@ -5,6 +5,7 @@ import { DeviceTelemetryService } from './device-telemetry.service';
 import { NotFoundException,ForbiddenException } from '@nestjs/common';
 import { MqttTransportService } from '../mqtt/mqtt-transport.service';
 import { DeviceDashboardService } from 'serverplugin';
+import { DeviceCommandAuditService } from './device-command-audit.service';
 
 describe('DeviceController', () => {
   let controller: DeviceController;
@@ -19,7 +20,8 @@ describe('DeviceController', () => {
     toggleDeviceStatus: jest.fn(),
     testPluginDeviceCheck: jest.fn(),
     reassignDevice:jest.fn(),
-    applyModelVersion: jest.fn()
+    applyModelVersion: jest.fn(),
+    assertDeviceAccess: jest.fn(),
   };
 
   const mockDeviceTelemetryService = {
@@ -35,9 +37,19 @@ const mockDeviceDashboardService = {
   getCommandMetadata: jest.fn(),
 };
 
+const mockDeviceCommandAuditService = {
+  execute: jest.fn(),
+};
+
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    mockDeviceCommandAuditService.execute.mockImplementation(
+      async (_command, action) => ({
+        correlationId: 'audit-correlation-1',
+        value: await action('audit-correlation-1'),
+      }),
+    );
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [DeviceController],
@@ -57,6 +69,10 @@ const mockDeviceDashboardService = {
         {
           provide: DeviceDashboardService,
           useValue: mockDeviceDashboardService,
+        },
+        {
+          provide: DeviceCommandAuditService,
+          useValue: mockDeviceCommandAuditService,
         },
       ]
     }).compile();
@@ -154,13 +170,17 @@ const mockDeviceDashboardService = {
       serialNumber: 'sn-100',
     };
 
-    mockDeviceService.getDevice.mockResolvedValue(device);
+    mockDeviceService.assertDeviceAccess.mockResolvedValue(device);
 
-    const result = await controller.getDeviceById('device-1');
-
-    expect(mockDeviceService.getDevice).toHaveBeenCalledWith({
-      id: 'device-1',
+    const result = await controller.getDeviceById('device-1', {
+      user: { userId: 1, role: 'USER' },
     });
+
+    expect(mockDeviceService.assertDeviceAccess).toHaveBeenCalledWith(
+      'device-1',
+      1,
+      'USER',
+    );
 
     expect(result).toEqual(device);
   });
@@ -229,7 +249,15 @@ const mockDeviceDashboardService = {
 
     mockDeviceTelemetryService.getTelemetryHistory.mockResolvedValue(history);
 
-    const result = await controller.getDeviceTelemetry('sn-100');
+    const result = await controller.getDeviceTelemetry('sn-100', {
+      user: { userId: 1, role: 'USER' },
+    });
+
+    expect(mockDeviceService.assertDeviceAccess).toHaveBeenCalledWith(
+      'sn-100',
+      1,
+      'USER',
+    );
 
     expect(mockDeviceTelemetryService.getTelemetryHistory).toHaveBeenCalledWith(
       'sn-100',
@@ -249,7 +277,15 @@ const mockDeviceDashboardService = {
 
     mockDeviceTelemetryService.getLatestTelemetry.mockResolvedValue(latest);
 
-    const result = await controller.getLatestDeviceTelemetry('sn-100');
+    const result = await controller.getLatestDeviceTelemetry('sn-100', {
+      user: { userId: 1, role: 'USER' },
+    });
+
+    expect(mockDeviceService.assertDeviceAccess).toHaveBeenCalledWith(
+      'sn-100',
+      1,
+      'USER',
+    );
 
     expect(mockDeviceTelemetryService.getLatestTelemetry).toHaveBeenCalledWith(
       'sn-100',
@@ -275,9 +311,13 @@ const mockDeviceDashboardService = {
     expect(result).toEqual(pluginResult);
   });
   it('should throw NotFoundException when device does not exist', async () => {
-    mockDeviceService.getDevice.mockRejectedValue(new NotFoundException());
+    mockDeviceService.assertDeviceAccess.mockRejectedValueOnce(new NotFoundException());
 
-    await expect(controller.getDeviceById('bad-id')).rejects.toThrow(NotFoundException);
+    await expect(
+      controller.getDeviceById('bad-id', {
+        user: { userId: 1, role: 'USER' },
+      }),
+    ).rejects.toThrow(NotFoundException);
   });
 
   it('should handle empty query params in getDevice', async () => {
@@ -324,10 +364,14 @@ const mockDeviceDashboardService = {
 
   it('should propagate generic errors as Internal Server Error', async () => {
  
-    mockDeviceService.getDevice.mockRejectedValue(new Error('Unexpected Database Crash'));
+    mockDeviceService.assertDeviceAccess.mockRejectedValueOnce(new Error('Unexpected Database Crash'));
 
   
-    await expect(controller.getDeviceById('any-id')).rejects.toThrow('Unexpected Database Crash');
+    await expect(
+      controller.getDeviceById('any-id', {
+        user: { userId: 1, role: 'USER' },
+      }),
+    ).rejects.toThrow('Unexpected Database Crash');
   });
   it('should propagate NotFoundException when toggling non-existent device', async () => {
     const req = { user: { userId: 1 } };
@@ -347,6 +391,28 @@ const mockDeviceDashboardService = {
         command: 'SET_LED',
         payload: { value: true },
       },
+      {
+        user: {
+          userId: 7,
+          role: 'USER',
+        },
+      },
+    );
+
+    expect(mockDeviceCommandAuditService.execute).toHaveBeenCalledWith(
+      {
+        userId: 7,
+        deviceId: 'sn-100',
+        command: 'SET_LED',
+        payload: { value: true },
+      },
+      expect.any(Function),
+    );
+
+    expect(mockDeviceService.assertDeviceAccess).toHaveBeenCalledWith(
+      'sn-100',
+      7,
+      'USER',
     );
 
     expect(
@@ -355,10 +421,12 @@ const mockDeviceDashboardService = {
       'sn-100',
       'SET_LED',
       { value: true },
+      { correlationId: 'audit-correlation-1' },
     );
 
     expect(result).toEqual({
       success: true,
+      correlationId: 'audit-correlation-1',
     });
   });
   it('should return command metadata', async () => {
@@ -372,8 +440,15 @@ const mockDeviceDashboardService = {
       metadata,
     );
 
-    const result =
-      await controller.getCommandMetadata('sn-100');
+    const result = await controller.getCommandMetadata('sn-100', {
+      user: { userId: 1, role: 'USER' },
+    });
+
+    expect(mockDeviceService.assertDeviceAccess).toHaveBeenCalledWith(
+      'sn-100',
+      1,
+      'USER',
+    );
 
     expect(
       mockDeviceDashboardService.getCommandMetadata,

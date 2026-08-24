@@ -226,6 +226,7 @@ export type UserWhereInput = {
   status?: Prisma.EnumUserStatusFilter<"User"> | $Enums.UserStatus
   posts?: Prisma.PostListRelationFilter
   devices?: Prisma.DeviceListRelationFilter
+  commandAudits?: Prisma.CommandAuditListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -237,6 +238,7 @@ export type UserOrderByWithRelationInput = {
   status?: Prisma.SortOrder
   posts?: Prisma.PostOrderByRelationAggregateInput
   devices?: Prisma.DeviceOrderByRelationAggregateInput
+  commandAudits?: Prisma.CommandAuditOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -251,6 +253,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   status?: Prisma.EnumUserStatusFilter<"User"> | $Enums.UserStatus
   posts?: Prisma.PostListRelationFilter
   devices?: Prisma.DeviceListRelationFilter
+  commandAudits?: Prisma.CommandAuditListRelationFilter
 }, "id" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -287,6 +290,7 @@ export type UserCreateInput = {
   status?: $Enums.UserStatus
   posts?: Prisma.PostCreateNestedManyWithoutAuthorInput
   devices?: Prisma.DeviceCreateNestedManyWithoutUserInput
+  commandAudits?: Prisma.CommandAuditCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -298,6 +302,7 @@ export type UserUncheckedCreateInput = {
   status?: $Enums.UserStatus
   posts?: Prisma.PostUncheckedCreateNestedManyWithoutAuthorInput
   devices?: Prisma.DeviceUncheckedCreateNestedManyWithoutUserInput
+  commandAudits?: Prisma.CommandAuditUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -308,6 +313,7 @@ export type UserUpdateInput = {
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   posts?: Prisma.PostUpdateManyWithoutAuthorNestedInput
   devices?: Prisma.DeviceUpdateManyWithoutUserNestedInput
+  commandAudits?: Prisma.CommandAuditUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -319,6 +325,7 @@ export type UserUncheckedUpdateInput = {
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   posts?: Prisma.PostUncheckedUpdateManyWithoutAuthorNestedInput
   devices?: Prisma.DeviceUncheckedUpdateManyWithoutUserNestedInput
+  commandAudits?: Prisma.CommandAuditUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -387,6 +394,11 @@ export type UserScalarRelationFilter = {
   isNot?: Prisma.UserWhereInput
 }
 
+export type UserNullableScalarRelationFilter = {
+  is?: Prisma.UserWhereInput | null
+  isNot?: Prisma.UserWhereInput | null
+}
+
 export type StringFieldUpdateOperationsInput = {
   set?: string
 }
@@ -439,6 +451,22 @@ export type UserUpdateOneRequiredWithoutDevicesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutDevicesInput, Prisma.UserUpdateWithoutDevicesInput>, Prisma.UserUncheckedUpdateWithoutDevicesInput>
 }
 
+export type UserCreateNestedOneWithoutCommandAuditsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutCommandAuditsInput, Prisma.UserUncheckedCreateWithoutCommandAuditsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutCommandAuditsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneWithoutCommandAuditsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutCommandAuditsInput, Prisma.UserUncheckedCreateWithoutCommandAuditsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutCommandAuditsInput
+  upsert?: Prisma.UserUpsertWithoutCommandAuditsInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutCommandAuditsInput, Prisma.UserUpdateWithoutCommandAuditsInput>, Prisma.UserUncheckedUpdateWithoutCommandAuditsInput>
+}
+
 export type UserCreateWithoutPostsInput = {
   email: string
   name?: string | null
@@ -446,6 +474,7 @@ export type UserCreateWithoutPostsInput = {
   role?: $Enums.Role
   status?: $Enums.UserStatus
   devices?: Prisma.DeviceCreateNestedManyWithoutUserInput
+  commandAudits?: Prisma.CommandAuditCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutPostsInput = {
@@ -456,6 +485,7 @@ export type UserUncheckedCreateWithoutPostsInput = {
   role?: $Enums.Role
   status?: $Enums.UserStatus
   devices?: Prisma.DeviceUncheckedCreateNestedManyWithoutUserInput
+  commandAudits?: Prisma.CommandAuditUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutPostsInput = {
@@ -481,6 +511,7 @@ export type UserUpdateWithoutPostsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   devices?: Prisma.DeviceUpdateManyWithoutUserNestedInput
+  commandAudits?: Prisma.CommandAuditUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPostsInput = {
@@ -491,6 +522,7 @@ export type UserUncheckedUpdateWithoutPostsInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   devices?: Prisma.DeviceUncheckedUpdateManyWithoutUserNestedInput
+  commandAudits?: Prisma.CommandAuditUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutDevicesInput = {
@@ -500,6 +532,7 @@ export type UserCreateWithoutDevicesInput = {
   role?: $Enums.Role
   status?: $Enums.UserStatus
   posts?: Prisma.PostCreateNestedManyWithoutAuthorInput
+  commandAudits?: Prisma.CommandAuditCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutDevicesInput = {
@@ -510,6 +543,7 @@ export type UserUncheckedCreateWithoutDevicesInput = {
   role?: $Enums.Role
   status?: $Enums.UserStatus
   posts?: Prisma.PostUncheckedCreateNestedManyWithoutAuthorInput
+  commandAudits?: Prisma.CommandAuditUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutDevicesInput = {
@@ -535,6 +569,7 @@ export type UserUpdateWithoutDevicesInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   posts?: Prisma.PostUpdateManyWithoutAuthorNestedInput
+  commandAudits?: Prisma.CommandAuditUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutDevicesInput = {
@@ -545,6 +580,65 @@ export type UserUncheckedUpdateWithoutDevicesInput = {
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   posts?: Prisma.PostUncheckedUpdateManyWithoutAuthorNestedInput
+  commandAudits?: Prisma.CommandAuditUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutCommandAuditsInput = {
+  email: string
+  name?: string | null
+  password?: string
+  role?: $Enums.Role
+  status?: $Enums.UserStatus
+  posts?: Prisma.PostCreateNestedManyWithoutAuthorInput
+  devices?: Prisma.DeviceCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutCommandAuditsInput = {
+  id?: number
+  email: string
+  name?: string | null
+  password?: string
+  role?: $Enums.Role
+  status?: $Enums.UserStatus
+  posts?: Prisma.PostUncheckedCreateNestedManyWithoutAuthorInput
+  devices?: Prisma.DeviceUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutCommandAuditsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutCommandAuditsInput, Prisma.UserUncheckedCreateWithoutCommandAuditsInput>
+}
+
+export type UserUpsertWithoutCommandAuditsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutCommandAuditsInput, Prisma.UserUncheckedUpdateWithoutCommandAuditsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutCommandAuditsInput, Prisma.UserUncheckedCreateWithoutCommandAuditsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutCommandAuditsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutCommandAuditsInput, Prisma.UserUncheckedUpdateWithoutCommandAuditsInput>
+}
+
+export type UserUpdateWithoutCommandAuditsInput = {
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  posts?: Prisma.PostUpdateManyWithoutAuthorNestedInput
+  devices?: Prisma.DeviceUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutCommandAuditsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  posts?: Prisma.PostUncheckedUpdateManyWithoutAuthorNestedInput
+  devices?: Prisma.DeviceUncheckedUpdateManyWithoutUserNestedInput
 }
 
 
@@ -555,11 +649,13 @@ export type UserUncheckedUpdateWithoutDevicesInput = {
 export type UserCountOutputType = {
   posts: number
   devices: number
+  commandAudits: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   posts?: boolean | UserCountOutputTypeCountPostsArgs
   devices?: boolean | UserCountOutputTypeCountDevicesArgs
+  commandAudits?: boolean | UserCountOutputTypeCountCommandAuditsArgs
 }
 
 /**
@@ -586,6 +682,13 @@ export type UserCountOutputTypeCountDevicesArgs<ExtArgs extends runtime.Types.Ex
   where?: Prisma.DeviceWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountCommandAuditsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CommandAuditWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -596,6 +699,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   status?: boolean
   posts?: boolean | Prisma.User$postsArgs<ExtArgs>
   devices?: boolean | Prisma.User$devicesArgs<ExtArgs>
+  commandAudits?: boolean | Prisma.User$commandAuditsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -630,6 +734,7 @@ export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = run
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   posts?: boolean | Prisma.User$postsArgs<ExtArgs>
   devices?: boolean | Prisma.User$devicesArgs<ExtArgs>
+  commandAudits?: boolean | Prisma.User$commandAuditsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -640,6 +745,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   objects: {
     posts: Prisma.$PostPayload<ExtArgs>[]
     devices: Prisma.$DevicePayload<ExtArgs>[]
+    commandAudits: Prisma.$CommandAuditPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -1044,6 +1150,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   readonly [Symbol.toStringTag]: "PrismaPromise"
   posts<T extends Prisma.User$postsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$postsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PostPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   devices<T extends Prisma.User$devicesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$devicesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DevicePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  commandAudits<T extends Prisma.User$commandAuditsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$commandAuditsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CommandAuditPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1517,6 +1624,30 @@ export type User$devicesArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
   take?: number
   skip?: number
   distinct?: Prisma.DeviceScalarFieldEnum | Prisma.DeviceScalarFieldEnum[]
+}
+
+/**
+ * User.commandAudits
+ */
+export type User$commandAuditsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CommandAudit
+   */
+  select?: Prisma.CommandAuditSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CommandAudit
+   */
+  omit?: Prisma.CommandAuditOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CommandAuditInclude<ExtArgs> | null
+  where?: Prisma.CommandAuditWhereInput
+  orderBy?: Prisma.CommandAuditOrderByWithRelationInput | Prisma.CommandAuditOrderByWithRelationInput[]
+  cursor?: Prisma.CommandAuditWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CommandAuditScalarFieldEnum | Prisma.CommandAuditScalarFieldEnum[]
 }
 
 /**

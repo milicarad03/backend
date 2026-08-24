@@ -11,6 +11,7 @@ import Redis from 'ioredis';
 import { MqttModule } from 'src/mqtt/mqtt.module';
 import { MqttPublisherService } from '../mqtt/mqtt-publisher.service';
 import { MqttTransportService } from 'src/mqtt/mqtt-transport.service';
+import { DeviceCommandAuditService } from './device-command-audit.service';
 
 export type DeviceTelemetry = {
   deviceId: string;
@@ -31,7 +32,7 @@ export type DeviceTelemetry = {
     }),
   ],
   controllers: [DeviceController],
-  providers: [DeviceService, MqttTransportService],
+  providers: [DeviceService, MqttTransportService, DeviceCommandAuditService],
   exports: [DeviceService],
 })
 export class DeviceModule {}

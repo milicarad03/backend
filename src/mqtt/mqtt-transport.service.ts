@@ -68,7 +68,8 @@ export class MqttTransportService
     string,
     PendingResponse
   >();
-  private readonly brokerUrl = 'mqtt://localhost:1883';
+  private readonly brokerUrl =
+    process.env.MQTT_BROKER_URL ?? 'mqtt://localhost:1883';
 
   constructor(
     private readonly pluginCore: DeviceDashboardService,

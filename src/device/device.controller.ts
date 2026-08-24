@@ -26,6 +26,7 @@ import {
   DatabaseFailureException,
   CommandValidationException,
 } from 'serverplugin';
+import { DeviceCommandAuditService } from './device-command-audit.service';
 
 @Controller('device')
 export class DeviceController {
@@ -34,7 +35,8 @@ export class DeviceController {
     private readonly deviceService: DeviceService,
     private readonly deviceTelemetryService:DeviceTelemetryService,
     private readonly mqttTransportService:MqttTransportService,
-    private readonly deviceDashboardService:DeviceDashboardService
+    private readonly deviceDashboardService:DeviceDashboardService,
+    private readonly deviceCommandAuditService: DeviceCommandAuditService,
   ) {}
 
  
@@ -87,16 +89,26 @@ export class DeviceController {
   @Get(':id/telemetry/latest')
   @Roles(Role.USER, Role.ADMIN)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  async getLatestDeviceTelemetry(@Param('id') id: string) {
+  async getLatestDeviceTelemetry(@Param('id') id: string, @Req() req) {
     this.logger.debug(`HTTP request for latest telemetry of device: ${id}`);
+    await this.deviceService.assertDeviceAccess(
+      id,
+      req.user.userId,
+      req.user.role,
+    );
     return this.deviceTelemetryService.getLatestTelemetry(id);
   }
 
    @Get(':id/telemetry')
    @Roles(Role.USER, Role.ADMIN)
    @UseGuards(AuthGuard('jwt'), RolesGuard)
-   async getDeviceTelemetry(@Param('id') id: string) {
+   async getDeviceTelemetry(@Param('id') id: string, @Req() req) {
       this.logger.debug(`HTTP request for telemetry history of device: ${id}`);
+      await this.deviceService.assertDeviceAccess(
+        id,
+        req.user.userId,
+        req.user.role,
+      );
       return this.deviceTelemetryService.getTelemetryHistory(id);
    }
 
@@ -113,9 +125,13 @@ export class DeviceController {
   @Get(":id")
   @Roles(Role.USER, Role.ADMIN)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  async getDeviceById(@Param("id") id: string): Promise<DeviceModel | null> {
+  async getDeviceById(@Param("id") id: string, @Req() req): Promise<DeviceModel> {
     this.logger.debug(`HTTP request for detailed view of device record: ${id}`);
-    return this.deviceService.getDevice({ id });
+    return this.deviceService.assertDeviceAccess(
+      id,
+      req.user.userId,
+      req.user.role,
+    );
   }
 
   
@@ -163,16 +179,35 @@ export class DeviceController {
 @Roles(Role.USER, Role.ADMIN)
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 async sendDeviceCommand( @Param('id') id: string,
-  @Body() body: { command: string; payload: any;}) {
+  @Body() body: { command: string; payload: any;},
+  @Req() req) {
   try {
-  await this.deviceDashboardService.executeCommand(
-      id,
-      body.command,
-      body.payload
+    const userId = req.user.userId ?? req.user.id;
+    const auditedCommand = await this.deviceCommandAuditService.execute(
+      {
+        userId,
+        deviceId: id,
+        command: body.command,
+        payload: body.payload,
+      },
+      async (correlationId) => {
+        await this.deviceService.assertDeviceAccess(
+          id,
+          userId,
+          req.user.role,
+        );
+        await this.deviceDashboardService.executeCommand(
+          id,
+          body.command,
+          body.payload,
+          { correlationId },
+        );
+      },
     );
 
     return {
-      success: true
+      success: true,
+      correlationId: auditedCommand.correlationId,
     };
 
   } catch (err: any) {
@@ -203,7 +238,13 @@ async sendDeviceCommand( @Param('id') id: string,
 @Roles(Role.USER, Role.ADMIN)
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 async getCommandMetadata(
-  @Param('id') id: string) {
+  @Param('id') id: string,
+  @Req() req) {
+  await this.deviceService.assertDeviceAccess(
+    id,
+    req.user.userId,
+    req.user.role,
+  );
   return this.deviceDashboardService.getCommandMetadata(id);
 }
 }

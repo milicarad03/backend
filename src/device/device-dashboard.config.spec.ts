@@ -224,7 +224,7 @@ describe('createDeviceDashboardConfig', () => {
         'ONLINE',
       );
     });
-    it('should publish command through mqtt publisher', async () => {
+  it('should publish command through mqtt publisher', async () => {
     const config = createDeviceDashboardConfig(
       mockDeviceRepository as any,
       mockDeviceTelemetryService as any,
@@ -246,6 +246,31 @@ describe('createDeviceDashboardConfig', () => {
       {
         command: 'SET_LED',
         payload: { value: true },
+      },
+    );
+  });
+  it('should include the audit correlation ID in the MQTT command', async () => {
+    const config = createDeviceDashboardConfig(
+      mockDeviceRepository as any,
+      mockDeviceTelemetryService as any,
+      mockRedis,
+      mockMqttPublisher as any,
+    );
+
+    await config.sendCommand(
+      'sn-100',
+      'SET_LED',
+      { value: true },
+      { correlationId: 'audit-correlation-1' },
+    );
+
+    expect(mockMqttPublisher.publish).toHaveBeenCalledWith(
+      'command',
+      'sn-100',
+      {
+        command: 'SET_LED',
+        payload: { value: true },
+        correlationId: 'audit-correlation-1',
       },
     );
   });

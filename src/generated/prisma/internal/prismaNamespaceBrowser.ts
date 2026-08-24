@@ -55,6 +55,7 @@ export const ModelName = {
   Post: 'Post',
   Device: 'Device',
   DeviceTelemetry: 'DeviceTelemetry',
+  CommandAudit: 'CommandAudit',
   DeviceModel: 'DeviceModel',
   ModelVersion: 'ModelVersion'
 } as const
@@ -109,6 +110,7 @@ export const DeviceScalarFieldEnum = {
   userId: 'userId',
   lastseen: 'lastseen',
   status: 'status',
+  telemetryState: 'telemetryState',
   modelVersionId: 'modelVersionId',
   isVerified: 'isVerified',
   certSerialNumber: 'certSerialNumber',
@@ -128,6 +130,22 @@ export const DeviceTelemetryScalarFieldEnum = {
 } as const
 
 export type DeviceTelemetryScalarFieldEnum = (typeof DeviceTelemetryScalarFieldEnum)[keyof typeof DeviceTelemetryScalarFieldEnum]
+
+
+export const CommandAuditScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  deviceId: 'deviceId',
+  command: 'command',
+  payload: 'payload',
+  correlationId: 'correlationId',
+  result: 'result',
+  error: 'error',
+  createdAt: 'createdAt',
+  completedAt: 'completedAt'
+} as const
+
+export type CommandAuditScalarFieldEnum = (typeof CommandAuditScalarFieldEnum)[keyof typeof CommandAuditScalarFieldEnum]
 
 
 export const DeviceModelScalarFieldEnum = {
@@ -163,6 +181,14 @@ export const JsonNullValueInput = {
 } as const
 
 export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
 
 
 export const QueryMode = {

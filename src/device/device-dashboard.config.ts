@@ -4,6 +4,7 @@ import { Logger } from '@nestjs/common';
 import { DeviceStatus } from '../generated/prisma/client.js';
 import Redis from 'ioredis';
 import { MqttPublisherService } from 'src/mqtt/mqtt-publisher.service';
+import type { CommandDispatchContext } from 'serverplugin';
 
 export type DeviceTelemetry = {
   deviceId: string;
@@ -87,7 +88,12 @@ export const createDeviceDashboardConfig = (
 
     }
   },
- sendCommand: async (deviceId: string, command: string, payload?: any) => {
+ sendCommand: async (
+   deviceId: string,
+   command: string,
+   payload?: any,
+   context?: CommandDispatchContext,
+ ) => {
 
   /*logger.error(
     `[MQTT SEND]
@@ -99,7 +105,10 @@ export const createDeviceDashboardConfig = (
 
    await mqttPublisher.publish('command', deviceId, {
      command,
-     payload, 
+     payload,
+     ...(context?.correlationId
+       ? { correlationId: context.correlationId }
+       : {}),
    });
 },
 getLatestTelemetry: async (deviceId: string) => {

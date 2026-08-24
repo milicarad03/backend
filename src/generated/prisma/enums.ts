@@ -33,3 +33,20 @@ export const DeviceStatus = {
 } as const
 
 export type DeviceStatus = (typeof DeviceStatus)[keyof typeof DeviceStatus]
+
+
+export const TelemetryState = {
+  ACTIVE: 'ACTIVE',
+  IDLE: 'IDLE'
+} as const
+
+export type TelemetryState = (typeof TelemetryState)[keyof typeof TelemetryState]
+
+
+export const CommandAuditResult = {
+  PENDING: 'PENDING',
+  SUCCESS: 'SUCCESS',
+  FAILURE: 'FAILURE'
+} as const
+
+export type CommandAuditResult = (typeof CommandAuditResult)[keyof typeof CommandAuditResult]

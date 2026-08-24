@@ -32,6 +32,13 @@ enum TelemetryState {
   ACTIVE
   IDLE
 }
+
+enum CommandAuditResult {
+  PENDING
+  SUCCESS
+  FAILURE
+}
+
 model User { 
   id    Int     @id @default(autoincrement()) 
   email String  @unique
@@ -41,6 +48,7 @@ model User {
   devices Device[]
   role  Role   @default(USER)
   status   UserStatus @default(PENDING)
+  commandAudits CommandAudit[]
 } 
 
 model Post { 
@@ -88,6 +96,24 @@ model DeviceTelemetry {
   modelVersionId String?
   modelVersion ModelVersion? @relation(fields: [modelVersionId], references: [id])
 
+}
+
+model CommandAudit {
+  id            String             @id @default(uuid())
+  userId        Int?
+  user          User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  deviceId      String
+  command       String
+  payload       Json?
+  correlationId String             @unique
+  result        CommandAuditResult @default(PENDING)
+  error         String?
+  createdAt     DateTime           @default(now())
+  completedAt   DateTime?
+
+  @@index([deviceId, createdAt])
+  @@index([userId, createdAt])
+  @@index([result, createdAt])
 }
 
 model DeviceModel {

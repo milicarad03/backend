@@ -388,6 +388,7 @@ export const ModelName = {
   Post: 'Post',
   Device: 'Device',
   DeviceTelemetry: 'DeviceTelemetry',
+  CommandAudit: 'CommandAudit',
   DeviceModel: 'DeviceModel',
   ModelVersion: 'ModelVersion'
 } as const
@@ -405,7 +406,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "post" | "device" | "deviceTelemetry" | "deviceModel" | "modelVersion"
+    modelProps: "user" | "post" | "device" | "deviceTelemetry" | "commandAudit" | "deviceModel" | "modelVersion"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -705,6 +706,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    CommandAudit: {
+      payload: Prisma.$CommandAuditPayload<ExtArgs>
+      fields: Prisma.CommandAuditFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CommandAuditFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommandAuditPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CommandAuditFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommandAuditPayload>
+        }
+        findFirst: {
+          args: Prisma.CommandAuditFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommandAuditPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CommandAuditFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommandAuditPayload>
+        }
+        findMany: {
+          args: Prisma.CommandAuditFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommandAuditPayload>[]
+        }
+        create: {
+          args: Prisma.CommandAuditCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommandAuditPayload>
+        }
+        createMany: {
+          args: Prisma.CommandAuditCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.CommandAuditCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommandAuditPayload>[]
+        }
+        delete: {
+          args: Prisma.CommandAuditDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommandAuditPayload>
+        }
+        update: {
+          args: Prisma.CommandAuditUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommandAuditPayload>
+        }
+        deleteMany: {
+          args: Prisma.CommandAuditDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CommandAuditUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.CommandAuditUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommandAuditPayload>[]
+        }
+        upsert: {
+          args: Prisma.CommandAuditUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommandAuditPayload>
+        }
+        aggregate: {
+          args: Prisma.CommandAuditAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCommandAudit>
+        }
+        groupBy: {
+          args: Prisma.CommandAuditGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CommandAuditGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CommandAuditCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CommandAuditCountAggregateOutputType> | number
+        }
+      }
+    }
     DeviceModel: {
       payload: Prisma.$DeviceModelPayload<ExtArgs>
       fields: Prisma.DeviceModelFieldRefs
@@ -926,6 +1001,7 @@ export const DeviceScalarFieldEnum = {
   userId: 'userId',
   lastseen: 'lastseen',
   status: 'status',
+  telemetryState: 'telemetryState',
   modelVersionId: 'modelVersionId',
   isVerified: 'isVerified',
   certSerialNumber: 'certSerialNumber',
@@ -945,6 +1021,22 @@ export const DeviceTelemetryScalarFieldEnum = {
 } as const
 
 export type DeviceTelemetryScalarFieldEnum = (typeof DeviceTelemetryScalarFieldEnum)[keyof typeof DeviceTelemetryScalarFieldEnum]
+
+
+export const CommandAuditScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  deviceId: 'deviceId',
+  command: 'command',
+  payload: 'payload',
+  correlationId: 'correlationId',
+  result: 'result',
+  error: 'error',
+  createdAt: 'createdAt',
+  completedAt: 'completedAt'
+} as const
+
+export type CommandAuditScalarFieldEnum = (typeof CommandAuditScalarFieldEnum)[keyof typeof CommandAuditScalarFieldEnum]
 
 
 export const DeviceModelScalarFieldEnum = {
@@ -980,6 +1072,14 @@ export const JsonNullValueInput = {
 } as const
 
 export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
 
 
 export const QueryMode = {
@@ -1105,6 +1205,20 @@ export type ListEnumDeviceStatusFieldRefInput<$PrismaModel> = FieldRefInputType<
 
 
 /**
+ * Reference to a field of type 'TelemetryState'
+ */
+export type EnumTelemetryStateFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TelemetryState'>
+    
+
+
+/**
+ * Reference to a field of type 'TelemetryState[]'
+ */
+export type ListEnumTelemetryStateFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TelemetryState[]'>
+    
+
+
+/**
  * Reference to a field of type 'Json'
  */
 export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
@@ -1115,6 +1229,20 @@ export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'J
  * Reference to a field of type 'QueryMode'
  */
 export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
+    
+
+
+/**
+ * Reference to a field of type 'CommandAuditResult'
+ */
+export type EnumCommandAuditResultFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CommandAuditResult'>
+    
+
+
+/**
+ * Reference to a field of type 'CommandAuditResult[]'
+ */
+export type ListEnumCommandAuditResultFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CommandAuditResult[]'>
     
 
 
@@ -1230,6 +1358,7 @@ export type GlobalOmitConfig = {
   post?: Prisma.PostOmit
   device?: Prisma.DeviceOmit
   deviceTelemetry?: Prisma.DeviceTelemetryOmit
+  commandAudit?: Prisma.CommandAuditOmit
   deviceModel?: Prisma.DeviceModelOmit
   modelVersion?: Prisma.ModelVersionOmit
 }

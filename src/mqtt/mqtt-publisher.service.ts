@@ -9,7 +9,8 @@ export class MqttPublisherService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(MqttPublisherService.name);
 
   private client: MqttClient | null = null;
-  private readonly brokerUrl = 'mqtt://localhost:1883';
+  private readonly brokerUrl =
+    process.env.MQTT_BROKER_URL ?? 'mqtt://localhost:1883';
 
 
   private getTopic(key: string, deviceId: string): string {

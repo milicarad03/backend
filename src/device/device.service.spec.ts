@@ -52,6 +52,57 @@ describe('DeviceService', () => {
     service = module.get<DeviceService>(DeviceService);
   });
 
+  it('should allow the owner to access a device', async () => {
+    const device = {
+      id: 'device-1',
+      serialNumber: 'SN-1',
+      userId: 2,
+    };
+
+    mockDeviceRepository.findOne.mockResolvedValue(device);
+
+    await expect(
+      service.assertDeviceAccess('SN-1', 2, 'USER'),
+    ).resolves.toEqual(device);
+    expect(mockDeviceRepository.findOne).toHaveBeenCalledWith({
+      serialNumber: 'SN-1',
+    });
+  });
+
+  it('should allow an administrator to access another user device', async () => {
+    const device = {
+      id: 'device-1',
+      serialNumber: 'SN-1',
+      userId: 2,
+    };
+
+    mockDeviceRepository.findOne.mockResolvedValue(device);
+
+    await expect(
+      service.assertDeviceAccess('SN-1', 1, 'ADMIN'),
+    ).resolves.toEqual(device);
+  });
+
+  it('should forbid a regular user from accessing another user device', async () => {
+    mockDeviceRepository.findOne.mockResolvedValue({
+      id: 'device-1',
+      serialNumber: 'SN-1',
+      userId: 2,
+    });
+
+    await expect(
+      service.assertDeviceAccess('SN-1', 3, 'USER'),
+    ).rejects.toThrow(ForbiddenException);
+  });
+
+  it('should throw NotFoundException when accessed device does not exist', async () => {
+    mockDeviceRepository.findOne.mockResolvedValue(null);
+
+    await expect(
+      service.assertDeviceAccess('SN-MISSING', 2, 'USER'),
+    ).rejects.toThrow(NotFoundException);
+  });
+
   it('should create device for target user when targetUserId is provided', async () => {
     const createDeviceDto = {
       serialNumber: 'sn-100',

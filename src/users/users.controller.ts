@@ -54,6 +54,8 @@ export class UsersController {
   }
 
   @Patch('approval/:id')
+  @Roles(Role.ADMIN)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   async approveOrRejectUser(
     @Param('id', ParseIntPipe) id: number, 
     @Body('status') status: "APPROVED" | "REJECTED"

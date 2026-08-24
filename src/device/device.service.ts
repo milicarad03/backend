@@ -26,6 +26,23 @@ export class DeviceService {
   async getDevice(where: Prisma.DeviceWhereUniqueInput): Promise<Device | null> {
     return this.repository.findOne(where);
   }
+
+  async assertDeviceAccess(
+    serialNumber: string,
+    userId: number,
+    role: string,
+  ): Promise<Device> {
+    const device = await this.ensureDeviceExists({ serialNumber });
+
+    if (role !== 'ADMIN' && device.userId !== userId) {
+      this.logger.warn(
+        `Device access denied. User ID: ${userId}, device serial: ${serialNumber}`,
+      );
+      throw new ForbiddenException('Permission denied for accessing device');
+    }
+
+    return device;
+  }
     
   async getAllDevices() {
     return this.repository.findMany({ orderBy: { createdAt: 'desc' } });

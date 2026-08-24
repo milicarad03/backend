@@ -1,17 +1,28 @@
 import {
   ConnectedSocket,
   MessageBody,
+  OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
+  WsException,
 } from '@nestjs/websockets';
 
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { DeviceRepository } from './device.repository.js';
+
 export type TelemetryPayload = {
   deviceId: string;
   timestamp: string | Date;
   data: Record<string, unknown>;
+};
+
+type SocketUser = {
+  userId: number;
+  role: string;
+  email?: string;
 };
 
 @WebSocketGateway({
@@ -20,10 +31,53 @@ export type TelemetryPayload = {
     credentials: true,
   },
 })
-export class DeviceTelemetryGateway {
+export class DeviceTelemetryGateway implements OnGatewayInit {
   private readonly logger = new Logger(DeviceTelemetryGateway.name);
+
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly deviceRepository: DeviceRepository,
+  ) {}
+
   @WebSocketServer()
-  server!: Server;  
+  server!: Server;
+
+  afterInit(server: Server) {
+    server.use(async (client, next) => {
+      try {
+        const rawToken = client.handshake.auth?.token;
+
+        if (typeof rawToken !== 'string' || rawToken.length === 0) {
+          throw new Error('Missing token');
+        }
+
+        const token = rawToken.startsWith('Bearer ')
+          ? rawToken.slice(7)
+          : rawToken;
+        const payload = await this.jwtService.verifyAsync<{
+          sub: number | string;
+          role: string;
+          email?: string;
+        }>(token);
+        const userId = Number(payload.sub);
+
+        if (!Number.isInteger(userId) || !payload.role) {
+          throw new Error('Invalid token payload');
+        }
+
+        client.data.user = {
+          userId,
+          role: payload.role,
+          email: payload.email,
+        } satisfies SocketUser;
+
+        next();
+      } catch {
+        this.logger.warn(`Rejected unauthenticated WebSocket connection: ${client.id}`);
+        next(new Error('UNAUTHORIZED'));
+      }
+    });
+  }
 
   handleConnection(client: Socket) {
     this.logger.log(
@@ -39,20 +93,46 @@ export class DeviceTelemetryGateway {
 
 
   @SubscribeMessage('device:subscribe')
-  handleDeviceSubscribe(
+  async handleDeviceSubscribe(
     @ConnectedSocket() client: Socket,
     @MessageBody() body: { deviceId: string },
   ) {
-    const room = `device:${body.deviceId}`;
+    const user = client.data.user as SocketUser | undefined;
+    const deviceId = body?.deviceId?.trim();
 
-    client.join(room);
+    if (!user) {
+      throw new WsException('UNAUTHORIZED');
+    }
+
+    if (!deviceId) {
+      throw new WsException('DEVICE_ID_REQUIRED');
+    }
+
+    const device = await this.deviceRepository.findOne({
+      serialNumber: deviceId,
+    });
+
+    if (!device) {
+      throw new WsException('DEVICE_NOT_FOUND');
+    }
+
+    if (user.role !== 'ADMIN' && device.userId !== user.userId) {
+      this.logger.warn(
+        `WebSocket device subscription denied. User ID: ${user.userId}, device: ${deviceId}`,
+      );
+      throw new WsException('FORBIDDEN');
+    }
+
+    const room = `device:${deviceId}`;
+
+    await client.join(room);
 
     this.logger.log(`Client subscribed to WebSocket room: ${room}`);
 
     return {
       event: 'device:subscribed',
       data: {
-        deviceId: body.deviceId,
+        deviceId,
       },
     };
   }
