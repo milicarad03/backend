@@ -13,6 +13,25 @@
         "ACTIVE": 5000
       }
     },
+    "attributes": {
+     "type": "object",
+      "required": [
+        "serialNumber",
+        "firmware",
+        "hardwareModel"
+      ],
+      "properties": {
+        "serialNumber": {
+          "type": "string"
+        },
+        "firmware": {
+          "type": "string"
+        },
+        "hardwareModel": {
+          "type": "string"
+        }
+      }
+    },
     "system": {
       "type": "object",
  

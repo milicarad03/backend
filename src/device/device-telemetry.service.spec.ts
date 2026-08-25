@@ -3,7 +3,8 @@ import { DeviceTelemetryService } from './device-telemetry.service';
 import { DeviceRepository } from './device.repository';
 import { DeviceTelemetryGateway } from './device-telemetry.gateway';
 
-import { NotFoundException,ForbiddenException } from '@nestjs/common';
+import { NotFoundException, ForbiddenException } from '@nestjs/common';
+import { InvalidTimestampException } from 'serverplugin';
 
 describe('DeviceTelemetryService', () => {
   let service: DeviceTelemetryService;
@@ -61,7 +62,12 @@ describe('DeviceTelemetryService', () => {
       id: 'telemetry-1',
       deviceId: 'sn-100',
       timestamp: new Date(telemetry.timestamp),
-      data: telemetry.data,
+      data: {
+        temperature: [[22.5, telemetry.timestamp]],
+        humidity: [[45, telemetry.timestamp]],
+        pressure: [[1012, telemetry.timestamp]],
+        led: [[false, telemetry.timestamp]],
+      },
       createdAt: new Date(),
     };
 
@@ -78,7 +84,13 @@ describe('DeviceTelemetryService', () => {
     expect(mockDeviceRepository.createTelemetry).toHaveBeenCalledWith({
       deviceId: 'sn-100',
       timestamp: new Date(telemetry.timestamp),
-      data: telemetry.data,
+      data: {
+        temperature: [[22.5, telemetry.timestamp]],
+        humidity: [[45, telemetry.timestamp]],
+        pressure: [[1012, telemetry.timestamp]],
+        led: [[false, telemetry.timestamp]],
+      },
+      modelVersionId: undefined,
     });
 
     expect(mockDeviceRepository.update).toHaveBeenCalledWith({
@@ -106,10 +118,9 @@ describe('DeviceTelemetryService', () => {
         id: 'telemetry-1',
         deviceId: 'sn-100',
         timestamp: new Date(),
-        data: { temperature: 22.5 },
+        data: { temperature: [[22.5, '2026-05-18T08:54:08.179Z']] },
       },
     ];
-    
 
     mockDeviceRepository.findTelemetryByDeviceId.mockResolvedValue(history);
 
@@ -124,7 +135,7 @@ describe('DeviceTelemetryService', () => {
       id: 'telemetry-1',
       deviceId: 'sn-100',
       timestamp: new Date(),
-      data: { temperature: 22.5 },
+      data: { temperature: [[22.5, '2026-05-18T08:54:08.179Z']] },
     };
 
     mockDeviceRepository.findLatestTelemetryByDeviceId.mockResolvedValue(latest);
@@ -155,7 +166,6 @@ describe('DeviceTelemetryService', () => {
     })).rejects.toThrow(ForbiddenException);
   });
 
-
   it('should handle status change and emit update', async () => {
     mockDeviceRepository.findOne.mockResolvedValue({ id: 'device-1' });
     mockDeviceRepository.update.mockResolvedValue({});
@@ -183,20 +193,23 @@ describe('DeviceTelemetryService', () => {
   it('should merge new telemetry data with previous data', async () => {
     const oldData = { temperature: 20 };
     const newData = { humidity: 50 };
+    const timestamp = '2026-05-18T08:54:08.179Z';
     
     mockDeviceRepository.findOne.mockResolvedValue({ isVerified: true });
     mockDeviceRepository.findLatestTelemetryByDeviceId.mockResolvedValue({ data: oldData });
-    mockDeviceRepository.createTelemetry.mockResolvedValue({ data: { ...oldData, ...newData } });
+    mockDeviceRepository.createTelemetry.mockResolvedValue({ data: { temperature: 20, humidity: [[50, timestamp]] } });
 
     await service.handleTelemetry({
       deviceId: 'sn-100',
-      timestamp: '2026-05-18T08:54:08.179Z',
+      timestamp,
       data: newData
     });
 
     expect(mockDeviceRepository.createTelemetry).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: { temperature: 20, humidity: 50 }
+        data: expect.objectContaining({
+          humidity: [[50, timestamp]]
+        })
       })
     );
   });
@@ -232,12 +245,10 @@ describe('DeviceTelemetryService', () => {
   });
 
   it('should handle empty telemetry data gracefully', async () => {
-    
     mockDeviceRepository.createTelemetry.mockResolvedValue({ id: 't1' }); 
     mockDeviceRepository.findOne.mockResolvedValue({ isVerified: true });
     mockDeviceRepository.update.mockResolvedValue({});
 
-  
     await expect(service.handleTelemetry({
       deviceId: 'sn-100',
       timestamp: '2026-05-18T08:54:08.179Z',
@@ -245,7 +256,7 @@ describe('DeviceTelemetryService', () => {
     })).resolves.not.toThrow();
   });
 
-  it('should throw an error if timestamp is invalid', async () => {
+  it('should throw an InvalidTimestampException if timestamp is invalid', async () => {
     mockDeviceRepository.findOne.mockResolvedValue({ isVerified: true });
     
     const badTelemetry = {
@@ -253,25 +264,29 @@ describe('DeviceTelemetryService', () => {
       timestamp: 'not-a-date',
       data: { temp: 20 }
     };
-    await expect(service.handleTelemetry(badTelemetry as any)).rejects.toThrow();
+    await expect(service.handleTelemetry(badTelemetry as any)).rejects.toThrow(InvalidTimestampException);
   });
+
   it('should allow overwriting telemetry fields with null if needed', async () => {
     const oldData = { temperature: 20, status: 'ok' };
-    const newData = { temperature: null }; // Želimo da obrišemo/resetujemo temperaturu
+    const newData = { temperature: null };
+    const timestamp = '2026-05-18T08:54:08.179Z';
     
     mockDeviceRepository.findOne.mockResolvedValue({ isVerified: true });
     mockDeviceRepository.findLatestTelemetryByDeviceId.mockResolvedValue({ data: oldData });
-    mockDeviceRepository.createTelemetry.mockResolvedValue({ data: { temperature: null, status: 'ok' } });
+    mockDeviceRepository.createTelemetry.mockResolvedValue({ data: { temperature: [[null, timestamp]], status: 'ok' } });
 
     await service.handleTelemetry({
       deviceId: 'sn-100',
-      timestamp: '2026-05-18T08:54:08.179Z',
+      timestamp,
       data: newData as any
     });
 
     expect(mockDeviceRepository.createTelemetry).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: { temperature: null, status: 'ok' }
+        data: expect.objectContaining({
+          temperature: [[null, timestamp]]
+        })
       })
     );
   });
@@ -280,8 +295,6 @@ describe('DeviceTelemetryService', () => {
     mockDeviceRepository.findOne.mockResolvedValue({ id: 'device-1' });
     mockDeviceRepository.update.mockRejectedValue(new Error('DB_FAILED'));
 
-  
     await expect(service.handleStatusChange('sn-100', 'OFFLINE')).rejects.toThrow('DB_FAILED');
   });
-
 });

@@ -28,13 +28,13 @@ jest.setTimeout(60_000);
 const DEVICE_ID = `system-e2e-${process.pid}-${Date.now()}`;
 const TEST_USER_EMAIL = `system-e2e-${process.pid}-${Date.now()}@example.test`;
 const MODEL_ID = 'modelC';
-const MODEL_VERSION = '2.0.1';
+const MODEL_VERSION = '1.0.7';
 const MQTT_BROKER_URL =
   process.env.MQTT_BROKER_URL ?? 'mqtt://localhost:1883';
 
 const simulatorDirectory = resolve(
   __dirname,
-  '../../devicesimulator',
+  '../../../devicesimulator',
 );
 const schemaPath = join(
   simulatorDirectory,
@@ -42,10 +42,7 @@ const schemaPath = join(
   MODEL_ID,
   `${MODEL_VERSION}.schema.json`,
 );
-const mappingPath = resolve(
-  __dirname,
-  '../schema/modelSmart/mapper.json',
-);
+const mappingPath = '/home/rmilica/projects/server/schema/modelSmart/mapper.json';
 const simulatorStatsPath = join(
   tmpdir(),
   `${DEVICE_ID}-telemetry.log`,

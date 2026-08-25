@@ -121,5 +121,19 @@ export class DeviceRepository {
     where: { deviceId }
   });
 }
+async updateAttributes(serialNumber: string, attributes: Prisma.InputJsonValue) {
+    return this.prisma.device.update({
+      where: { serialNumber },
+      data: { attributes },
+    });
+  }
+
+  async findAttributesBySerialNumber(serialNumber: string) {
+    const device = await this.prisma.device.findUnique({
+      where: { serialNumber },
+      select: { attributes: true },
+    });
+    return device?.attributes ?? null;
+  }
 
 }

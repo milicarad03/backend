@@ -93,14 +93,6 @@ describe('DeviceTelemetryGateway', () => {
       expect(mockServer.emit).toHaveBeenCalledWith('telemetry:update', telemetry);
     });
 
-
-    it('should join global statuses room', () => {
-      const result = gateway.handleStatusesSubscribe(mockSocket);
-
-      expect(mockSocket.join).toHaveBeenCalledWith('devices:statuses');
-      expect(result).toEqual({ event: 'devices:statuses_subscribed' });
-    });
-
     it('should reject subscription with missing deviceId', async () => {
       await expect(
         gateway.handleDeviceSubscribe(mockSocket, { deviceId: '' }),
@@ -186,5 +178,19 @@ describe('DeviceTelemetryGateway', () => {
       await gateway.handleDeviceSubscribe(mockSocket, { deviceId: longId });
 
       expect(mockSocket.join).toHaveBeenCalledWith(`device:${longId}`);
+    });
+    it('should allow admin to join global statuses room', () => {
+      mockSocket.data.user.role = 'ADMIN';
+      const result = gateway.handleStatusesSubscribe(mockSocket);
+
+      expect(mockSocket.join).toHaveBeenCalledWith('devices:statuses');
+      expect(result).toEqual({ event: 'devices:statuses_subscribed' });
+    });
+
+    it('should reject non-admin user from joining global statuses room', () => {
+      mockSocket.data.user.role = 'USER';
+      
+      expect(() => gateway.handleStatusesSubscribe(mockSocket)).toThrow('FORBIDDEN');
+      expect(mockSocket.join).not.toHaveBeenCalled();
     });
 });

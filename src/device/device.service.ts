@@ -431,4 +431,13 @@ async markDeviceAsVerified(serialNumber: string, certSerialNumber: string): Prom
     }
   });
 }
+async getDeviceAttributes(serialNumber: string, userId: number, role: string) {
+    await this.assertDeviceAccess(serialNumber, userId, role);
+
+    const attributes = await this.repository.findAttributesBySerialNumber(serialNumber);
+    return {
+      serialNumber,
+      attributes: attributes ?? {},
+    };
+  }
 }

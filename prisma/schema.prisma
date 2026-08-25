@@ -75,6 +75,7 @@ model Device {
   status        DeviceStatus @default(UNINITIALIZED)
   telemetryState  TelemetryState @default(IDLE)
   telemetry DeviceTelemetry[]
+  attributes      Json?
 
   modelVersion   ModelVersion? @relation(fields: [modelVersionId], references: [id])
   modelVersionId String?

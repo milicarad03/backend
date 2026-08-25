@@ -2,7 +2,8 @@
   "subscriptions": [
     "iot/devices/+/telemetry",
     "iot/devices/+/status",
-     "iot/devices/+/response"
+     "iot/devices/+/response",
+     "iot/devices/+/attributes"
   ],
   "publish": {
     "command": "iot/devices/%s/commands",

@@ -65,8 +65,7 @@ export class DeviceTelemetryService {
   }
 
   async handleTelemetry(telemetry: IncomingTelemetry) {
-  //  await this.deviceRepository.deleteTelemetryByDeviceId("device-2");
- // this.logger.error(`[RAW PAYLOAD] ${JSON.stringify(telemetry.data, null, 2)}`);
+
    this.logger.debug(`Telemetry received from plugin for device: ${telemetry.deviceId}`);
 
     const timestamp = new Date(telemetry.timestamp);

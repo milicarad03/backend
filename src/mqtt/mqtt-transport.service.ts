@@ -25,6 +25,7 @@ import {
   CommandValidationException,
 } from 'serverplugin';
 import { randomUUID } from 'crypto';
+import { DeviceRepository } from 'src/device/device.repository';
 
 export type TelemetryContext = {
   deviceId: string;
@@ -74,6 +75,7 @@ export class MqttTransportService
   constructor(
     private readonly pluginCore: DeviceDashboardService,
     private readonly mqttPublisher: MqttPublisherService,
+    private readonly deviceRepository: DeviceRepository,
   ) {}
 
   onModuleInit() {
@@ -208,7 +210,7 @@ export class MqttTransportService
     topic: string,
   ): string | null {
     const match = topic.match(
-      /^iot\/devices\/([^/]+)\/(telemetry|status|response)$/,
+      /^iot\/devices\/([^/]+)\/(telemetry|status|response|attributes)$/,
     );
     return match ? match[1] : null;
   }
@@ -290,6 +292,29 @@ export class MqttTransportService
         );
         return;
       }
+      // Handle attribute messages
+     /* if (topic.endsWith('/attributes')) {
+        this.logger.log(
+          `Incoming device attributes update for device: ${context.deviceId}`,
+        );
+
+        try {
+          await this.deviceRepository.updateAttributes(
+            context.deviceId,
+            message,
+          );
+
+          this.logger.debug(
+            `Attributes successfully updated in database for device: ${context.deviceId}`,
+          );
+        } catch (dbError: any) {
+          this.logger.error(
+            `Failed to save attributes for device ${context.deviceId}: ${dbError.message}`,
+            dbError.stack,
+          );
+        }
+        return;
+      }*/
 
       // Handle status messages
       if (topic.endsWith('/status')) {

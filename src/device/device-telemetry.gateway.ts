@@ -91,7 +91,6 @@ export class DeviceTelemetryGateway implements OnGatewayInit {
     );
   }
 
-
   @SubscribeMessage('device:subscribe')
   async handleDeviceSubscribe(
     @ConnectedSocket() client: Socket,
@@ -136,19 +135,29 @@ export class DeviceTelemetryGateway implements OnGatewayInit {
       },
     };
   }
+
   @SubscribeMessage('devices:subscribe_statuses')
   handleStatusesSubscribe(@ConnectedSocket() client: Socket) {
+    const user = client.data.user as SocketUser | undefined;
+
+    if (!user) {
+      throw new WsException('UNAUTHORIZED');
+    }
+
+    if (user.role !== 'ADMIN') {
+      this.logger.warn(`Global statuses subscription denied for non-admin user ID: ${user.userId}`);
+      throw new WsException('FORBIDDEN');
+    }
+
     const room = 'devices:statuses';
     client.join(room);
-    this.logger.log(`Client (probably DeviceTable) subscribed to global room: ${room}`);
+    this.logger.log(`Admin client subscribed to global room: ${room}`);
     return { event: 'devices:statuses_subscribed' };
   }
 
   emitTelemetryUpdate(telemetry: TelemetryPayload) {
     const room = `device:${telemetry.deviceId}`;
-
     this.server.to(room).emit('telemetry:update', telemetry);
-
     this.logger.debug(`Telemetry emitted to room: ${room}`);
   }
 
@@ -156,8 +165,6 @@ export class DeviceTelemetryGateway implements OnGatewayInit {
     const payload = { deviceId, status, timestamp: new Date() };
 
     this.server.to('devices:statuses').emit('device:status_update', payload);
-
-
     this.server.to(`device:${deviceId}`).emit('device:status_update', payload);
 
     this.logger.debug(`Status update [${status}] emitted for device: ${deviceId}`);

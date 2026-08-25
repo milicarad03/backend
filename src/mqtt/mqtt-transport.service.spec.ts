@@ -9,6 +9,8 @@ import {
 } from 'serverplugin';
 import { MqttPublisherService } from './mqtt-publisher.service';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
+import { DeviceRepository } from '../device/device.repository';
+
 jest.mock('mqtt');
 jest.mock('fs', () => ({
   readFileSync: jest.fn(() =>
@@ -16,6 +18,7 @@ jest.mock('fs', () => ({
       subscriptions: [
         'iot/devices/+/telemetry',
         'iot/devices/+/status',
+        'iot/devices/+/attributes',
       ],
     }),
   ),
@@ -28,55 +31,58 @@ describe('MqttTransportService', () => {
     let module: TestingModule;
     let messageHandler: any;
     let mockMqttPublisher: any;
-
+    let mockDeviceRepository: any;
 
     beforeEach(async () => {
         mockPluginCore = {
-            getSubscriptionTopics: jest.fn().mockReturnValue(['iot/devices/+/telemetry', 'iot/devices/+/status']),
+            getSubscriptionTopics: jest.fn().mockReturnValue([
+                'iot/devices/+/telemetry',
+                'iot/devices/+/status',
+                'iot/devices/+/attributes',
+            ]),
             processTelemetry: jest.fn().mockResolvedValue({ approved: true }),
             processStatus: jest.fn().mockResolvedValue(undefined),
         };
 
         mockMqttClient = {
-        subscribe: jest.fn((topic, cb) => cb(null)),
-        on: jest.fn(),
-        end: jest.fn(),
-        removeAllListeners: jest.fn(),
+            subscribe: jest.fn((topic, cb) => cb(null)),
+            on: jest.fn(),
+            end: jest.fn(),
+            removeAllListeners: jest.fn(),
         };
+
         mockMqttPublisher = {
             publish: jest.fn(),
-            };
+        };
+
+        mockDeviceRepository = {
+            updateAttributes: jest.fn().mockResolvedValue(undefined),
+        };
 
         (mqtt.connect as jest.Mock).mockReturnValue(mockMqttClient);
 
-        module= await Test.createTestingModule({
-        providers: [
-            MqttTransportService,
-            { provide: DeviceDashboardService, useValue: mockPluginCore },
-
-            {
-                provide: MqttPublisherService,
-                useValue: mockMqttPublisher,
-            },
-
-        ],
+        module = await Test.createTestingModule({
+            providers: [
+                MqttTransportService,
+                { provide: DeviceDashboardService, useValue: mockPluginCore },
+                { provide: MqttPublisherService, useValue: mockMqttPublisher },
+                { provide: DeviceRepository, useValue: mockDeviceRepository },
+            ],
         }).compile();
 
         service = module.get<MqttTransportService>(MqttTransportService);
         service.onModuleInit(); 
 
-        
         const connectCallback = mockMqttClient.on.mock.calls.find(call => call[0] === 'connect')[1];
         connectCallback(); 
 
-        
         messageHandler = mockMqttClient.on.mock.calls.find(call => call[0] === 'message')[1];
     });
 
     afterEach(async () => {
         jest.clearAllMocks();
         if (module) {
-        await module.close();
+            await module.close();
         }
     });
 
@@ -89,19 +95,31 @@ describe('MqttTransportService', () => {
         const topic = 'iot/devices/dev-123/telemetry';
         const payload = Buffer.from(JSON.stringify({ temp: 25 }));
         
-        await messageHandler(topic, payload,{ retain: false });
+        await messageHandler(topic, payload, { retain: false });
         
         expect(mockPluginCore.processTelemetry).toHaveBeenCalledWith(
-        { temp: 25 },
-        { deviceId: 'dev-123', topic, transport: 'mqtt' }
+            { temp: 25 },
+            { deviceId: 'dev-123', topic, transport: 'mqtt' }
+        );
+    });
+
+    it('should process attributes message correctly and update repository', async () => {
+        const topic = 'iot/devices/dev-123/attributes';
+        const attributesPayload = { firmware: 'v1.2.3', hwVersion: '2.0' };
+        const payload = Buffer.from(JSON.stringify(attributesPayload));
+
+        await messageHandler(topic, payload, { retain: false });
+
+        expect(mockDeviceRepository.updateAttributes).toHaveBeenCalledWith(
+            'dev-123',
+            attributesPayload
         );
     });
 
     it('should log a warning for unsupported topic syntax', async () => {
-   
         const loggerSpy = jest.spyOn(service['logger'], 'warn'); 
 
-        await messageHandler('some/random/topic', Buffer.from('{}'),{ retain: false });
+        await messageHandler('some/random/topic', Buffer.from('{}'), { retain: false });
 
         expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('unsupported MQTT topic syntax'));
         expect(mockPluginCore.processTelemetry).not.toHaveBeenCalled();
@@ -112,14 +130,12 @@ describe('MqttTransportService', () => {
        
         const loggerSpy = jest.spyOn(service['logger'], 'warn');
 
-        await messageHandler('iot/devices/dev-123/telemetry', Buffer.from('{}'),{ retain: false });
+        await messageHandler('iot/devices/dev-123/telemetry', Buffer.from('{}'), { retain: false });
 
         expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('rejected telemetry'));
     });
 
     it('should process status message correctly', async () => {
-      
-
         const topic = 'iot/devices/dev-123/status';
         const payload = Buffer.from(JSON.stringify({ status: 'online' }));
 
@@ -154,7 +170,6 @@ describe('MqttTransportService', () => {
     });
    
     it('should log error if subscription fails', () => {
-
         mockMqttClient.subscribe.mockImplementation((topic, cb) => cb(new Error('Subscription failed')));
         const loggerSpy = jest.spyOn(service['logger'], 'error');
 
@@ -167,9 +182,8 @@ describe('MqttTransportService', () => {
     it('should log error when payload is invalid JSON', async () => {
         const loggerSpy = jest.spyOn(service['logger'], 'error');
         
-        await messageHandler('iot/devices/dev-123/telemetry', Buffer.from('invalid-json'),{ retain: false });
+        await messageHandler('iot/devices/dev-123/telemetry', Buffer.from('invalid-json'), { retain: false });
         
-       
         expect(loggerSpy).toHaveBeenCalledWith(
             expect.stringContaining('[UNHANDLED_EXCEPTION]'),
             expect.any(String) 
@@ -186,7 +200,7 @@ describe('MqttTransportService', () => {
         expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('MQTT client connection error'), err.stack);
     });
 
-   it('should catch and log error for empty payload', async () => {
+    it('should catch and log error for empty payload', async () => {
         const loggerSpy = jest.spyOn(service['logger'], 'error');
         
         await messageHandler('iot/devices/dev-123/telemetry', Buffer.from(''), { retain: false });
@@ -195,60 +209,56 @@ describe('MqttTransportService', () => {
             expect.any(String)
         );
     });
-
     
     it('should warn if disconnect is called when client is null', () => {
         const loggerSpy = jest.spyOn(service['logger'], 'warn');
-        service['client'] = null; // Simuliramo stanje gde klijent ne postoji
+        service['client'] = null;
 
         service.onModuleDestroy();
 
         expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('already uninitialized'));
     });
+
     it('should catch and log error if plugin throws an exception', async () => {
         const loggerSpy = jest.spyOn(service['logger'], 'error');
     
-        // OVO JE VAŽNO: Ako hoćeš da uhvatiš UNHANDLED_EXCEPTION, 
-        // moraš baciti običan Error, a ne PluginErrorCode.
         mockPluginCore.processTelemetry.mockRejectedValue(new Error('Plugin crashed'));
 
-        await messageHandler('iot/devices/dev-123/telemetry', Buffer.from('{}'),{ retain: false });
+        await messageHandler('iot/devices/dev-123/telemetry', Buffer.from('{}'), { retain: false });
 
         expect(loggerSpy).toHaveBeenCalledWith(
             expect.stringContaining('[UNHANDLED_EXCEPTION]'),
             expect.any(String)
         );
     });
-    it('should handle DatabaseFailureException', async () => {
 
+    it('should handle DatabaseFailureException', async () => {
         const loggerSpy = jest.spyOn(service['logger'], 'error');
 
         mockPluginCore.processTelemetry.mockRejectedValue(
-            new DatabaseFailureException(
-                '[CRITICAL] Database service is unavailable',
-            ),
+            new DatabaseFailureException('[CRITICAL] Database service is unavailable'),
         );
 
-      
-        await messageHandler('iot/devices/dev-123/telemetry', Buffer.from('{}'),{ retain: false });
+        await messageHandler('iot/devices/dev-123/telemetry', Buffer.from('{}'), { retain: false });
 
-     
         expect(loggerSpy).toHaveBeenCalledWith(
             expect.stringContaining("[CRITICAL] Database service is unavailable")
         );
     });
+
     it('should handle HookFailedException during status processing', async () => {
         const loggerSpy = jest.spyOn(service['logger'], 'error');
         mockPluginCore.processStatus.mockRejectedValue(
             new HookFailedException(),
         );
 
-        await messageHandler('iot/devices/dev-123/status', Buffer.from(JSON.stringify({ status: 'online' })),{ retain: false });
+        await messageHandler('iot/devices/dev-123/status', Buffer.from(JSON.stringify({ status: 'online' })), { retain: false });
 
         expect(loggerSpy).toHaveBeenCalledWith(
             expect.stringContaining("[INTERNAL] Host application failed to process telemetry")
         );
     });
+
     it('should warn when retained telemetry message is received', async () => {
         const loggerSpy = jest.spyOn(service['logger'], 'warn');
 
@@ -262,6 +272,7 @@ describe('MqttTransportService', () => {
             expect.stringContaining('[RETAINED]')
         );
     });
+
     it('should ignore retained status messages', async () => {
         const loggerSpy = jest.spyOn(service['logger'], 'debug');
 
@@ -272,11 +283,11 @@ describe('MqttTransportService', () => {
         );
 
         expect(mockPluginCore.processStatus).not.toHaveBeenCalled();
-
         expect(loggerSpy).toHaveBeenCalledWith(
             expect.stringContaining('Ignoring retained status')
         );
     });
+
     it('should handle INVALID_TIMESTAMP error', async () => {
         const loggerSpy = jest.spyOn(service['logger'], 'warn');
 
@@ -294,6 +305,7 @@ describe('MqttTransportService', () => {
             '[VALIDATION] Device sent invalid timestamp.'
         );
     });
+
     it('should handle NotFoundException', async () => {
         const loggerSpy = jest.spyOn(service['logger'], 'warn');
 
@@ -311,6 +323,7 @@ describe('MqttTransportService', () => {
             expect.stringContaining('[NOT_FOUND]')
         );
     });
+
     it('should handle ForbiddenException', async () => {
         const loggerSpy = jest.spyOn(service['logger'], 'warn');
 
@@ -328,6 +341,7 @@ describe('MqttTransportService', () => {
             expect.stringContaining('[SECURITY]')
         );
     });
+
     it('should publish STOP_DEVICE command when telemetry schema is invalid', async () => {
         mockPluginCore.processTelemetry.mockResolvedValue({
             approved: false,
@@ -344,8 +358,8 @@ describe('MqttTransportService', () => {
             'command',
             'dev-123',
             {
-            command: 'STOP_DEVICE',
-            reason: 'INVALID_TELEMETRY_SCHEMA',
+                command: 'STOP_DEVICE',
+                reason: 'INVALID_TELEMETRY_SCHEMA',
             }
         );
     });
@@ -468,5 +482,4 @@ describe('MqttTransportService', () => {
         await rejection;
         expect(service['pendingResponses'].size).toBe(0);
     });
-
 });

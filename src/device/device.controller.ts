@@ -247,4 +247,17 @@ async getCommandMetadata(
   );
   return this.deviceDashboardService.getCommandMetadata(id);
 }
+
+@Get(':serialNumber/attributes')
+  @Roles(Role.USER, Role.ADMIN)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  async getAttributes(
+    @Param('serialNumber') serialNumber: string,
+    @Req() req: any,
+  ) {
+    const userId = req.user.userId || req.user.sub;
+    const role = req.user.role;
+
+    return this.deviceService.getDeviceAttributes(serialNumber, Number(userId), role);
+  }
 }

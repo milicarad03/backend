@@ -1,10 +1,13 @@
 {
   "fields": {
     "serialNumber": {
-      "path": "system.identity.serial"
+      "path": "attributes.serialNumber"
     },
     "firmware": {
-      "path": "system.identity.firmware"
+      "path": "attributes.firmware"
+    },
+    "hardwareModel": {
+      "path": "attributes.hardwareModel"
     },
     "pumpEnabled": {
       "path": "system.status.pumpEnabled"
@@ -58,6 +61,24 @@
         "columns": 4,
         "items": [
           {
+            "id": "serial-number",
+            "component": "value-card",
+            "bind": "serialNumber",
+            "title": "Serial Number"
+          },
+          {
+            "id": "hardware-model",
+            "component": "value-card",
+            "bind": "hardwareModel",
+            "title": "Hardware Model"
+          },
+          {
+            "id": "firmware",
+            "component": "value-card",
+            "bind": "firmware",
+            "title": "Firmware"
+          },
+          {
             "id": "flow-rate",
             "component": "value-card",
             "bind": "flowRate",
@@ -84,12 +105,6 @@
             "bind": "energyUsage",
             "title": "Energy Usage",
             "unit": "kWh"
-          },
-          {
-            "id": "firmware",
-            "component": "value-card",
-            "bind": "firmware",
-            "title": "Firmware"
           },
           {
             "id": "motor-temp",
