@@ -4,7 +4,10 @@ import { Logger } from '@nestjs/common';
 import { DeviceStatus } from '../generated/prisma/client.js';
 import Redis from 'ioredis';
 import { MqttPublisherService } from 'src/mqtt/mqtt-publisher.service';
-import type { CommandDispatchContext } from 'serverplugin';
+import type {
+  CommandDispatchContext,
+  DeviceAttributes,
+} from 'serverplugin';
 
 export type DeviceTelemetry = {
   deviceId: string;
@@ -13,12 +16,6 @@ export type DeviceTelemetry = {
 };
 
 const logger = new Logger('DeviceDashboardConfig');
-/*const redisClient = new Redis({host: 'localhost',
-  port: 6379,
-});*/
-
-//redisClient.on('connect', () => logger.log('Successfully connected to Redis Server.'));
-//redisClient.on('error', (err) => logger.error(`Redis connection error: ${err.message}`));
 
 export const createDeviceDashboardConfig = (
   deviceRepository: DeviceRepository,
@@ -56,10 +53,7 @@ export const createDeviceDashboardConfig = (
       };
     }catch(err:any){
     logger.error(`Failed loading device ${deviceId}: ${err.message}` );
-
     throw err;
-
-          
     }
   },
 
@@ -75,6 +69,30 @@ export const createDeviceDashboardConfig = (
     logger.error(`[CONFIG HOOK] Telemetry processing failed for ${telemetry.deviceId}: ${err.message}`);
     throw err;
 
+    }
+  },
+  onAttributes: async (
+    deviceId: string,
+    attributes: DeviceAttributes,
+  ) => {
+    if (!deviceId || !attributes) {
+      throw new Error('INVALID_DEVICE_ATTRIBUTES');
+    }
+
+    logger.debug(
+      `Persisting validated attributes for device: ${deviceId}`,
+    );
+    await deviceRepository.updateAttributes(
+      deviceId,
+      attributes as any,
+    );
+
+    try {
+      await redisClient.del(`cache:device:${deviceId}`);
+    } catch (error: any) {
+      logger.warn(
+        `Attributes were persisted, but the device cache could not be invalidated for ${deviceId}: ${error.message}`,
+      );
     }
   },
   onStatusChange: async (deviceId: string, status: string) => {
@@ -94,14 +112,6 @@ export const createDeviceDashboardConfig = (
    payload?: any,
    context?: CommandDispatchContext,
  ) => {
-
-  /*logger.error(
-    `[MQTT SEND]
-     device=${deviceId}
-     command=${command}
-     payload=${JSON.stringify(payload)}
-     stack=${new Error().stack}`
-  );*/
 
    await mqttPublisher.publish('command', deviceId, {
      command,

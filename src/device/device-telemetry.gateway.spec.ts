@@ -114,19 +114,20 @@ describe('DeviceTelemetryGateway', () => {
 
       expect(mockSocket.join).not.toHaveBeenCalled();
     });
-    it('should emit status update to both rooms', () => {
+    it('should emit one status update to the union of both rooms', () => {
       gateway.emitStatusUpdate('dev-123', 'online');
 
-
-      expect(mockServer.to).toHaveBeenCalledWith('devices:statuses');
-      expect(mockServer.to).toHaveBeenCalledWith('device:dev-123');
-      
-    
-      expect(mockServer.emit).toHaveBeenCalledTimes(2);
-      expect(mockServer.emit).toHaveBeenCalledWith('device:status_update', expect.objectContaining({ 
-        deviceId: 'dev-123', 
-        status: 'online' 
-      }));
+      expect(mockServer.to).toHaveBeenNthCalledWith(1, 'devices:statuses');
+      expect(mockServer.to).toHaveBeenNthCalledWith(2, 'device:dev-123');
+      expect(mockServer.emit).toHaveBeenCalledTimes(1);
+      expect(mockServer.emit).toHaveBeenCalledWith(
+        'device:status_update',
+        expect.objectContaining({
+          deviceId: 'dev-123',
+          status: 'online',
+          timestamp: expect.any(Date),
+        }),
+      );
     });
     it('should handle error if client fails to join room', async () => {
       mockSocket.join.mockImplementationOnce(() => {
@@ -179,18 +180,20 @@ describe('DeviceTelemetryGateway', () => {
 
       expect(mockSocket.join).toHaveBeenCalledWith(`device:${longId}`);
     });
-    it('should allow admin to join global statuses room', () => {
+    it('should allow admin to join global statuses room', async () => {
       mockSocket.data.user.role = 'ADMIN';
-      const result = gateway.handleStatusesSubscribe(mockSocket);
+      const result = await gateway.handleStatusesSubscribe(mockSocket);
 
       expect(mockSocket.join).toHaveBeenCalledWith('devices:statuses');
       expect(result).toEqual({ event: 'devices:statuses_subscribed' });
     });
 
-    it('should reject non-admin user from joining global statuses room', () => {
+    it('should reject non-admin user from joining global statuses room', async () => {
       mockSocket.data.user.role = 'USER';
-      
-      expect(() => gateway.handleStatusesSubscribe(mockSocket)).toThrow('FORBIDDEN');
+
+      await expect(
+        gateway.handleStatusesSubscribe(mockSocket),
+      ).rejects.toThrow('FORBIDDEN');
       expect(mockSocket.join).not.toHaveBeenCalled();
     });
 });

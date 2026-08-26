@@ -191,4 +191,99 @@ describe('Device telemetry WebSocket authorization (e2e)', () => {
 
     expect(telemetryListener).not.toHaveBeenCalled();
   });
+
+  it('allows an administrator to receive global device statuses', async () => {
+    const adminToken = jwtService.sign({
+      sub: 1,
+      email: 'admin@example.com',
+      role: 'ADMIN',
+    });
+    const admin = await connectClient(adminToken);
+
+    const subscribed = waitForEvent<void>(
+      admin,
+      'devices:statuses_subscribed',
+    );
+    admin.emit('devices:subscribe_statuses');
+    await subscribed;
+
+    const statusUpdate = waitForEvent<{
+      deviceId: string;
+      status: string;
+      timestamp: string;
+    }>(admin, 'device:status_update');
+
+    gateway.emitStatusUpdate('SN-1', 'ONLINE');
+
+    await expect(statusUpdate).resolves.toEqual({
+      deviceId: 'SN-1',
+      status: 'ONLINE',
+      timestamp: expect.any(String),
+    });
+  });
+
+  it('does not allow a regular user to join the global statuses room', async () => {
+    const userToken = jwtService.sign({
+      sub: 2,
+      email: 'owner@example.com',
+      role: 'USER',
+    });
+    const user = await connectClient(userToken);
+
+    user.emit('devices:subscribe_statuses');
+    await delay(20);
+
+    const serverSocket = gateway.server.sockets.sockets.get(user.id!);
+    expect(serverSocket?.rooms.has('devices:statuses')).toBe(false);
+  });
+
+  it('allows an owner to receive status updates for their device', async () => {
+    const ownerToken = jwtService.sign({
+      sub: 2,
+      email: 'owner@example.com',
+      role: 'USER',
+    });
+    const owner = await connectClient(ownerToken);
+
+    const subscribed = waitForEvent<{ deviceId: string }>(
+      owner,
+      'device:subscribed',
+    );
+    owner.emit('device:subscribe', { deviceId: 'SN-1' });
+    await expect(subscribed).resolves.toEqual({ deviceId: 'SN-1' });
+
+    const statusUpdate = waitForEvent<{
+      deviceId: string;
+      status: string;
+      timestamp: string;
+    }>(owner, 'device:status_update');
+
+    gateway.emitStatusUpdate('SN-1', 'OFFLINE');
+
+    await expect(statusUpdate).resolves.toEqual({
+      deviceId: 'SN-1',
+      status: 'OFFLINE',
+      timestamp: expect.any(String),
+    });
+  });
+
+  it('does not deliver a device status update to another user', async () => {
+    const otherUserToken = jwtService.sign({
+      sub: 3,
+      email: 'other@example.com',
+      role: 'USER',
+    });
+    const otherUser = await connectClient(otherUserToken);
+    const statusListener = jest.fn();
+    otherUser.on('device:status_update', statusListener);
+
+    otherUser.emit('device:subscribe', { deviceId: 'SN-1' });
+    await waitForDeviceLookup();
+    await delay(20);
+
+    gateway.emitStatusUpdate('SN-1', 'ONLINE');
+    await delay(100);
+
+    expect(statusListener).not.toHaveBeenCalled();
+  });
 });

@@ -28,21 +28,28 @@ jest.setTimeout(60_000);
 const DEVICE_ID = `system-e2e-${process.pid}-${Date.now()}`;
 const TEST_USER_EMAIL = `system-e2e-${process.pid}-${Date.now()}@example.test`;
 const MODEL_ID = 'modelC';
-const MODEL_VERSION = '1.0.7';
+const MODEL_VERSION = '1.1.3';
 const MQTT_BROKER_URL =
   process.env.MQTT_BROKER_URL ?? 'mqtt://localhost:1883';
 
+const backendDirectory = process.cwd();
+
 const simulatorDirectory = resolve(
-  __dirname,
-  '../../../devicesimulator',
+  process.cwd(),
+  '../../devicesimulator',
 );
+
 const schemaPath = join(
   simulatorDirectory,
   'schema',
   MODEL_ID,
   `${MODEL_VERSION}.schema.json`,
 );
-const mappingPath = '/home/rmilica/projects/server/schema/modelSmart/mapper.json';
+
+const mappingPath = resolve(
+  backendDirectory,
+  'schema/modelSmart/mapper.json',
+);
 const simulatorStatsPath = join(
   tmpdir(),
   `${DEVICE_ID}-telemetry.log`,
@@ -131,7 +138,7 @@ const closeChildProcess = async (
   }
 };
 
-const clearRetainedStatus = () =>
+const clearRetainedMessages = () =>
   new Promise<void>((resolvePromise) => {
     const client = mqtt.connect(MQTT_BROKER_URL, {
       clientId: `system-e2e-cleanup-${process.pid}-${Date.now()}`,
@@ -139,7 +146,13 @@ const clearRetainedStatus = () =>
       reconnectPeriod: 0,
     });
 
+    let finished = false;
     const finish = () => {
+      if (finished) {
+        return;
+      }
+
+      finished = true;
       client.removeAllListeners();
       client.end(true);
       resolvePromise();
@@ -158,8 +171,15 @@ const clearRetainedStatus = () =>
         '',
         { qos: 1, retain: true },
         () => {
-          clearTimeout(timeout);
-          finish();
+          client.publish(
+            `iot/devices/${DEVICE_ID}/attributes`,
+            '',
+            { qos: 1, retain: true },
+            () => {
+              clearTimeout(timeout);
+              finish();
+            },
+          );
         },
       );
     });
@@ -403,11 +423,11 @@ describe('Simulator to backend telemetry pipeline (system e2e)', () => {
       await prisma.$disconnect().catch(() => undefined);
     }
 
-    await clearRetainedStatus();
+    await clearRetainedMessages();
     removeTemporarySimulatorFiles();
   });
 
-  it('persists mapped telemetry and exposes it through REST and Socket.IO', async () => {
+  it('persists attributes and mapped telemetry through the complete pipeline', async () => {
     simulatorProcess = spawn(
       process.execPath,
       ['sim.js', DEVICE_ID, MODEL_ID, MODEL_VERSION],
@@ -450,6 +470,42 @@ describe('Simulator to backend telemetry pipeline (system e2e)', () => {
       10_000,
       `Simulator did not subscribe to its command topic. Output:\n${simulatorOutput}`,
     );
+
+    const expectedAttributes = {
+      serialNumber: DEVICE_ID,
+      firmware: MODEL_VERSION,
+      hardwareModel: MODEL_ID,
+    };
+
+    await waitForCondition(
+      async () => {
+        const storedDevice = await prisma.device.findUnique({
+          where: { serialNumber: DEVICE_ID },
+          select: { attributes: true },
+        });
+        const attributes = storedDevice?.attributes as
+          | Record<string, unknown>
+          | null;
+
+        return (
+          attributes?.serialNumber === DEVICE_ID &&
+          attributes?.firmware === MODEL_VERSION &&
+          attributes?.hardwareModel === MODEL_ID
+        );
+      },
+      10_000,
+      'Validated device attributes were not persisted.',
+    );
+
+    const attributesResponse = await request(app.getHttpServer())
+      .get(`/device/${DEVICE_ID}/attributes`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .expect(200);
+
+    expect(attributesResponse.body).toEqual({
+      serialNumber: DEVICE_ID,
+      attributes: expectedAttributes,
+    });
 
     const telemetryEvent = new Promise<TelemetryEvent>(
       (resolve, reject) => {
@@ -532,6 +588,7 @@ describe('Simulator to backend telemetry pipeline (system e2e)', () => {
     );
     expect(socketTelemetry.data).not.toHaveProperty('metrics');
     expect(socketTelemetry.data).not.toHaveProperty('system');
+    expect(socketTelemetry.data).not.toHaveProperty('attributes');
 
     const latestResponse = await request(app.getHttpServer())
       .get(`/device/${DEVICE_ID}/telemetry/latest`)
@@ -559,6 +616,9 @@ describe('Simulator to backend telemetry pipeline (system e2e)', () => {
     );
     expect(persistedTelemetry?.data).toEqual(
       socketTelemetry.data,
+    );
+    expect(persistedTelemetry?.data).not.toHaveProperty(
+      'attributes',
     );
 
     const idleCommandResponse = await request(app.getHttpServer())

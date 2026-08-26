@@ -5,6 +5,7 @@ import { createDeviceDashboardConfig } from './device-dashboard.config';
 describe('createDeviceDashboardConfig', () => {
   const mockDeviceRepository = {
     findOne: jest.fn(),
+    updateAttributes: jest.fn(),
   };
 
   const mockDeviceTelemetryService = {
@@ -18,6 +19,7 @@ describe('createDeviceDashboardConfig', () => {
     const mockRedis = {
     get: jest.fn(),
     set: jest.fn(),
+    del: jest.fn(),
     on: jest.fn().mockReturnThis(),
   } as any;
 
@@ -104,6 +106,50 @@ describe('createDeviceDashboardConfig', () => {
     expect(mockDeviceTelemetryService.handleTelemetry).toHaveBeenCalledWith(
       telemetry,
     );
+  });
+
+  it('should persist validated attributes and invalidate the device cache', async () => {
+    const attributes = {
+      serialNumber: 'sn-100',
+      firmware: '1.1.3',
+      hardwareModel: 'modelC',
+    };
+    mockDeviceRepository.updateAttributes.mockResolvedValue({
+      serialNumber: 'sn-100',
+      attributes,
+    });
+    mockRedis.del.mockResolvedValue(1);
+
+    const config = createDeviceDashboardConfig(
+      mockDeviceRepository as any,
+      mockDeviceTelemetryService as any,
+      mockRedis,
+      mockMqttPublisher as any,
+    );
+
+    await config.onAttributes('sn-100', attributes);
+
+    expect(mockDeviceRepository.updateAttributes).toHaveBeenCalledWith(
+      'sn-100',
+      attributes,
+    );
+    expect(mockRedis.del).toHaveBeenCalledWith(
+      'cache:device:sn-100',
+    );
+  });
+
+  it('should reject attributes without a device identifier', async () => {
+    const config = createDeviceDashboardConfig(
+      mockDeviceRepository as any,
+      mockDeviceTelemetryService as any,
+      mockRedis,
+      mockMqttPublisher as any,
+    );
+
+    await expect(
+      config.onAttributes('', { firmware: '1.1.3' }),
+    ).rejects.toThrow('INVALID_DEVICE_ATTRIBUTES');
+    expect(mockDeviceRepository.updateAttributes).not.toHaveBeenCalled();
   });
 
   

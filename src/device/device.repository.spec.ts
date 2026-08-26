@@ -372,7 +372,7 @@ describe('DeviceRepository', () => {
     await expect(repository.createTelemetry({ deviceId: undefined as any, timestamp: new Date(), data: {} }))
       .rejects.toThrow();
   });
- it('should return device with null modelVersion if not linked', async () => {
+  it('should return device with null modelVersion if not linked', async () => {
     const deviceWithoutModel = {
       id: 'device-1',
       serialNumber: 'sn-100',
@@ -392,5 +392,41 @@ describe('DeviceRepository', () => {
       expect(result.modelVersion).toBeNull();
       expect(result).toEqual(deviceWithoutModel);
     }
+  });
+
+  it('should persist the latest device attributes', async () => {
+    const attributes = {
+      serialNumber: 'sn-100',
+      firmware: '1.1.3',
+      hardwareModel: 'modelC',
+    };
+    mockPrismaService.device.update.mockResolvedValue({
+      serialNumber: 'sn-100',
+      attributes,
+    });
+
+    await repository.updateAttributes('sn-100', attributes);
+
+    expect(mockPrismaService.device.update).toHaveBeenCalledWith({
+      where: { serialNumber: 'sn-100' },
+      data: { attributes },
+    });
+  });
+
+  it('should return only the latest attributes for a device', async () => {
+    const attributes = {
+      serialNumber: 'sn-100',
+      firmware: '1.1.3',
+      hardwareModel: 'modelC',
+    };
+    mockPrismaService.device.findUnique.mockResolvedValue({ attributes });
+
+    await expect(
+      repository.findAttributesBySerialNumber('sn-100'),
+    ).resolves.toEqual(attributes);
+    expect(mockPrismaService.device.findUnique).toHaveBeenCalledWith({
+      where: { serialNumber: 'sn-100' },
+      select: { attributes: true },
+    });
   });
 });

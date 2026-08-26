@@ -9,7 +9,6 @@ import {
 } from 'serverplugin';
 import { MqttPublisherService } from './mqtt-publisher.service';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
-import { DeviceRepository } from '../device/device.repository';
 
 jest.mock('mqtt');
 jest.mock('fs', () => ({
@@ -31,7 +30,6 @@ describe('MqttTransportService', () => {
     let module: TestingModule;
     let messageHandler: any;
     let mockMqttPublisher: any;
-    let mockDeviceRepository: any;
 
     beforeEach(async () => {
         mockPluginCore = {
@@ -42,6 +40,7 @@ describe('MqttTransportService', () => {
             ]),
             processTelemetry: jest.fn().mockResolvedValue({ approved: true }),
             processStatus: jest.fn().mockResolvedValue(undefined),
+            processAttributes: jest.fn().mockResolvedValue({ approved: true }),
         };
 
         mockMqttClient = {
@@ -55,10 +54,6 @@ describe('MqttTransportService', () => {
             publish: jest.fn(),
         };
 
-        mockDeviceRepository = {
-            updateAttributes: jest.fn().mockResolvedValue(undefined),
-        };
-
         (mqtt.connect as jest.Mock).mockReturnValue(mockMqttClient);
 
         module = await Test.createTestingModule({
@@ -66,7 +61,6 @@ describe('MqttTransportService', () => {
                 MqttTransportService,
                 { provide: DeviceDashboardService, useValue: mockPluginCore },
                 { provide: MqttPublisherService, useValue: mockMqttPublisher },
-                { provide: DeviceRepository, useValue: mockDeviceRepository },
             ],
         }).compile();
 
@@ -103,17 +97,41 @@ describe('MqttTransportService', () => {
         );
     });
 
-    it('should process attributes message correctly and update repository', async () => {
+    it('should process attributes through the server plugin', async () => {
         const topic = 'iot/devices/dev-123/attributes';
-        const attributesPayload = { firmware: 'v1.2.3', hwVersion: '2.0' };
+        const attributesPayload = {
+            serialNumber: 'dev-123',
+            firmware: 'v1.2.3',
+            hardwareModel: 'modelC',
+        };
         const payload = Buffer.from(JSON.stringify(attributesPayload));
 
-        await messageHandler(topic, payload, { retain: false });
+        await messageHandler(topic, payload, { retain: true });
 
-        expect(mockDeviceRepository.updateAttributes).toHaveBeenCalledWith(
-            'dev-123',
-            attributesPayload
+        expect(mockPluginCore.processAttributes).toHaveBeenCalledWith(
+            attributesPayload,
+            { deviceId: 'dev-123', topic, transport: 'mqtt' },
         );
+        expect(mockPluginCore.processTelemetry).not.toHaveBeenCalled();
+    });
+
+    it('should not forward rejected attributes to another processing path', async () => {
+        mockPluginCore.processAttributes.mockResolvedValue({
+            approved: false,
+            reason: 'INVALID_ATTRIBUTES_SCHEMA',
+        });
+        const loggerSpy = jest.spyOn(service['logger'], 'warn');
+
+        await messageHandler(
+            'iot/devices/dev-123/attributes',
+            Buffer.from(JSON.stringify({ firmware: 123 })),
+            { retain: true },
+        );
+
+        expect(loggerSpy).toHaveBeenCalledWith(
+            expect.stringContaining('rejected attributes'),
+        );
+        expect(mockPluginCore.processTelemetry).not.toHaveBeenCalled();
     });
 
     it('should log a warning for unsupported topic syntax', async () => {

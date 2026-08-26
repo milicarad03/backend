@@ -22,6 +22,7 @@ describe('DeviceController', () => {
     reassignDevice:jest.fn(),
     applyModelVersion: jest.fn(),
     assertDeviceAccess: jest.fn(),
+    getDeviceAttributes: jest.fn(),
   };
 
   const mockDeviceTelemetryService = {
@@ -455,6 +456,30 @@ const mockDeviceCommandAuditService = {
     ).toHaveBeenCalledWith('sn-100');
 
     expect(result).toEqual(metadata);
+  });
+  it('should return the authenticated user device attributes', async () => {
+    const attributesResponse = {
+      serialNumber: 'sn-100',
+      attributes: {
+        serialNumber: 'sn-100',
+        firmware: '1.1.3',
+        hardwareModel: 'modelC',
+      },
+    };
+    mockDeviceService.getDeviceAttributes.mockResolvedValue(
+      attributesResponse,
+    );
+
+    const result = await controller.getAttributes('sn-100', {
+      user: { userId: 2, role: 'USER' },
+    });
+
+    expect(mockDeviceService.getDeviceAttributes).toHaveBeenCalledWith(
+      'sn-100',
+      2,
+      'USER',
+    );
+    expect(result).toEqual(attributesResponse);
   });
   it('should update device model version', async () => {
   const deviceId = 'device-123';

@@ -137,7 +137,7 @@ export class DeviceTelemetryGateway implements OnGatewayInit {
   }
 
   @SubscribeMessage('devices:subscribe_statuses')
-  handleStatusesSubscribe(@ConnectedSocket() client: Socket) {
+  async handleStatusesSubscribe(@ConnectedSocket() client: Socket) {
     const user = client.data.user as SocketUser | undefined;
 
     if (!user) {
@@ -150,7 +150,7 @@ export class DeviceTelemetryGateway implements OnGatewayInit {
     }
 
     const room = 'devices:statuses';
-    client.join(room);
+    await client.join(room);
     this.logger.log(`Admin client subscribed to global room: ${room}`);
     return { event: 'devices:statuses_subscribed' };
   }
@@ -164,8 +164,10 @@ export class DeviceTelemetryGateway implements OnGatewayInit {
   emitStatusUpdate(deviceId: string, status: string) {
     const payload = { deviceId, status, timestamp: new Date() };
 
-    this.server.to('devices:statuses').emit('device:status_update', payload);
-    this.server.to(`device:${deviceId}`).emit('device:status_update', payload);
+    this.server
+      .to('devices:statuses')
+      .to(`device:${deviceId}`)
+      .emit('device:status_update', payload);
 
     this.logger.debug(`Status update [${status}] emitted for device: ${deviceId}`);
   }

@@ -14,6 +14,7 @@ export class DeviceService {
     private dashboardPlugin: DeviceDashboardService,
     private mqttTransportService: MqttTransportService,
   ) {}
+
   private async ensureDeviceExists(where: Prisma.DeviceWhereUniqueInput): Promise<Device> {
     const device = await this.repository.findOne(where);
     if (!device) {
@@ -35,9 +36,7 @@ export class DeviceService {
     const device = await this.ensureDeviceExists({ serialNumber });
 
     if (role !== 'ADMIN' && device.userId !== userId) {
-      this.logger.warn(
-        `Device access denied. User ID: ${userId}, device serial: ${serialNumber}`,
-      );
+      this.logger.warn(`Device access denied. User ID: ${userId}, device serial: ${serialNumber}`);
       throw new ForbiddenException('Permission denied for accessing device');
     }
 
@@ -145,13 +144,7 @@ export class DeviceService {
   }
 
   async deleteIfAdmin(deviceId: string, userId: number, role: string) {
-    const device = await this.ensureDeviceExists({ id: deviceId });
-    //const device = await this.repository.findOne({ id: deviceId });
-
-   /* if (!device) {
-      this.logger.warn(`Aborting administrative deletion task. Record not found: ${deviceId}`);
-      throw new NotFoundException('Device not found');
-    }*/
+    await this.ensureDeviceExists({ id: deviceId });
 
     if (role !== 'ADMIN') {
       this.logger.error(`Unauthorized deletion payload block. Action denied for non-admin context user: ${userId}`);
@@ -164,12 +157,7 @@ export class DeviceService {
   }
 
   async toggleDeviceStatus(deviceId: string, userId: number): Promise<Device> {
-    /*const device = await this.repository.findOne({ id: deviceId });
-    if (!device) {
-      this.logger.warn(`Aborting power toggle task. Record not found: ${deviceId}`);
-      throw new NotFoundException('Device not found');
-    }*/
-   const device = await this.ensureDeviceExists({ id: deviceId });
+    const device = await this.ensureDeviceExists({ id: deviceId });
 
     if (device.userId !== userId) {
       this.logger.error(`Security guard block. User ID: ${userId} lacks ownership permissions for device target: ${deviceId}`);
@@ -193,245 +181,162 @@ export class DeviceService {
       throw pluginError;
     }
   }
+
   async reassignDevice(deviceSerial: string, newUserId: number) {
-  /*  const device = await this.repository.findOne({ serialNumber: deviceSerial });
-    if (!device) {
-      this.logger.warn(`Device ${deviceSerial} not found for reassignment.`);
-      throw new NotFoundException(`Device ${deviceSerial} not found`);
-    }*/
-  await this.ensureDeviceExists({ serialNumber: deviceSerial });
-  this.logger.log(`Reassigning device ${deviceSerial} to user ID: ${newUserId}`);
-  
-  return this.repository.update({
-    where: { serialNumber: deviceSerial },
-    data: { 
-      user: {
-        connect: { id: newUserId }
+    await this.ensureDeviceExists({ serialNumber: deviceSerial });
+    this.logger.log(`Reassigning device ${deviceSerial} to user ID: ${newUserId}`);
+    
+    return this.repository.update({
+      where: { serialNumber: deviceSerial },
+      data: { 
+        user: {
+          connect: { id: newUserId }
+        }
       }
-    }
-  });
-}
-async applyModelVersion(
-  deviceId: string,
-  targetModelVersionId: string,
-) {
-  const device =
-    await this.repository.findOne({
-      id: deviceId,
     });
-
-  if (!device) {
-    throw new NotFoundException(
-      'DEVICE_NOT_FOUND',
-    );
   }
 
-  if (
-    device.status !==
-    DeviceStatus.ONLINE
+  async applyModelVersion(
+    deviceId: string,
+    targetModelVersionId: string,
   ) {
-    throw new ForbiddenException(
-      'DEVICE_MUST_BE_ONLINE',
-    );
-  }
+    const device = await this.repository.findOne({ id: deviceId });
 
-  const targetVersion =
-    await this.repository
-      .findModelVersionById(
-        targetModelVersionId,
-      );
-
-  if (!targetVersion) {
-    throw new NotFoundException(
-      'MODEL_VERSION_NOT_FOUND',
-    );
-  }
-
-  if (!device.modelVersion) {
-    throw new ConflictException( 'DEVICE_HAS_NO_MODEL_VERSION');
-  }
-
-  if ( device.modelVersion.modelId !== targetVersion.modelId) {
-    throw new ConflictException(
-      'TARGET_VERSION_BELONGS_TO_DIFFERENT_MODEL',
-    );
-  }
-
-  if (device.modelVersionId === targetVersion.id) {
-    throw new ConflictException(
-      'DEVICE_ALREADY_USES_MODEL_VERSION',
-    );
-  }
-
-  const previousModelVersionId =device.modelVersionId;
-
-  let databaseSwitched = false;
-
-  try {
-
-    this.logger.log(
-      `[MODEL UPDATE] Staging ${targetVersion.modelId}:${targetVersion.version} on device ${device.serialNumber}`,
-    );
-
-    const stageResponse =
-      await this.mqttTransportService
-        .sendCommandAndWaitForResponse(
-          device.serialNumber,
-          'STAGE_MODEL_VERSION',
-          {
-            model:
-              targetVersion.modelId,
-
-            version:
-              targetVersion.version,
-
-            schema:
-              targetVersion.schema,
-
-            mapping:
-              targetVersion.mapping,
-          },
-          15000,
-        );
-
-    if (!stageResponse.success) {
-      this.logger.warn(
-        `[MODEL UPDATE] Device ${device.serialNumber} rejected staged version ${targetVersion.modelId}:${targetVersion.version}. Error: ${stageResponse.error ?? 'UNKNOWN'}`,
-      );
-
-      throw new ConflictException(
-        stageResponse.error ??
-          'DEVICE_REJECTED_MODEL_VERSION',
-      );
+    if (!device) {
+      throw new NotFoundException('DEVICE_NOT_FOUND');
     }
 
-    this.logger.log(
-      `[MODEL UPDATE] Device ${device.serialNumber} successfully staged ${targetVersion.modelId}:${targetVersion.version}`,
-    );
-    await this.repository.update({
-      where: {
-        id: device.id,
-      },
-      data: {
-        modelVersion: {
-          connect: {
-            id: targetVersion.id,
+    if (device.status !== DeviceStatus.ONLINE) {
+      throw new ForbiddenException('DEVICE_MUST_BE_ONLINE');
+    }
+
+    const targetVersion = await this.repository.findModelVersionById(targetModelVersionId);
+
+    if (!targetVersion) {
+      throw new NotFoundException('MODEL_VERSION_NOT_FOUND');
+    }
+
+    if (!device.modelVersion) {
+      throw new ConflictException('DEVICE_HAS_NO_MODEL_VERSION');
+    }
+
+    if (device.modelVersion.modelId !== targetVersion.modelId) {
+      throw new ConflictException('TARGET_VERSION_BELONGS_TO_DIFFERENT_MODEL');
+    }
+
+    if (device.modelVersionId === targetVersion.id) {
+      throw new ConflictException('DEVICE_ALREADY_USES_MODEL_VERSION');
+    }
+
+    const previousModelVersionId = device.modelVersionId;
+    let databaseSwitched = false;
+
+    try {
+      this.logger.log(`[MODEL UPDATE] Staging ${targetVersion.modelId}:${targetVersion.version} on device ${device.serialNumber}`);
+
+      const stageResponse = await this.mqttTransportService.sendCommandAndWaitForResponse(
+        device.serialNumber,
+        'STAGE_MODEL_VERSION',
+        {
+          model: targetVersion.modelId,
+          version: targetVersion.version,
+          schema: targetVersion.schema,
+          mapping: targetVersion.mapping,
+        },
+        15000,
+      );
+
+      if (!stageResponse.success) {
+        this.logger.warn(`[MODEL UPDATE] Device ${device.serialNumber} rejected staged version ${targetVersion.modelId}:${targetVersion.version}. Error: ${stageResponse.error ?? 'UNKNOWN'}`);
+        throw new ConflictException(stageResponse.error ?? 'DEVICE_REJECTED_MODEL_VERSION');
+      }
+
+      this.logger.log(`[MODEL UPDATE] Device ${device.serialNumber} successfully staged ${targetVersion.modelId}:${targetVersion.version}`);
+      
+      await this.repository.update({
+        where: { id: device.id },
+        data: {
+          modelVersion: {
+            connect: { id: targetVersion.id },
           },
         },
-      },
-    });
+      });
 
-    databaseSwitched = true;
+      databaseSwitched = true;
 
-    this.logger.log(
-      `[MODEL UPDATE] Database model version changed to ${targetVersion.modelId}:${targetVersion.version} for device ${device.serialNumber}`,
-    );
-    await this.dashboardPlugin
-      .invalidateDeviceCache(
+      this.logger.log(`[MODEL UPDATE] Database model version changed to ${targetVersion.modelId}:${targetVersion.version} for device ${device.serialNumber}`);
+      
+      await this.dashboardPlugin.invalidateDeviceCache(device.serialNumber);
+
+      this.logger.log(`[MODEL UPDATE] Device cache invalidated for ${device.serialNumber}`);
+
+      const restartResponse = await this.mqttTransportService.sendCommandAndWaitForResponse(
         device.serialNumber,
+        'RESTART_WITH_MODEL_VERSION',
+        {
+          model: targetVersion.modelId,
+          version: targetVersion.version,
+        },
+        10000,
       );
 
-    this.logger.log(
-      `[MODEL UPDATE] Device cache invalidated for ${device.serialNumber}`,
-    );
+      if (!restartResponse.success) {
+        throw new ConflictException(restartResponse.error ?? 'DEVICE_RESTART_REJECTED');
+      }
 
-    const restartResponse =
-      await this.mqttTransportService
-        .sendCommandAndWaitForResponse(
-          device.serialNumber,
-          'RESTART_WITH_MODEL_VERSION',
-          {
-            model:
-              targetVersion.modelId,
+      this.logger.log(`[MODEL UPDATE] Device ${device.serialNumber} accepted restart for ${targetVersion.modelId}:${targetVersion.version}`);
 
-            version:
-              targetVersion.version,
-          },
-          10000,
-        );
-
-    if (!restartResponse.success) {
-      throw new ConflictException(
-        restartResponse.error ??
-          'DEVICE_RESTART_REJECTED',
-      );
-    }
-
-    this.logger.log(
-      `[MODEL UPDATE] Device ${device.serialNumber} accepted restart for ${targetVersion.modelId}:${targetVersion.version}`,
-    );
-
-    return {
-      success: true,
-      staged: true,
-      restartRequired: true,
-      deviceId:
-        device.id,
-      serialNumber:
-        device.serialNumber,
-      model:
-        targetVersion.modelId,
-      version:
-        targetVersion.version,
-      modelVersionId:
-        targetVersion.id,
-    };
-  } catch (error: any) {
-    this.logger.error(`[MODEL UPDATE] Version update failed for device ${device.serialNumber}: ${error.message}`);
-    if (
-      databaseSwitched &&
-      previousModelVersionId
-    ) {
-      try {
-        await this.repository.update({
-          where: {
-            id: device.id,
-          },
-          data: {
-            modelVersion: {
-              connect: {
-                id:
-                  previousModelVersionId,
+      return {
+        success: true,
+        staged: true,
+        restartRequired: true,
+        deviceId: device.id,
+        serialNumber: device.serialNumber,
+        model: targetVersion.modelId,
+        version: targetVersion.version,
+        modelVersionId: targetVersion.id,
+      };
+    } catch (error: any) {
+      this.logger.error(`[MODEL UPDATE] Version update failed for device ${device.serialNumber}: ${error.message}`);
+      
+      if (databaseSwitched && previousModelVersionId) {
+        try {
+          await this.repository.update({
+            where: { id: device.id },
+            data: {
+              modelVersion: {
+                connect: { id: previousModelVersionId },
               },
             },
-          },
-        });
+          });
 
-        await this.dashboardPlugin
-          .invalidateDeviceCache(
-            device.serialNumber,
-          );
+          await this.dashboardPlugin.invalidateDeviceCache(device.serialNumber);
 
-        this.logger.warn(`[MODEL UPDATE] Database rolled back to previous model version for ${device.serialNumber}` );
-      } catch (
-        rollbackError: any
-      ) {
-        this.logger.error(
-          `[MODEL UPDATE] Rollback failed for ${device.serialNumber}: ${rollbackError.message}`,
-        );
+          this.logger.warn(`[MODEL UPDATE] Database rolled back to previous model version for ${device.serialNumber}`);
+        } catch (rollbackError: any) {
+          this.logger.error(`[MODEL UPDATE] Rollback failed for ${device.serialNumber}: ${rollbackError.message}`);
+        }
       }
-    }
 
-    throw error;
+      throw error;
+    }
   }
-}
 
-async markDeviceAsVerified(serialNumber: string, certSerialNumber: string): Promise<Device> {
-  await this.ensureDeviceExists({ serialNumber });
-  this.logger.log(`Marking device ${serialNumber} as verified with cert serial ${certSerialNumber}.`);
-  
-  return this.repository.update({
-   
-    where: { serialNumber }, 
-    data: { 
-      isVerified: true, 
-      verifiedAt: new Date(),
-      
-      certSerialNumber: certSerialNumber, 
-    }
-  });
-}
-async getDeviceAttributes(serialNumber: string, userId: number, role: string) {
+  async markDeviceAsVerified(serialNumber: string, certSerialNumber: string): Promise<Device> {
+    await this.ensureDeviceExists({ serialNumber });
+    this.logger.log(`Marking device ${serialNumber} as verified with cert serial ${certSerialNumber}.`);
+    
+    return this.repository.update({
+      where: { serialNumber }, 
+      data: { 
+        isVerified: true, 
+        verifiedAt: new Date(),
+        certSerialNumber: certSerialNumber, 
+      }
+    });
+  }
+
+  async getDeviceAttributes(serialNumber: string, userId: number, role: string) {
     await this.assertDeviceAccess(serialNumber, userId, role);
 
     const attributes = await this.repository.findAttributesBySerialNumber(serialNumber);
