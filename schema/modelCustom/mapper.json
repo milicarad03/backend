@@ -1,5 +1,8 @@
 {
   "fields": {
+    "batteryLevel": {
+        "path": "metrics.batteryLevel"
+    },
     "serialNumber": {
       "path": "attributes.serialNumber"
     },
@@ -63,6 +66,12 @@
         "title": "PUMP OVERVIEW",
         "columns": 4,
         "items": [
+            {
+            "id": "battery-status",
+            "component": "battery-indicator",
+            "bind": "batteryLevel",
+            "title": "Battery Status"
+            },
           {
             "id": "serial-number",
             "component": "value-card",
@@ -114,6 +123,12 @@
             "component": "value-card",
             "bind": "motorTemperature",
             "title": "Motor Temperature"
+          },
+          {
+            "id": "signal-test",
+            "component": "signal-strength",
+            "bind": "motorTemperature",
+            "title": "Signal Strength Test"
           }
         ]
       },

@@ -1,7 +1,5 @@
 import { createDeviceDashboardConfig } from './device-dashboard.config';
 
-
-
 describe('createDeviceDashboardConfig', () => {
   const mockDeviceRepository = {
     findOne: jest.fn(),

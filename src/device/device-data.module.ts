@@ -3,7 +3,6 @@ import { DeviceRepository } from './device.repository';
 import { PrismaService } from '../prisma.service';
 import { DeviceTelemetryService } from './device-telemetry.service';
 import { DeviceTelemetryGateway } from './device-telemetry.gateway';
-import { MqttTransportService } from 'src/mqtt/mqtt-transport.service';
 
 @Module({
   providers: [DeviceRepository,PrismaService, DeviceTelemetryService, DeviceTelemetryGateway],

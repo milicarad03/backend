@@ -58,8 +58,6 @@ export class PostService {
         const post = await this.repository.findOne({ id: postId });
 
         if (!post) throw new NotFoundException('Post nije pronađen');
-
-        // Ako nije admin I nije vlasnik posta -> blokiraj
         if (role !== 'ADMIN' && post.authorId !== userId) {
             throw new ForbiddenException('Nemate dozvolu da obrišete ovaj post');
         }
@@ -71,8 +69,6 @@ export class PostService {
             const post = await this.repository.findOne({ id: postId });
 
             if (!post) throw new NotFoundException('Post nije pronađen');
-
-            // ako nije vlasnik posta ne moze da objavi
             if (post.authorId !== userId) {
                 throw new ForbiddenException('Nemate dozvolu da objavite ovaj post');
             }

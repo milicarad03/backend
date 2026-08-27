@@ -79,20 +79,20 @@
       }
     },
     "SET_TARGET_PRESSURE": {
-    "payload": {
+      "payload": {
         "type": "object",
         "required": [
-        "value"
+          "value"
         ],
         "properties": {
-        "value": {
+          "value": {
             "type": "number",
             "minimum": 2,
             "maximum": 16
-        }
+          }
         },
         "additionalProperties": false
-    }
+      }
     },
     "SET_OPERATING_PROFILE": {
       "payload": {
@@ -231,7 +231,7 @@
     },
     "schemaId": {
       "type": "string",
-      "const": "modelB",
+      "const": "modelA",
       "x-reporting": {
         "IDLE": 120000,
         "ACTIVE": 6000

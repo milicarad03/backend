@@ -1,7 +1,6 @@
 import { DeviceRepository } from './device.repository';
 import { DeviceTelemetryService } from './device-telemetry.service';
 import { Logger } from '@nestjs/common';
-import { DeviceStatus } from '../generated/prisma/client.js';
 import Redis from 'ioredis';
 import { MqttPublisherService } from 'src/mqtt/mqtt-publisher.service';
 import type {

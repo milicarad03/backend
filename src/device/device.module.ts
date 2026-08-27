@@ -7,7 +7,6 @@ import { DeviceDashboardModule } from 'serverplugin';
 import { DeviceTelemetryService } from './device-telemetry.service';
 import { createDeviceDashboardConfig } from './device-dashboard.config';
 import { RedisModule } from './redis.module';
-import Redis from 'ioredis';
 import { MqttModule } from 'src/mqtt/mqtt.module';
 import { MqttPublisherService } from '../mqtt/mqtt-publisher.service';
 import { MqttTransportService } from 'src/mqtt/mqtt-transport.service';

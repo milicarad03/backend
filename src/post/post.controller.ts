@@ -45,7 +45,7 @@ export class PostController {
 
     
     @Post("post")
-    @Roles(Role.USER, Role.ADMIN) // mogu da postuju i korisnik i admin
+    @Roles(Role.USER, Role.ADMIN) 
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     async createDraft(
         @Req() req,
@@ -58,7 +58,6 @@ export class PostController {
     @Roles(Role.USER, Role.ADMIN) 
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     async publishPost(@Param("id") id: string, @Req() req) {
-    // Servis treba da proveri da li korisnik poseduje ovaj post
     return this.postService.publishIfOwner(Number(id), req.user.userId);
   }
 
@@ -68,7 +67,6 @@ export class PostController {
     @Roles(Role.USER, Role.ADMIN) 
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     async deletePost(@Param("id") id: string, @Req() req){
-    ///post  mogu da obrisu samo vlasnik ili admin
     return this.postService.deleteIfOwnerOrAdmin(Number(id), req.user.userId, req.user.role);
   }
     

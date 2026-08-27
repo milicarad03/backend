@@ -154,10 +154,7 @@ export class CertificateRegistrationService {
           '-sha256',
         ]);
       const serialOutput = execFileSync('openssl', ['x509', '-in', operationalDeviceCertPath, '-noout', '-serial']).toString();
-      //const certSerialNumber = serialOutput.split('=')[1].trim();
       certSerialNumber = serialOutput.split('=')[1]?.trim();
-
-      //await this.deviceService.markDeviceAsVerified(deviceId, certSerialNumber);
       } catch (opensslError: any) {
         this.logger.error(`Failed to sign operational certificate. OpenSSL Output: ${opensslError.stderr?.toString() || opensslError.message}`);
         throw new BadRequestException('OPERATIONAL_SIGNING_FAILED');
@@ -165,23 +162,16 @@ export class CertificateRegistrationService {
      
 
       if (!certSerialNumber) {
-    
         throw new InternalServerErrorException('CERTIFICATE_SERIAL_MISSING'); 
       }
 
-
      try {
-       // const serialOutput = execFileSync('openssl', ['x509', '-in', operationalDeviceCertPath, '-noout', '-serial']).toString();
-       // const certSerialNumber = serialOutput.split('=')[1].trim();
-      
         await this.deviceService.markDeviceAsVerified(deviceId, certSerialNumber);
       } catch (dbError: any) {
         this.logger.error(`Database update failed: ${dbError.message}`);
         throw new InternalServerErrorException('DB_FAILED'); 
       }
           
-          
-
       const operationalDeviceCertPem = readFileSync(
         operationalDeviceCertPath,
         'utf8',

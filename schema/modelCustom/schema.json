@@ -7,7 +7,7 @@
   "properties": {
     "schemaId": {
       "type": "string",
-      "const": "modelC",
+      "const": "modelA",
       "x-reporting": {
         "IDLE": 120000,
         "ACTIVE": 5000
@@ -97,6 +97,15 @@
     "metrics": {
       "type": "object",
       "properties": {
+        "batteryLevel": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 100,
+        "x-reporting": {
+            "IDLE": null,
+            "ACTIVE": 5000
+        }
+        },
         "flowRate": {
           "type": "number",
           "minimum": 0,

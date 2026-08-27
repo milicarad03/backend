@@ -1,5 +1,8 @@
 {
   "fields": {
+    "deviceStatus": {
+      "path": "system.status.mode"
+    },
     "serialNumber": {
       "path": "system.identity.serial"
     },
@@ -22,22 +25,18 @@
       "path": "diagnostics.health.oil_level",
       "historyPath": "historicalTelemetry.oil_level"
     },
-    
     "vibration": {
       "path": "diagnostics.health.vibration",
       "historyPath": "historicalTelemetry.vibration"
     },
-
     "vibrationHistory": {
       "path": "historicalTelemetry.vibration",
       "operation": "array"
     },
-
     "vibrationMin": {
       "path": "historicalTelemetry.vibration",
       "operation": "min"
     },
-
     "vibrationMax": {
       "path": "historicalTelemetry.vibration",
       "operation": "max"
@@ -55,6 +54,10 @@
       "historyPath": "historicalTelemetry.tempIn"
     },
     "tempOutlet": {
+      "path": "performance.stages.tempOut",
+      "historyPath": "historicalTelemetry.tempOut"
+    },
+    "compressorTempOut": {
       "path": "performance.stages.tempOut",
       "historyPath": "historicalTelemetry.tempOut"
     },
@@ -90,151 +93,168 @@
       "path": "system.identity.serial"
     }
   },
-
-"dashboard": {
-  "sections": [
-    {
-      "id": "overview",
-      "title": "COMPRESSOR OVERVIEW",
-      "columns": 4,
-      "items": [
-        {
-          "id": "uptime",
-          "component": "value-card",
-          "bind": "uptime",
-          "title": "Uptime"
-        },
-        {
-          "id": "mode",
-          "component": "value-card",
-          "bind": "opMode",
-          "title": "Operating Mode"
-        },
-        {
-          "id": "airflow",
-          "component": "value-card",
-          "bind": "airflow",
-          "title": "Airflow"
-        },
-        {
-          "id": "power",
-          "component": "value-card",
-          "bind": "powerDraw",
-          "title": "Power Draw",
-          "unit": "kW"
-        },
-        {
-        "id": "oil-level",
-        "component": "oil-gauge",
-        "bind": "oilLevel",
-        "title": "Oil Level",
-        "unit": "%"
-        },
-        {
-        "id": "oil-warning",
-        "component": "value-card",
-        "bind": "oilLevel",
-        "title": "LOW OIL WARNING",
+  "dashboard": {
+    "sections": [
+      {
+        "id": "overview",
+        "title": "COMPRESSOR OVERVIEW",
+        "columns": 4,
+        "items": [
+          {
+            "id": "compressor-status-badge",
+            "component": "status-badge",
+            "bind": "deviceStatus",
+            "title": "System Operating Status",
+            "colSpan": 2
+          },
+          {
+            "id": "mode",
+            "component": "value-card",
+            "bind": "opMode",
+            "title": "Operating Mode",
+            "colSpan": 2
+          },
+          {
+            "id": "uptime",
+            "component": "value-card",
+            "bind": "uptime",
+            "title": "Uptime"
+          },
+          {
+            "id": "airflow",
+            "component": "value-card",
+            "bind": "airflow",
+            "title": "Airflow"
+          },
+          {
+            "id": "power",
+            "component": "value-card",
+            "bind": "powerDraw",
+            "title": "Power Draw",
+            "unit": "kW"
+          },
+          {
+            "id": "oil-level",
+            "component": "oil-gauge",
+            "bind": "oilLevel",
+            "title": "Oil Level",
+            "unit": "%"
+          },
+          {
+            "id": "compressor-thermometer",
+            "component": "temperature-thermometer",
+            "bind": "compressorTempOut",
+            "title": "Discharge Temperature",
+            "min": 40,
+            "max": 120,
+            "colSpan": 2
+          },
+          {
+            "id": "oil-warning",
+            "component": "value-card",
+            "bind": "oilLevel",
+            "title": "LOW OIL WARNING",
+            "colSpan": 2,
             "visibleWhen": {
-                "bind": "opMode",
-                "equals": "FAULT"
+              "bind": "opMode",
+              "equals": "FAULT"
             }
-        }
-      ]
-    },
-    {
-      "id": "history",
-      "title": "TELEMETRY HISTORY",
-      "columns": 4,
-      "items": [
-        {
-          "id": "uptime-chart",
-          "component": "line-chart",
-          "bind": "uptime",
-          "title": "Uptime History",
-          "colSpan": 2
-        },
-        {
-          "id": "uptime-table",
-          "component": "table",
-          "bind": "uptime",
-          "title": "Uptime Table",
-          "colSpan": 2
-        },
-        {
+          }
+        ]
+      },
+      {
+        "id": "history",
+        "title": "TELEMETRY HISTORY",
+        "columns": 4,
+        "items": [
+          {
+            "id": "uptime-chart",
+            "component": "line-chart",
+            "bind": "uptime",
+            "title": "Uptime History",
+            "colSpan": 2
+          },
+          {
+            "id": "uptime-table",
+            "component": "table",
+            "bind": "uptime",
+            "title": "Uptime Table",
+            "colSpan": 2
+          },
+          {
             "id": "power-chart",
             "component": "line-chart",
             "bind": "powerDraw",
             "title": "Power Draw History",
             "unit": "kW",
             "colSpan": 2
-        },
-        {
+          },
+          {
             "id": "power-table",
             "component": "table",
             "bind": "powerDraw",
             "title": "Power Draw Table",
             "unit": "kW",
             "colSpan": 2
-        }
-      ]
-    },
-    {
-    "id": "controls",
-    "title": "COMPRESSOR CONTROLS",
-    "columns": 4,
-    "items": [
-        {
-        "id": "target-pressure",
-        "component": "numeric-input",
-        "title": "Target Pressure",
-        "command": "SET_TARGET_PRESSURE",
-        "commandField": "value",
-        "min": 2,
-        "max": 16,
-        "step": 1
-        }
+          }
+        ]
+      },
+      {
+        "id": "controls",
+        "title": "COMPRESSOR CONTROLS",
+        "columns": 4,
+        "items": [
+          {
+            "id": "target-pressure",
+            "component": "numeric-input",
+            "title": "Target Pressure",
+            "command": "SET_TARGET_PRESSURE",
+            "commandField": "value",
+            "min": 2,
+            "max": 16,
+            "step": 1
+          }
+        ]
+      },
+      {
+        "id": "complex controls",
+        "title": "COMPRESSOR CONTROLS",
+        "columns": 2,
+        "items": [
+          {
+            "id": "operating-profile",
+            "component": "command-form",
+            "title": "Operating Profile",
+            "command": "SET_OPERATING_PROFILE"
+          }
+        ]
+      },
+      {
+        "id": "mapping-demo",
+        "title": "MAPPING OPERATIONS",
+        "columns": 3,
+        "items": [
+          {
+            "id": "vibration-min",
+            "component": "value-card",
+            "bind": "vibrationMin",
+            "title": "Minimum Vibration"
+          },
+          {
+            "id": "vibration-max",
+            "component": "value-card",
+            "bind": "vibrationMax",
+            "title": "Maximum Vibration"
+          },
+          {
+            "id": "vibration-history",
+            "component": "table",
+            "bind": "vibrationHistory",
+            "title": "Vibration Samples",
+            "colSpan": 3
+          }
+        ]
+      }
     ]
-    },
-    {
-    "id": "complex controls",
-    "title": "COMPRESSOR CONTROLS",
-    "columns": 2,
-    "items": [
-        {
-        "id": "operating-profile",
-        "component": "command-form",
-        "title": "Operating Profile",
-        "command": "SET_OPERATING_PROFILE"
-        }
-    ]
-    },
-    {
-      "id": "mapping-demo",
-      "title": "MAPPING OPERATIONS",
-      "columns": 3,
-      "items": [
-        {
-          "id": "vibration-min",
-          "component": "value-card",
-          "bind": "vibrationMin",
-          "title": "Minimum Vibration"
-        },
-        {
-          "id": "vibration-max",
-          "component": "value-card",
-          "bind": "vibrationMax",
-          "title": "Maximum Vibration"
-        },
-        {
-          "id": "vibration-history",
-          "component": "table",
-          "bind": "vibrationHistory",
-          "title": "Vibration Samples",
-          "colSpan": 3
-        }
-      ]
-    }
-  ]
-}
+  }
 }

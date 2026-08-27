@@ -430,6 +430,42 @@ const mockDeviceCommandAuditService = {
       correlationId: 'audit-correlation-1',
     });
   });
+  it('should report UI-to-controller command latency when timestamp header is present', async () => {
+    const dateNowSpy = jest
+      .spyOn(Date, 'now')
+      .mockReturnValue(2_000);
+
+    try {
+      const result = await controller.sendDeviceCommand(
+        'sn-100',
+        {
+          command: 'SET_LED',
+          payload: { value: true },
+        },
+        {
+          headers: {
+            'x-ui-command-started-at': '1975',
+          },
+          user: {
+            userId: 7,
+            role: 'USER',
+          },
+        },
+      );
+
+      expect(result).toEqual({
+        success: true,
+        correlationId: 'audit-correlation-1',
+        performance: {
+          clientStartedAt: 1_975,
+          serverReceivedAt: 2_000,
+          uiToServerMs: 25,
+        },
+      });
+    } finally {
+      dateNowSpy.mockRestore();
+    }
+  });
   it('should return command metadata', async () => {
     const metadata = [
       {

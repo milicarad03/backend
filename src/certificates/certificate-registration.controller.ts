@@ -1,5 +1,3 @@
-// src/certificates/certificate-registration.controller.ts
-
 import { Body, Controller, Post,Logger } from '@nestjs/common';
 import { CertificateRegistrationService } from '../certificates/certificate-registration.service';
 
