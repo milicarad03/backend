@@ -21,6 +21,7 @@ export class MqttPublisherService implements OnModuleInit, OnModuleDestroy {
 
   onModuleInit() {
     this.client = mqtt.connect(this.brokerUrl);
+
     this.client.on('connect', () => {
       this.logger.log(`MQTT publisher connected to ${this.brokerUrl}`);
     });

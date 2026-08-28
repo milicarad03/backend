@@ -45,6 +45,9 @@ const mockDeviceCommandAuditService = {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    mockDeviceDashboardService.executeCommand.mockResolvedValue({
+      status: 'DISPATCHED',
+    });
     mockDeviceCommandAuditService.execute.mockImplementation(
       async (_command, action) => ({
         correlationId: 'audit-correlation-1',
@@ -383,7 +386,7 @@ const mockDeviceCommandAuditService = {
 
   it('should execute device command', async () => {
     mockDeviceDashboardService.executeCommand.mockResolvedValue(
-      undefined,
+      { status: 'DISPATCHED' },
     );
 
     const result = await controller.sendDeviceCommand(
@@ -428,6 +431,7 @@ const mockDeviceCommandAuditService = {
     expect(result).toEqual({
       success: true,
       correlationId: 'audit-correlation-1',
+      status: 'DISPATCHED',
     });
   });
   it('should report UI-to-controller command latency when timestamp header is present', async () => {
@@ -456,6 +460,7 @@ const mockDeviceCommandAuditService = {
       expect(result).toEqual({
         success: true,
         correlationId: 'audit-correlation-1',
+        status: 'DISPATCHED',
         performance: {
           clientStartedAt: 1_975,
           serverReceivedAt: 2_000,
@@ -465,6 +470,61 @@ const mockDeviceCommandAuditService = {
     } finally {
       dateNowSpy.mockRestore();
     }
+  });
+  it('should report a redundant command as NOOP', async () => {
+    mockDeviceDashboardService.executeCommand.mockResolvedValue({
+      status: 'NOOP',
+      reason: 'ALREADY_APPLIED',
+      observedAt: '2026-08-27T12:00:00.000Z',
+    });
+
+    const result = await controller.sendDeviceCommand(
+      'sn-100',
+      {
+        command: 'SET_PUMP_STATE',
+        payload: { enabled: true },
+      },
+      {
+        user: { userId: 7, role: 'USER' },
+      },
+    );
+
+    expect(result).toEqual({
+      success: true,
+      correlationId: 'audit-correlation-1',
+      status: 'NOOP',
+      reason: 'ALREADY_APPLIED',
+      observedAt: '2026-08-27T12:00:00.000Z',
+    });
+  });
+  it('should expose backend-to-device transport round-trip metadata', async () => {
+    mockDeviceDashboardService.executeCommand.mockResolvedValue({
+      status: 'DISPATCHED',
+      response: {
+        deviceId: 'sn-100',
+        command: 'SET_LED',
+        correlationId: 'audit-correlation-1',
+        success: true,
+        transport: 'coap',
+        transportRoundTripMs: 12.345,
+      },
+    });
+
+    const result = await controller.sendDeviceCommand(
+      'sn-100',
+      { command: 'SET_LED', payload: { value: true } },
+      { user: { userId: 7, role: 'USER' }, headers: {} },
+    );
+
+    expect(result).toEqual({
+      success: true,
+      correlationId: 'audit-correlation-1',
+      status: 'DISPATCHED',
+      transportPerformance: {
+        transport: 'coap',
+        roundTripMs: 12.345,
+      },
+    });
   });
   it('should return command metadata', async () => {
     const metadata = [

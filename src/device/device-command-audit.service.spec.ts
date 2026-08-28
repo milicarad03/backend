@@ -80,6 +80,36 @@ describe('DeviceCommandAuditService', () => {
     });
   });
 
+  it('persists a redundant command as NOOP', async () => {
+    const action = jest.fn().mockResolvedValue({
+      status: 'NOOP',
+      reason: 'ALREADY_APPLIED',
+    });
+
+    const result = await service.execute(
+      {
+        userId: 7,
+        deviceId: 'SN-1',
+        command: 'SET_PUMP_STATE',
+        payload: { enabled: true },
+      },
+      action,
+    );
+
+    expect(result.value).toEqual({
+      status: 'NOOP',
+      reason: 'ALREADY_APPLIED',
+    });
+    expect(commandAudit.update).toHaveBeenCalledWith({
+      where: { id: 'audit-1' },
+      data: {
+        result: 'NOOP',
+        error: null,
+        completedAt: expect.any(Date),
+      },
+    });
+  });
+
   it('does not execute a command when the initial audit write fails', async () => {
     const action = jest.fn();
     commandAudit.create.mockRejectedValue(

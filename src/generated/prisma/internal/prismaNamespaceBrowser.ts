@@ -111,6 +111,7 @@ export const DeviceScalarFieldEnum = {
   lastseen: 'lastseen',
   status: 'status',
   telemetryState: 'telemetryState',
+  telemetryStateUpdatedAt: 'telemetryStateUpdatedAt',
   attributes: 'attributes',
   modelVersionId: 'modelVersionId',
   isVerified: 'isVerified',

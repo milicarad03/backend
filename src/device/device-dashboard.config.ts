@@ -1,8 +1,9 @@
 import { DeviceRepository } from './device.repository';
 import { DeviceTelemetryService } from './device-telemetry.service';
 import { Logger } from '@nestjs/common';
+import { DeviceStatus } from '../generated/prisma/client.js';
 import Redis from 'ioredis';
-import { MqttPublisherService } from 'src/mqtt/mqtt-publisher.service';
+import { DeviceCommandService } from './device-command.service';
 import type {
   CommandDispatchContext,
   DeviceAttributes,
@@ -15,12 +16,18 @@ export type DeviceTelemetry = {
 };
 
 const logger = new Logger('DeviceDashboardConfig');
+/*const redisClient = new Redis({host: 'localhost',
+  port: 6379,
+});*/
+
+//redisClient.on('connect', () => logger.log('Successfully connected to Redis Server.'));
+//redisClient.on('error', (err) => logger.error(`Redis connection error: ${err.message}`));
 
 export const createDeviceDashboardConfig = (
   deviceRepository: DeviceRepository,
   deviceTelemetryService: DeviceTelemetryService,
   redisClient: Redis,
-  mqttPublisher: MqttPublisherService,
+  commandService: DeviceCommandService,
 
 ) => ({
   
@@ -48,11 +55,16 @@ export const createDeviceDashboardConfig = (
         schema: device.modelVersion?.schema,
         mapping: device.modelVersion?.mapping,
         status: device.status,
+        telemetryState: device.telemetryState,
+        telemetryStateUpdatedAt: device.telemetryStateUpdatedAt,
 
       };
     }catch(err:any){
     logger.error(`Failed loading device ${deviceId}: ${err.message}` );
+
     throw err;
+
+          
     }
   },
 
@@ -112,13 +124,36 @@ export const createDeviceDashboardConfig = (
    context?: CommandDispatchContext,
  ) => {
 
-   await mqttPublisher.publish('command', deviceId, {
-     command,
-     payload,
-     ...(context?.correlationId
-       ? { correlationId: context.correlationId }
-       : {}),
-   });
+  /*logger.error(
+    `[MQTT SEND]
+     device=${deviceId}
+     command=${command}
+     payload=${JSON.stringify(payload)}
+     stack=${new Error().stack}`
+  );*/
+
+   const response =
+     await commandService.sendCommandAndWaitForResponse(
+       deviceId,
+       command,
+       payload ?? {},
+       10_000,
+       context?.correlationId,
+     );
+
+   if (
+     response.success &&
+     command === 'SET_STATE' &&
+     (payload?.state === 'ACTIVE' || payload?.state === 'IDLE')
+   ) {
+     await deviceTelemetryService.handleTelemetryStateChange(
+       deviceId,
+       payload.state,
+       response.timestamp,
+     );
+   }
+
+   return response;
 },
 getLatestTelemetry: async (deviceId: string) => {
   return await deviceTelemetryService.getLatestTelemetry(deviceId);

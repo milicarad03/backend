@@ -177,9 +177,43 @@ describe('DeviceTelemetryService', () => {
       data: {
         status: 'OFFLINE',
         lastseen: expect.any(Date),
+        telemetryStateUpdatedAt: null,
       },
     });
     expect(mockTelemetryGateway.emitStatusUpdate).toHaveBeenCalledWith('sn-100', 'OFFLINE');
+  });
+
+  it('persists a telemetry state confirmed by the device', async () => {
+    mockDeviceRepository.update.mockResolvedValue({});
+
+    await service.handleTelemetryStateChange(
+      'sn-100',
+      'ACTIVE',
+      '2026-08-27T12:00:00.000Z',
+    );
+
+    expect(mockDeviceRepository.update).toHaveBeenCalledWith({
+      where: { serialNumber: 'sn-100' },
+      data: {
+        telemetryState: 'ACTIVE',
+        telemetryStateUpdatedAt: new Date(
+          '2026-08-27T12:00:00.000Z',
+        ),
+        lastseen: new Date('2026-08-27T12:00:00.000Z'),
+      },
+    });
+  });
+
+  it('rejects an invalid telemetry state timestamp', async () => {
+    await expect(
+      service.handleTelemetryStateChange(
+        'sn-100',
+        'IDLE',
+        'invalid-date',
+      ),
+    ).rejects.toThrow(InvalidTimestampException);
+
+    expect(mockDeviceRepository.update).not.toHaveBeenCalled();
   });
 
   it('should skip status change if device does not exist', async () => {

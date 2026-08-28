@@ -36,6 +36,7 @@ describe('Authentication and device authorization (e2e)', () => {
     findDevices: jest.fn(),
     createDevice: jest.fn(),
     assertDeviceAccess: jest.fn(),
+    getDeviceAttributes: jest.fn(),
   };
 
   const deviceTelemetryService = {
@@ -217,12 +218,33 @@ describe('Authentication and device authorization (e2e)', () => {
       },
     );
 
+    deviceService.getDeviceAttributes.mockImplementation(
+      async (serialNumber: string, userId: number, role: string) => {
+        await deviceService.assertDeviceAccess(
+          serialNumber,
+          userId,
+          role,
+        );
+
+        return {
+          serialNumber,
+          attributes: {
+            serialNumber,
+            firmware: '1.1.4',
+            hardwareModel: 'modelC',
+          },
+        };
+      },
+    );
+
     deviceTelemetryService.getLatestTelemetry.mockResolvedValue({
       deviceId: 'SN-1',
       data: { temperature: 21.5 },
     });
 
-    deviceDashboardService.executeCommand.mockResolvedValue(undefined);
+    deviceDashboardService.executeCommand.mockResolvedValue({
+      status: 'DISPATCHED',
+    });
   });
 
   afterAll(async () => {
@@ -434,6 +456,7 @@ describe('Authentication and device authorization (e2e)', () => {
     expect(response.body).toEqual({
       success: true,
       correlationId: 'audit-correlation-1',
+      status: 'DISPATCHED',
     });
     expect(deviceService.assertDeviceAccess).toHaveBeenCalledWith(
       'SN-1',
@@ -483,6 +506,94 @@ describe('Authentication and device authorization (e2e)', () => {
     expect(
       deviceTelemetryService.getLatestTelemetry,
     ).not.toHaveBeenCalled();
+  });
+
+  it('rejects device attributes access without a JWT', async () => {
+    await request(app.getHttpServer())
+      .get('/device/SN-1/attributes')
+      .expect(401);
+
+    expect(deviceService.getDeviceAttributes).not.toHaveBeenCalled();
+  });
+
+  it('allows a device owner to read their device attributes', async () => {
+    const ownerToken = await login(
+      'user@example.com',
+      'user-password',
+    );
+
+    await request(app.getHttpServer())
+      .get('/device/SN-1/attributes')
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .expect(200)
+      .expect({
+        serialNumber: 'SN-1',
+        attributes: {
+          serialNumber: 'SN-1',
+          firmware: '1.1.4',
+          hardwareModel: 'modelC',
+        },
+      });
+
+    expect(deviceService.getDeviceAttributes).toHaveBeenCalledWith(
+      'SN-1',
+      2,
+      'USER',
+    );
+  });
+
+  it('forbids a regular user from reading another device attributes', async () => {
+    const otherUserToken = await login(
+      'other-user@example.com',
+      'other-user-password',
+    );
+
+    await request(app.getHttpServer())
+      .get('/device/SN-1/attributes')
+      .set('Authorization', `Bearer ${otherUserToken}`)
+      .expect(403);
+
+    expect(deviceService.getDeviceAttributes).toHaveBeenCalledWith(
+      'SN-1',
+      3,
+      'USER',
+    );
+  });
+
+  it('allows an administrator to read device attributes', async () => {
+    const adminToken = await login(
+      'admin@example.com',
+      'admin-password',
+    );
+
+    await request(app.getHttpServer())
+      .get('/device/SN-1/attributes')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
+
+    expect(deviceService.getDeviceAttributes).toHaveBeenCalledWith(
+      'SN-1',
+      1,
+      'ADMIN',
+    );
+  });
+
+  it('returns 404 for attributes of a device that does not exist', async () => {
+    const adminToken = await login(
+      'admin@example.com',
+      'admin-password',
+    );
+
+    await request(app.getHttpServer())
+      .get('/device/SN-MISSING/attributes')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(404);
+
+    expect(deviceService.getDeviceAttributes).toHaveBeenCalledWith(
+      'SN-MISSING',
+      1,
+      'ADMIN',
+    );
   });
 
   it('allows a regular user to fetch permitted devices', async () => {

@@ -1,5 +1,7 @@
 import { createDeviceDashboardConfig } from './device-dashboard.config';
 
+
+
 describe('createDeviceDashboardConfig', () => {
   const mockDeviceRepository = {
     findOne: jest.fn(),
@@ -9,10 +11,12 @@ describe('createDeviceDashboardConfig', () => {
   const mockDeviceTelemetryService = {
     handleTelemetry: jest.fn(),
     handleStatusChange: jest.fn(),
+    handleTelemetryStateChange: jest.fn(),
      getLatestTelemetry: jest.fn(),
   };
   const mockMqttPublisher = {
     publish: jest.fn(),
+    sendCommandAndWaitForResponse: jest.fn(),
   };
     const mockRedis = {
     get: jest.fn(),
@@ -23,6 +27,12 @@ describe('createDeviceDashboardConfig', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockMqttPublisher.sendCommandAndWaitForResponse.mockResolvedValue({
+      deviceId: 'sn-100',
+      command: 'SET_LED',
+      correlationId: 'generated-correlation',
+      success: true,
+    });
   });
 
   it('should return device data when device exists', async () => {
@@ -34,6 +44,10 @@ describe('createDeviceDashboardConfig', () => {
       userId: 1,
       isActive: true,
       createdAt: new Date(),
+      telemetryState: 'ACTIVE',
+      telemetryStateUpdatedAt: new Date(
+        '2026-08-27T12:00:00.000Z',
+      ),
     };
 
     mockDeviceRepository.findOne.mockResolvedValue(device);
@@ -56,6 +70,10 @@ describe('createDeviceDashboardConfig', () => {
       serialNumber: 'sn-100',
       name: 'Temperature Sensor',
       type: 'TEMP_SENSOR',
+      telemetryState: 'ACTIVE',
+      telemetryStateUpdatedAt: new Date(
+        '2026-08-27T12:00:00.000Z',
+      ),
     });
   });
 
@@ -268,7 +286,7 @@ describe('createDeviceDashboardConfig', () => {
         'ONLINE',
       );
     });
-  it('should publish command through mqtt publisher', async () => {
+  it('should send a command and wait for the device response', async () => {
     const config = createDeviceDashboardConfig(
       mockDeviceRepository as any,
       mockDeviceTelemetryService as any,
@@ -283,14 +301,13 @@ describe('createDeviceDashboardConfig', () => {
     );
 
     expect(
-      mockMqttPublisher.publish,
+      mockMqttPublisher.sendCommandAndWaitForResponse,
     ).toHaveBeenCalledWith(
-      'command',
       'sn-100',
-      {
-        command: 'SET_LED',
-        payload: { value: true },
-      },
+      'SET_LED',
+      { value: true },
+      10_000,
+      undefined,
     );
   });
   it('should include the audit correlation ID in the MQTT command', async () => {
@@ -308,14 +325,43 @@ describe('createDeviceDashboardConfig', () => {
       { correlationId: 'audit-correlation-1' },
     );
 
-    expect(mockMqttPublisher.publish).toHaveBeenCalledWith(
-      'command',
+    expect(mockMqttPublisher.sendCommandAndWaitForResponse).toHaveBeenCalledWith(
       'sn-100',
-      {
-        command: 'SET_LED',
-        payload: { value: true },
-        correlationId: 'audit-correlation-1',
-      },
+      'SET_LED',
+      { value: true },
+      10_000,
+      'audit-correlation-1',
+    );
+  });
+  it('persists a confirmed telemetry state from the device response', async () => {
+    mockMqttPublisher.sendCommandAndWaitForResponse.mockResolvedValue({
+      deviceId: 'sn-100',
+      command: 'SET_STATE',
+      correlationId: 'state-correlation',
+      success: true,
+      timestamp: '2026-08-27T12:00:00.000Z',
+      status: 'ACTIVE',
+    });
+    const config = createDeviceDashboardConfig(
+      mockDeviceRepository as any,
+      mockDeviceTelemetryService as any,
+      mockRedis,
+      mockMqttPublisher as any,
+    );
+
+    await config.sendCommand(
+      'sn-100',
+      'SET_STATE',
+      { state: 'ACTIVE' },
+      { correlationId: 'state-correlation' },
+    );
+
+    expect(
+      mockDeviceTelemetryService.handleTelemetryStateChange,
+    ).toHaveBeenCalledWith(
+      'sn-100',
+      'ACTIVE',
+      '2026-08-27T12:00:00.000Z',
     );
   });
   it('should return latest telemetry from telemetry service', async () => {

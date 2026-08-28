@@ -79,6 +79,7 @@ const runLocalBinary = (binary, args) => {
     env: {
       ...process.env,
       NODE_ENV: 'test',
+      COAP_ENABLED: 'false',
     },
     stdio: 'inherit',
   });

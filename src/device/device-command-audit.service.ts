@@ -42,12 +42,13 @@ export class DeviceCommandAuditService {
 
     try {
       const value = await action(correlationId);
+      const result = this.isNoop(value) ? 'NOOP' : 'SUCCESS';
 
       try {
         await this.prisma.commandAudit.update({
           where: { id: audit.id },
           data: {
-            result: 'SUCCESS',
+            result,
             error: null,
             completedAt: new Date(),
           },
@@ -93,5 +94,14 @@ export class DeviceCommandAuditService {
     } catch {
       return 'UNKNOWN_COMMAND_ERROR';
     }
+  }
+
+  private isNoop(value: unknown): boolean {
+    return (
+      typeof value === 'object' &&
+      value !== null &&
+      'status' in value &&
+      (value as { status?: unknown }).status === 'NOOP'
+    );
   }
 }

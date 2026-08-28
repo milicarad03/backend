@@ -46,7 +46,8 @@ export type TelemetryState = (typeof TelemetryState)[keyof typeof TelemetryState
 export const CommandAuditResult = {
   PENDING: 'PENDING',
   SUCCESS: 'SUCCESS',
-  FAILURE: 'FAILURE'
+  FAILURE: 'FAILURE',
+  NOOP: 'NOOP'
 } as const
 
 export type CommandAuditResult = (typeof CommandAuditResult)[keyof typeof CommandAuditResult]

@@ -8,6 +8,8 @@ import {
     InvalidTimestampException,
 } from 'serverplugin';
 import { MqttPublisherService } from './mqtt-publisher.service';
+import { MqttCommandService } from './mqtt-command.service';
+import { CoapDeviceRegistryService } from '../coap/coap-device-registry.service';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
 
 jest.mock('mqtt');
@@ -30,6 +32,8 @@ describe('MqttTransportService', () => {
     let module: TestingModule;
     let messageHandler: any;
     let mockMqttPublisher: any;
+    let mockMqttCommandService: any;
+    let mockCoapRegistry: any;
 
     beforeEach(async () => {
         mockPluginCore = {
@@ -53,6 +57,12 @@ describe('MqttTransportService', () => {
         mockMqttPublisher = {
             publish: jest.fn(),
         };
+        mockMqttCommandService = {
+            handleResponse: jest.fn(),
+        };
+        mockCoapRegistry = {
+            unregister: jest.fn(),
+        };
 
         (mqtt.connect as jest.Mock).mockReturnValue(mockMqttClient);
 
@@ -61,6 +71,8 @@ describe('MqttTransportService', () => {
                 MqttTransportService,
                 { provide: DeviceDashboardService, useValue: mockPluginCore },
                 { provide: MqttPublisherService, useValue: mockMqttPublisher },
+                { provide: MqttCommandService, useValue: mockMqttCommandService },
+                { provide: CoapDeviceRegistryService, useValue: mockCoapRegistry },
             ],
         }).compile();
 
@@ -163,6 +175,7 @@ describe('MqttTransportService', () => {
             { status: 'online' },
             { deviceId: 'dev-123', topic, transport: 'mqtt' }
         );
+        expect(mockCoapRegistry.unregister).toHaveBeenCalledWith('dev-123');
     });
 
     it('should disconnect on module destroy', () => {
@@ -301,6 +314,7 @@ describe('MqttTransportService', () => {
         );
 
         expect(mockPluginCore.processStatus).not.toHaveBeenCalled();
+        expect(mockCoapRegistry.unregister).not.toHaveBeenCalled();
         expect(loggerSpy).toHaveBeenCalledWith(
             expect.stringContaining('Ignoring retained status')
         );
@@ -382,20 +396,11 @@ describe('MqttTransportService', () => {
         );
     });
 
-    it('should resolve a command when the matching correlation response arrives', async () => {
-        const responsePromise = service.sendCommandAndWaitForResponse(
-            'dev-123',
-            'RESTART',
-            { reason: 'MODEL_UPDATE' },
-            1000,
-        );
-
-        const publishedMessage = mockMqttPublisher.publish.mock.calls[0][2];
-        const correlationId = publishedMessage.payload.correlationId;
+    it('should forward command responses to the command service', async () => {
         const response = {
             deviceId: 'dev-123',
             command: 'RESTART',
-            correlationId,
+            correlationId: 'correlation-1',
             success: true,
         };
 
@@ -405,99 +410,9 @@ describe('MqttTransportService', () => {
             { retain: false },
         );
 
-        await expect(responsePromise).resolves.toEqual(response);
-        expect(service['pendingResponses'].size).toBe(0);
-    });
-
-    it('should ignore a response with the wrong correlation ID', async () => {
-        const responsePromise = service.sendCommandAndWaitForResponse(
+        expect(mockMqttCommandService.handleResponse).toHaveBeenCalledWith(
             'dev-123',
-            'RESTART',
-            {},
-            1000,
+            response,
         );
-
-        const publishedMessage = mockMqttPublisher.publish.mock.calls[0][2];
-        const correlationId = publishedMessage.payload.correlationId;
-
-        await messageHandler(
-            'iot/devices/dev-123/response',
-            Buffer.from(JSON.stringify({
-                deviceId: 'dev-123',
-                command: 'RESTART',
-                correlationId: 'wrong-correlation-id',
-                success: true,
-            })),
-            { retain: false },
-        );
-
-        expect(service['pendingResponses'].size).toBe(1);
-
-        const matchingResponse = {
-            deviceId: 'dev-123',
-            command: 'RESTART',
-            correlationId,
-            success: true,
-        };
-
-        await messageHandler(
-            'iot/devices/dev-123/response',
-            Buffer.from(JSON.stringify(matchingResponse)),
-            { retain: false },
-        );
-
-        await expect(responsePromise).resolves.toEqual(matchingResponse);
-        expect(service['pendingResponses'].size).toBe(0);
-    });
-
-    it('should reject on timeout and remove the pending response', async () => {
-        const responsePromise = service.sendCommandAndWaitForResponse(
-            'dev-123',
-            'RESTART',
-            {},
-            20,
-        );
-
-        await expect(responsePromise).rejects.toThrow(
-            'DEVICE_RESPONSE_TIMEOUT:RESTART',
-        );
-        expect(service['pendingResponses'].size).toBe(0);
-    });
-
-    it('should clear the pending response when publishing fails', async () => {
-        const publishError = new Error('MQTT_PUBLISH_FAILED');
-        const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
-        mockMqttPublisher.publish.mockRejectedValueOnce(publishError);
-
-        await expect(
-            service.sendCommandAndWaitForResponse(
-                'dev-123',
-                'RESTART',
-                {},
-                1000,
-            ),
-        ).rejects.toThrow('MQTT_PUBLISH_FAILED');
-
-        expect(clearTimeoutSpy).toHaveBeenCalled();
-        expect(service['pendingResponses'].size).toBe(0);
-        clearTimeoutSpy.mockRestore();
-    });
-
-    it('should reject and remove pending commands during module shutdown', async () => {
-        const responsePromise = service.sendCommandAndWaitForResponse(
-            'dev-123',
-            'RESTART',
-            {},
-            10000,
-        );
-        const rejection = expect(responsePromise).rejects.toThrow(
-            'MQTT_TRANSPORT_SHUTDOWN:dev-123:RESTART:',
-        );
-
-        await Promise.resolve();
-        service.onModuleDestroy();
-
-        await rejection;
-        expect(service['pendingResponses'].size).toBe(0);
     });
 });

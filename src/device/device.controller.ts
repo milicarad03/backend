@@ -215,7 +215,7 @@ async sendDeviceCommand( @Param('id') id: string,
           userId,
           req.user.role,
         );
-        await this.deviceDashboardService.executeCommand(
+        return this.deviceDashboardService.executeCommand(
           id,
           body.command,
           body.payload,
@@ -223,12 +223,32 @@ async sendDeviceCommand( @Param('id') id: string,
         );
       },
     );
+    const transportResponse =
+      auditedCommand.value.status === 'DISPATCHED'
+        ? auditedCommand.value.response
+        : undefined;
 
     return {
       success: true,
       correlationId: auditedCommand.correlationId,
+      status: auditedCommand.value.status,
+      ...(auditedCommand.value.status === 'NOOP'
+        ? {
+            reason: auditedCommand.value.reason,
+            observedAt: auditedCommand.value.observedAt,
+          }
+        : {}),
       ...(commandPerformance
         ? { performance: commandPerformance }
+        : {}),
+      ...(transportResponse?.transport &&
+      typeof transportResponse.transportRoundTripMs === 'number'
+        ? {
+            transportPerformance: {
+              transport: transportResponse.transport,
+              roundTripMs: transportResponse.transportRoundTripMs,
+            },
+          }
         : {}),
     };
 

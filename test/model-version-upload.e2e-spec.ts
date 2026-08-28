@@ -16,6 +16,12 @@ const validSchema = {
   required: ['schemaId'],
   commands: {
     SET_FLOW_TARGET: {
+      'x-idempotency': {
+        stateBinding: 'flowRate',
+        payloadPath: 'target',
+        maxAgeMs: 15000,
+        epsilon: 0.01,
+      },
       payload: {
         type: 'object',
         required: ['target'],
@@ -90,6 +96,58 @@ const validMapping = {
             max: 500,
             step: 1,
           },
+        ],
+      },
+    ],
+  },
+};
+
+const schemaWithAttributes = {
+  ...validSchema,
+  properties: {
+    ...validSchema.properties,
+    attributes: {
+      type: 'object',
+      required: [
+        'serialNumber',
+        'firmware',
+        'hardwareModel',
+      ],
+      properties: {
+        serialNumber: { type: 'string' },
+        firmware: { type: 'string' },
+        hardwareModel: { type: 'string' },
+      },
+      additionalProperties: false,
+    },
+  },
+};
+
+const mappingWithAttributes = {
+  ...validMapping,
+  fields: {
+    ...validMapping.fields,
+    serialNumber: {
+      path: 'attributes.serialNumber',
+    },
+    firmware: {
+      path: 'attributes.firmware',
+    },
+    hardwareModel: {
+      path: 'attributes.hardwareModel',
+    },
+  },
+  dashboard: {
+    sections: [
+      {
+        ...validMapping.dashboard.sections[0],
+        items: [
+          {
+            id: 'firmware',
+            component: 'value-card',
+            bind: 'firmware',
+          },
+          ...validMapping.dashboard.sections[0].items,
         ],
       },
     ],
@@ -225,6 +283,57 @@ describe('Model version upload (e2e)', () => {
     });
   });
 
+  it('allows an administrator to upload a model with device attributes', async () => {
+    repository.createVersion.mockResolvedValueOnce({
+      id: 'model-version-with-attributes',
+      modelId: 'smartPumpModel',
+      version: '1.1.4',
+      schema: schemaWithAttributes,
+      mapping: mappingWithAttributes,
+    });
+
+    const response = await request(app.getHttpServer())
+      .post('/model-versions/upload')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .field('modelName', 'smartPumpModel')
+      .field('version', '1.1.4')
+      .field('description', 'Smart pump model with device attributes')
+      .attach(
+        'schema',
+        Buffer.from(JSON.stringify(schemaWithAttributes)),
+        {
+          filename: 'schema-with-attributes.json',
+          contentType: 'application/json',
+        },
+      )
+      .attach(
+        'mapping',
+        Buffer.from(JSON.stringify(mappingWithAttributes)),
+        {
+          filename: 'mapping-with-attributes.json',
+          contentType: 'application/json',
+        },
+      )
+      .expect(201);
+
+    expect(response.body).toMatchObject({
+      id: 'model-version-with-attributes',
+      modelId: 'smartPumpModel',
+      version: '1.1.4',
+      validation: { valid: true },
+    });
+    expect(repository.upsertDeviceModel).toHaveBeenCalledWith({
+      name: 'smartPumpModel',
+      description: 'Smart pump model with device attributes',
+    });
+    expect(repository.createVersion).toHaveBeenCalledWith({
+      modelName: 'smartPumpModel',
+      version: '1.1.4',
+      schema: schemaWithAttributes,
+      mapping: mappingWithAttributes,
+    });
+  });
+
   it('forbids a regular user from uploading a model version', async () => {
     await uploadValidFiles(userToken).expect(403);
 
@@ -347,6 +456,57 @@ describe('Model version upload (e2e)', () => {
     expect(response.body.errors).toEqual(
       expect.arrayContaining([
         expect.stringContaining('DASHBOARD_BINDING_NOT_FOUND'),
+      ]),
+    );
+    expect(repository.createVersion).not.toHaveBeenCalled();
+  });
+
+  it('rejects idempotency metadata that references an unknown binding', async () => {
+    const invalidIdempotencySchema = {
+      ...validSchema,
+      commands: {
+        SET_FLOW_TARGET: {
+          ...validSchema.commands.SET_FLOW_TARGET,
+          'x-idempotency': {
+            stateBinding: 'missingBinding',
+            payloadPath: 'target',
+            maxAgeMs: 15000,
+          },
+        },
+      },
+    };
+
+    const response = await request(app.getHttpServer())
+      .post('/model-versions/upload')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .field('modelName', 'smartPumpModel')
+      .field('version', '1.0.1')
+      .attach(
+        'schema',
+        Buffer.from(JSON.stringify(invalidIdempotencySchema)),
+        {
+          filename: 'schema.json',
+          contentType: 'application/json',
+        },
+      )
+      .attach(
+        'mapping',
+        Buffer.from(JSON.stringify(validMapping)),
+        {
+          filename: 'mapping.json',
+          contentType: 'application/json',
+        },
+      )
+      .expect(400);
+
+    expect(response.body.message).toBe(
+      'SCHEMA_MAPPING_COMPATIBILITY_FAILED',
+    );
+    expect(response.body.errors).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining(
+          'COMMAND_IDEMPOTENCY_STATE_BINDING_NOT_FOUND',
+        ),
       ]),
     );
     expect(repository.createVersion).not.toHaveBeenCalled();
