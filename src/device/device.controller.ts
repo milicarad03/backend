@@ -49,8 +49,6 @@ export class DeviceController {
     const userRole = req.user.role;
 
     this.logger.log(`Fetch devices requested by user ID: ${userId} with role: ${userRole}`);
-
-    // sve se pretvara u niz iako je stigao jedan id
     const normalizedUserIds = Array.isArray(userIds) ? userIds : userIds ? [userIds] : [];
     const normalizedDeviceType = Array.isArray(type) ? type : type ? [type] : [];
 

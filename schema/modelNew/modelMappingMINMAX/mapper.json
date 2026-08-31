@@ -1,10 +1,13 @@
 {
   "fields": {
     "serialNumber": {
-      "path": "system.identity.serial"
+      "path": "attributes.serialNumber"
     },
     "firmware": {
-      "path": "system.identity.firmware"
+      "path": "attributes.firmware"
+    },
+    "hardwareModel": {
+      "path": "attributes.hardwareModel"
     },
     "opMode": {
       "path": "system.status.mode"
@@ -93,6 +96,24 @@
         "title": "COMPRESSOR OVERVIEW",
         "columns": 4,
         "items": [
+          {
+            "id": "serial-number",
+            "component": "value-card",
+            "bind": "serialNumber",
+            "title": "Serial Number"
+          },
+          {
+            "id": "hardware-model",
+            "component": "value-card",
+            "bind": "hardwareModel",
+            "title": "Hardware Model"
+          },
+          {
+            "id": "firmware",
+            "component": "value-card",
+            "bind": "firmware",
+            "title": "Firmware"
+          },
           {
             "id": "uptime",
             "component": "value-card",

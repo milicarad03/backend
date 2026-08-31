@@ -49,7 +49,7 @@
   "properties": {
     "schemaId": {
       "type": "string",
-      "const": "modelC",
+      "const": "modelA",
       "x-reporting": {
         "IDLE": 120000,
         "ACTIVE": 6000

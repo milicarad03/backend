@@ -77,9 +77,68 @@ describe('CoapCommandService', () => {
         method: 'POST',
       }),
     );
-    expect(JSON.parse(request.end.mock.calls[0][0])).toEqual({
+    expect(
+      JSON.parse(request.end.mock.calls[0][0].toString('utf8')),
+    ).toEqual({
       command: 'SET_LED',
       payload: { value: true, correlationId },
+      correlationId,
+    });
+    expect(request.setOption).not.toHaveBeenCalledWith(
+      'Block1',
+      expect.any(Buffer),
+    );
+  });
+
+  it('uses Block1 transfer for a model package larger than one CoAP block', async () => {
+    const correlationId = 'large-model-correlation';
+    const request = mockExchange({
+      deviceId: 'coap-1',
+      command: 'STAGE_MODEL_VERSION',
+      correlationId,
+      success: true,
+    });
+    const payload = {
+      model: 'modelC',
+      version: '1.1.5',
+      schema: {
+        description: 'x'.repeat(5_600),
+      },
+      mapping: {
+        fields: {},
+      },
+    };
+
+    await expect(
+      service.sendCommandAndWaitForResponse(
+        'coap-1',
+        'STAGE_MODEL_VERSION',
+        payload,
+        2_000,
+        correlationId,
+      ),
+    ).resolves.toMatchObject({
+      deviceId: 'coap-1',
+      command: 'STAGE_MODEL_VERSION',
+      correlationId,
+      success: true,
+    });
+
+    const requestBody = request.end.mock.calls[0][0] as Buffer;
+
+    expect(requestBody).toBeInstanceOf(Buffer);
+    expect(requestBody.length).toBeGreaterThan(1_024);
+    expect(request.setOption).toHaveBeenCalledWith(
+      'Block1',
+      Buffer.from([6]),
+    );
+    expect(JSON.parse(requestBody.toString('utf8'))).toMatchObject({
+      command: 'STAGE_MODEL_VERSION',
+      payload: {
+        model: 'modelC',
+        version: '1.1.5',
+        correlationId,
+      },
       correlationId,
     });
   });

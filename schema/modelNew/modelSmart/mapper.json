@@ -33,7 +33,7 @@
       "historyPath": "historicalTelemetry.energyUsage"
     },
     "motorTemperature": {
-        "path": "metrics.motorTemperature"
+      "path": "metrics.motorTemperature"
     }
   },
   "dashboard": {
@@ -151,6 +151,14 @@
             "component": "line-chart",
             "bind": "flowRate",
             "title": "Flow Rate History",
+            "unit": "l/min",
+            "colSpan": 2
+          },
+          {
+            "id": "flow-table",
+            "component": "table",
+            "bind": "flowRate",
+            "title": "Flow Rate Table",
             "unit": "l/min",
             "colSpan": 2
           },

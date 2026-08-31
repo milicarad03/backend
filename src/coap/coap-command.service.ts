@@ -6,6 +6,8 @@ import { CoapDeviceRegistryService } from './coap-device-registry.service';
 const coap: any = require('coap');
 
 const MAX_RESPONSE_BYTES = 64 * 1024;
+const BLOCK1_SIZE_EXPONENT = 6;
+const BLOCK1_SIZE_BYTES = 2 ** (BLOCK1_SIZE_EXPONENT + 4);
 
 @Injectable()
 export class CoapCommandService {
@@ -33,6 +35,7 @@ export class CoapCommandService {
       },
       correlationId,
     };
+    const requestBody = Buffer.from(JSON.stringify(envelope), 'utf8');
 
     return new Promise<DeviceCommandResponse>((resolve, reject) => {
       let settled = false;
@@ -62,6 +65,13 @@ export class CoapCommandService {
 
       request.setOption('Content-Format', 'application/json');
       request.setOption('Accept', 'application/json');
+
+      if (requestBody.length > BLOCK1_SIZE_BYTES) {
+        request.setOption(
+          'Block1',
+          Buffer.from([BLOCK1_SIZE_EXPONENT]),
+        );
+      }
 
       request.once('error', (error: Error) => {
         finish(() => reject(error));
@@ -119,7 +129,7 @@ export class CoapCommandService {
         });
       });
 
-      request.end(JSON.stringify(envelope));
+      request.end(requestBody);
     });
   }
 }

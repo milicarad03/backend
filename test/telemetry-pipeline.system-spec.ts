@@ -776,10 +776,6 @@ describe(
             })
             .expect(201);
 
-        /*
-         * Izmenjeno:
-         * odgovor sada sadrži i transportPerformance.
-         */
         expect(
           activeCommandResponse.body,
         ).toMatchObject({
@@ -1144,11 +1140,6 @@ describe(
             })
             .expect(201);
 
-        /*
-         * Izmenjeno:
-         * i IDLE DISPATCHED odgovor sadrži
-         * transportPerformance.
-         */
         expect(
           idleCommandResponse.body,
         ).toMatchObject({
