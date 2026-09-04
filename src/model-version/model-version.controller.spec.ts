@@ -43,7 +43,9 @@ describe('ModelVersionController', () => {
     it('should return an array of model versions', async () => {
       const mockModels = [{ id: '1', name: 'Sensor v1' }];
       mockModelVersionService.findAll.mockResolvedValue(mockModels);
+
       const result = await controller.getAllModels();
+
       expect(service.findAll).toHaveBeenCalledTimes(1);
       expect(result).toEqual(mockModels);
     });
@@ -56,6 +58,7 @@ describe('ModelVersionController', () => {
       expect(guards).toContain(AuthGuard('jwt'));
       expect(guards).toContain(RolesGuard);
     });
+
     it('should propagate errors from the service', async () => {
       mockModelVersionService.findAll.mockRejectedValue(new Error('Database error'));
       await expect(controller.getAllModels()).rejects.toThrow('Database error');

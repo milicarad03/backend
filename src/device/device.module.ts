@@ -14,6 +14,7 @@ import { DeviceCommandAuditService } from './device-command-audit.service';
 import { CoapModule } from 'src/coap/coap.module';
 import { CoapTransportService } from 'src/coap/coap-transport.service';
 import { DeviceCommandService } from './device-command.service';
+import { DeviceBulkImportService } from './device-bulk-import.service';
 
 export type DeviceTelemetry = {
   deviceId: string;
@@ -47,6 +48,7 @@ export type DeviceTelemetry = {
   ],
   controllers: [DeviceController],
   providers: [
+    DeviceBulkImportService,
     DeviceService,
     MqttTransportService,
     CoapTransportService,

@@ -128,13 +128,11 @@ const measurements = new Map(
   ]),
 );
 
-// Warm both paths and leave each device in a known, opposite state.
 for (const target of targets) {
   for (const value of [true, false]) {
     try {
       await sendLedCommand(target, value);
     } catch {
-      // Warm-up calls are intentionally excluded from the report.
     }
   }
   measurements.get(target.transport).nextValue = true;
@@ -246,5 +244,33 @@ const report = {
 await mkdir(dirname(outputPath), { recursive: true });
 await writeFile(outputPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
 
-console.log(JSON.stringify(report, null, 2));
-console.log(`Saved transport comparison: ${outputPath}`);
+const formatMilliseconds = (value) =>
+  value === null ? '-' : `${Number(value).toFixed(3)} ms`;
+
+console.log('\nMQTT vs CoAP command round trip');
+console.log(
+  `Command: ${report.command} | Samples per transport: ${samples} | Warm-up: 2`,
+);
+console.table(
+  Object.fromEntries(
+    Object.entries(results).map(([transport, result]) => [
+      transport.toUpperCase(),
+      {
+        device: result.deviceId,
+        successful: `${result.successfulResponses}/${result.attempts}`,
+        minimum: formatMilliseconds(result.minimumMs),
+        average: formatMilliseconds(result.averageMs),
+        median: formatMilliseconds(result.medianMs),
+        p95: formatMilliseconds(result.p95Ms),
+        maximum: formatMilliseconds(result.maximumMs),
+        successRate: `${result.successRatePercentage}%`,
+        timeouts: result.timeouts,
+        failures: result.failures,
+        noops: result.noops,
+        routeErrors: result.transportMismatches,
+      },
+    ]),
+  ),
+);
+console.log(`Conclusion: ${comparison.conclusion}`);
+console.log(`JSON report: ${outputPath}`);

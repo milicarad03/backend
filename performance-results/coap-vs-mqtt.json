@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-31T07:55:38.524Z",
+  "generatedAt": "2026-09-03T14:05:02.859Z",
   "measurement": "backend transport send to matching device acknowledgement",
   "command": "SET_LED",
   "plannedSamplesPerTransport": 30,
@@ -9,11 +9,11 @@
     "mqtt": {
       "deviceId": "mqtt-led-1",
       "samples": 30,
-      "minimumMs": 0.963,
-      "maximumMs": 3.746,
-      "averageMs": 1.704,
-      "medianMs": 1.522,
-      "p95Ms": 3.552,
+      "minimumMs": 1.402,
+      "maximumMs": 15.922,
+      "averageMs": 10.218,
+      "medianMs": 9.974,
+      "p95Ms": 15.343,
       "attempts": 30,
       "successfulResponses": 30,
       "timeouts": 0,
@@ -25,11 +25,11 @@
     "coap": {
       "deviceId": "coap-led-1",
       "samples": 30,
-      "minimumMs": 1.524,
-      "maximumMs": 6.608,
-      "averageMs": 2.638,
-      "medianMs": 1.929,
-      "p95Ms": 5.433,
+      "minimumMs": 1.275,
+      "maximumMs": 2.999,
+      "averageMs": 1.918,
+      "medianMs": 1.948,
+      "p95Ms": 2.973,
       "attempts": 30,
       "successfulResponses": 30,
       "timeouts": 0,
@@ -41,9 +41,9 @@
   },
   "comparison": {
     "available": true,
-    "coapMinusMqttAverageMs": 0.934,
-    "coapVsMqttAveragePercentage": 54.81,
-    "fasterTransport": "mqtt",
-    "conclusion": "MQTT had the lower local average round trip. This non-DTLS experiment is not a production-network conclusion."
+    "coapMinusMqttAverageMs": -8.3,
+    "coapVsMqttAveragePercentage": -81.23,
+    "fasterTransport": "coap",
+    "conclusion": "COAP had the lower local average round trip. This non-DTLS experiment is not a production-network conclusion."
   }
 }

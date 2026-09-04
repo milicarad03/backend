@@ -1,5 +1,3 @@
-// src/certificates/certificate-registration.service.ts
-
 import { BadRequestException, Injectable, Logger, InternalServerErrorException} from '@nestjs/common';
 import { execFileSync } from 'child_process';
 import {
@@ -162,8 +160,10 @@ export class CertificateRegistrationService {
      
 
       if (!certSerialNumber) {
+    
         throw new InternalServerErrorException('CERTIFICATE_SERIAL_MISSING'); 
       }
+
 
      try {
         await this.deviceService.markDeviceAsVerified(deviceId, certSerialNumber);
@@ -172,6 +172,8 @@ export class CertificateRegistrationService {
         throw new InternalServerErrorException('DB_FAILED'); 
       }
           
+          
+
       const operationalDeviceCertPem = readFileSync(
         operationalDeviceCertPath,
         'utf8',

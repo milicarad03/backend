@@ -16,12 +16,6 @@ export type DeviceTelemetry = {
 };
 
 const logger = new Logger('DeviceDashboardConfig');
-/*const redisClient = new Redis({host: 'localhost',
-  port: 6379,
-});*/
-
-//redisClient.on('connect', () => logger.log('Successfully connected to Redis Server.'));
-//redisClient.on('error', (err) => logger.error(`Redis connection error: ${err.message}`));
 
 export const createDeviceDashboardConfig = (
   deviceRepository: DeviceRepository,
@@ -106,10 +100,24 @@ export const createDeviceDashboardConfig = (
       );
     }
   },
-  onStatusChange: async (deviceId: string, status: string) => {
+  onStatusChange: async (
+    deviceId: string,
+    status: string,
+    context?: { heartbeat?: boolean },
+  ) => {
     try{
-      logger.log(`[CONFIG HOOK] Routing status change for ${deviceId} to telemetry service`);
-      await deviceTelemetryService.handleStatusChange(deviceId, status);
+      const message = `[CONFIG HOOK] Routing status change for ${deviceId} to telemetry service`;
+      if (context?.heartbeat) logger.debug(message);
+      else logger.log(message);
+      if (context?.heartbeat) {
+        await deviceTelemetryService.handleStatusChange(
+          deviceId,
+          status,
+          context,
+        );
+      } else {
+        await deviceTelemetryService.handleStatusChange(deviceId, status);
+      }
     }catch(err:any){
 
       logger.error(`[CONFIG HOOK] Status update failed for ${deviceId}: ${err.message}`);
@@ -123,15 +131,6 @@ export const createDeviceDashboardConfig = (
    payload?: any,
    context?: CommandDispatchContext,
  ) => {
-
-  /*logger.error(
-    `[MQTT SEND]
-     device=${deviceId}
-     command=${command}
-     payload=${JSON.stringify(payload)}
-     stack=${new Error().stack}`
-  );*/
-
    const response =
      await commandService.sendCommandAndWaitForResponse(
        deviceId,

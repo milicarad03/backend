@@ -286,6 +286,30 @@ describe('createDeviceDashboardConfig', () => {
         'ONLINE',
       );
     });
+    it('should forward heartbeat context to telemetry service', async () => {
+      mockDeviceTelemetryService.handleStatusChange = jest
+        .fn()
+        .mockResolvedValue(undefined);
+
+      const config = createDeviceDashboardConfig(
+        mockDeviceRepository as any,
+        mockDeviceTelemetryService as any,
+        mockRedis,
+        mockMqttPublisher as any,
+      );
+
+      await config.onStatusChange('sn-100', 'ONLINE', {
+        heartbeat: true,
+      });
+
+      expect(
+        mockDeviceTelemetryService.handleStatusChange,
+      ).toHaveBeenCalledWith(
+        'sn-100',
+        'ONLINE',
+        { heartbeat: true },
+      );
+    });
   it('should send a command and wait for the device response', async () => {
     const config = createDeviceDashboardConfig(
       mockDeviceRepository as any,

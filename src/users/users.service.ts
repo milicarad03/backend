@@ -1,4 +1,5 @@
 import { Logger,Injectable,HttpException,HttpStatus, BadRequestException,NotFoundException} from "@nestjs/common";
+import { PrismaService } from "../prisma.service.js";
 import { User, Prisma } from "../generated/prisma/client.js";
 import * as bcrypt from 'bcrypt';
 import { UsersRepository } from "./users.repository.js";
@@ -89,6 +90,8 @@ async handleApproval(userId: number, status: 'APPROVED' | 'REJECTED') {
     return updatedUser;
 }
 
+ 
+
   async promoteToAdmin(userId: number) {
     return this.repository.update({
       where: { id: userId },
@@ -111,6 +114,8 @@ async handleApproval(userId: number, status: 'APPROVED' | 'REJECTED') {
     throw new NotFoundException(`Korisnik sa ID-em ${userId} nije pronađen.`);
   }
   }
+
+
   async validateUser(email: string, pass: string): Promise<User | null> {
   
     const user = await this.repository.findOne({ email });
@@ -125,6 +130,7 @@ async handleApproval(userId: number, status: 'APPROVED' | 'REJECTED') {
     
     return null;
   }
+
 
   async login(loginData:LoginDto){
     const user = await this.validateUser(loginData.email, loginData.password);
@@ -147,4 +153,6 @@ async handleApproval(userId: number, status: 'APPROVED' | 'REJECTED') {
       user: safeUser
     };
   }
+
+ 
 }

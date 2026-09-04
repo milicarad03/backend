@@ -53,8 +53,6 @@ export class DeviceCommandService {
               correlationId,
             );
     } catch (error) {
-      // Do not retry the same command over another transport: its side effect
-      // might already have happened. Only remove the stale route for next time.
       if (transport === 'coap') {
         this.coapRegistry.unregister(deviceId);
       }

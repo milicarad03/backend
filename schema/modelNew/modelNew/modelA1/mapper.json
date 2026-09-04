@@ -1,0 +1,111 @@
+{
+  "fields": {
+    "serialNumber": {
+      "path": "attributes.serialNumber"
+    },
+    "firmware": {
+      "path": "attributes.firmware"
+    },
+    "hardwareModel": {
+      "path": "attributes.hardwareModel"
+    },
+    "temperature": {
+      "path": "telemetry.temperature",
+      "historyPath": "historicalTelemetry.temperature"
+    },
+    "humidity": {
+      "path": "telemetry.humidity",
+      "historyPath": "historicalTelemetry.humidity"
+    },
+    "pressure": {
+      "path": "telemetry.pressure",
+      "historyPath": "historicalTelemetry.pressure"
+    },
+    "led": {
+      "path": "telemetry.led"
+    }
+  },
+
+  "dashboard": {
+    "sections": [
+      {
+        "id": "overview",
+        "title": "SENSOR OVERVIEW",
+        "columns": 4,
+        "items": [
+          {
+            "id": "temperature",
+            "component": "value-card",
+            "bind": "temperature",
+            "title": "Temperature"
+          },
+          {
+            "id": "humidity",
+            "component": "value-card",
+            "bind": "humidity",
+            "title": "Humidity"
+          },
+          {
+            "id": "pressure",
+            "component": "value-card",
+            "bind": "pressure",
+            "title": "Pressure"
+          },
+          {
+            "id": "led",
+            "component": "value-card",
+            "bind": "led",
+            "title": "LED State"
+          },
+          {
+          "id": "visible-test",
+          "component": "value-card",
+          "bind": "temperature",
+          "title": "VISIBLE ONLY WHEN LED IS ON",
+          "visibleWhen": {
+            "bind": "led",
+            "equals": true
+          }
+        }
+        ]
+      },
+      {
+        "id": "charts",
+        "title": "HISTORICAL DATA",
+        "columns": 4,
+        "items": [
+          {
+            "id": "temperature-chart",
+            "component": "line-chart",
+            "bind": "temperature",
+            "title": "Temperature History",
+            "colSpan": 2
+          },
+          {
+            "id": "temperature-table",
+            "component": "table",
+            "bind": "temperature",
+            "title": "Temperature Table",
+            "colSpan": 2
+          }
+        ]
+      },
+      {
+        "id": "controls",
+        "title": "DEVICE CONTROLS",
+        "columns": 4,
+        "items": [
+          {
+            "id": "led-switch",
+            "component": "switch",
+            "bind": "led",
+            "title": "LED Control",
+            "command": "SET_LED",
+            "commandField": "value"
+          }
+                    
+        ]
+      }
+    ]
+  }
+}

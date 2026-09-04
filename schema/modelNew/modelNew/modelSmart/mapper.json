@@ -1,0 +1,185 @@
+{
+  "fields": {
+    "serialNumber": {
+      "path": "attributes.serialNumber"
+    },
+    "firmware": {
+      "path": "attributes.firmware"
+    },
+    "hardwareModel": {
+      "path": "attributes.hardwareModel"
+    },
+    "pumpEnabled": {
+      "path": "system.status.pumpEnabled"
+    },
+    "targetFlow": {
+      "path": "system.status.targetFlow"
+    },
+    "alarm": {
+      "path": "system.status.alarm"
+    },
+    "flowRate": {
+      "path": "metrics.flowRate",
+      "historyPath": "historicalTelemetry.flowRate"
+    },
+    "inletPressure": {
+      "path": "metrics.inletPressure"
+    },
+    "outletPressure": {
+      "path": "metrics.outletPressure"
+    },
+    "energyUsage": {
+      "path": "metrics.energyUsage",
+      "historyPath": "historicalTelemetry.energyUsage"
+    },
+    "motorTemperature": {
+        "path": "metrics.motorTemperature"
+    }
+  },
+  "dashboard": {
+    "sections": [
+      {
+        "id": "alarm-section",
+        "title": "ALARM STATUS",
+        "columns": 2,
+        "items": [
+          {
+            "id": "alarm-card",
+            "component": "value-card",
+            "bind": "alarm",
+            "title": "SYSTEM ALARM ACTIVE",
+            "visibleWhen": {
+              "bind": "alarm",
+              "equals": true
+            }
+          }
+        ]
+      },
+      {
+        "id": "overview",
+        "title": "PUMP OVERVIEW",
+        "columns": 4,
+        "items": [
+          {
+            "id": "serial-number",
+            "component": "value-card",
+            "bind": "serialNumber",
+            "title": "Serial Number"
+          },
+          {
+            "id": "hardware-model",
+            "component": "value-card",
+            "bind": "hardwareModel",
+            "title": "Hardware Model"
+          },
+          {
+            "id": "firmware",
+            "component": "value-card",
+            "bind": "firmware",
+            "title": "Firmware"
+          },
+          {
+            "id": "flow-rate",
+            "component": "value-card",
+            "bind": "flowRate",
+            "title": "Flow Rate",
+            "unit": "l/min"
+          },
+          {
+            "id": "inlet-pressure",
+            "component": "value-card",
+            "bind": "inletPressure",
+            "title": "Inlet Pressure",
+            "unit": "bar"
+          },
+          {
+            "id": "outlet-pressure",
+            "component": "value-card",
+            "bind": "outletPressure",
+            "title": "Outlet Pressure",
+            "unit": "bar"
+          },
+          {
+            "id": "energy-usage",
+            "component": "value-card",
+            "bind": "energyUsage",
+            "title": "Energy Usage",
+            "unit": "kWh"
+          },
+          {
+            "id": "motor-temp",
+            "component": "value-card",
+            "bind": "motorTemperature",
+            "title": "Motor Temperature"
+          }
+        ]
+      },
+      {
+        "id": "controls",
+        "title": "PUMP CONTROLS",
+        "columns": 2,
+        "items": [
+          {
+            "id": "pump-switch",
+            "component": "switch",
+            "bind": "pumpEnabled",
+            "title": "Pump Power",
+            "command": "SET_PUMP_STATE",
+            "commandField": "enabled"
+          },
+          {
+            "id": "target-flow-input",
+            "component": "numeric-input",
+            "title": "Target Flow Rate",
+            "bind": "targetFlow",
+            "command": "SET_FLOW_TARGET",
+            "commandField": "target",
+            "min": 0,
+            "max": 500,
+            "step": 5,
+            "unit": "l/min"
+          }
+        ]
+      },
+      {
+        "id": "analytics",
+        "title": "TELEMETRY HISTORY",
+        "columns": 4,
+        "items": [
+          {
+            "id": "flow-chart",
+            "component": "line-chart",
+            "bind": "flowRate",
+            "title": "Flow Rate History",
+            "unit": "l/min",
+            "colSpan": 2
+          },
+          {
+            "id": "flow-table",
+            "component": "table",
+            "bind": "flowRate",
+            "title": "Flow Rate Table",
+            "unit": "l/min",
+            "colSpan": 2
+          },
+          {
+            "id": "energy-chart",
+            "component": "line-chart",
+            "bind": "energyUsage",
+            "title": "Energy Consumption History",
+            "unit": "kWh",
+            "colSpan": 2
+          },
+          {
+            "id": "energy-table",
+            "component": "table",
+            "bind": "energyUsage",
+            "title": "Energy Consumption Table",
+            "unit": "kWh",
+            "colSpan": 2
+          }
+        ]
+      }
+    ]
+  }
+}

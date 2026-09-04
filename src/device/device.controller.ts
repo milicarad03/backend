@@ -27,6 +27,8 @@ import {
   CommandValidationException,
 } from 'serverplugin';
 import { DeviceCommandAuditService } from './device-command-audit.service';
+import { DeviceBulkImportService } from './device-bulk-import.service';
+import { BulkDeviceImportDto } from './dto/bulk-device-import.dto';
 
 @Controller('device')
 export class DeviceController {
@@ -37,7 +39,15 @@ export class DeviceController {
     private readonly mqttTransportService:MqttTransportService,
     private readonly deviceDashboardService:DeviceDashboardService,
     private readonly deviceCommandAuditService: DeviceCommandAuditService,
+    private readonly deviceBulkImportService: DeviceBulkImportService,
   ) {}
+
+  @Post('bulk-import')
+  @Roles(Role.ADMIN)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  async bulkImportDevices(@Body() manifest: BulkDeviceImportDto) {
+    return this.deviceBulkImportService.importDevices(manifest);
+  }
 
  
   
@@ -49,6 +59,7 @@ export class DeviceController {
     const userRole = req.user.role;
 
     this.logger.log(`Fetch devices requested by user ID: ${userId} with role: ${userRole}`);
+
     const normalizedUserIds = Array.isArray(userIds) ? userIds : userIds ? [userIds] : [];
     const normalizedDeviceType = Array.isArray(type) ? type : type ? [type] : [];
 

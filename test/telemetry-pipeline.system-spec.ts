@@ -40,7 +40,7 @@ const backendDirectory = process.cwd();
 
 const simulatorDirectory = resolve(
   process.cwd(),
-  '../../devicesimulator',
+  '../../devicesimulator/devicesimulator',
 );
 
 const schemaPath = join(

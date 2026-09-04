@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma.service.js";
-import { Device, Prisma } from "../generated/prisma/client.js";
+import { Device, DeviceStatus, Prisma } from "../generated/prisma/client.js";
 
 @Injectable()
 export class DeviceRepository {
@@ -79,6 +79,33 @@ export class DeviceRepository {
     return this.prisma.deviceTelemetry.findFirst({
       where: { deviceId },
       orderBy: { timestamp: 'desc' },
+    });
+  }
+
+  async findStaleOnlineDevices(cutoff: Date) {
+    return this.prisma.device.findMany({
+      where: {
+        status: DeviceStatus.ONLINE,
+        lastseen: { lt: cutoff },
+      },
+      select: {
+        serialNumber: true,
+        lastseen: true,
+      },
+    });
+  }
+
+  async markOfflineIfStale(serialNumber: string, cutoff: Date) {
+    return this.prisma.device.updateMany({
+      where: {
+        serialNumber,
+        status: DeviceStatus.ONLINE,
+        lastseen: { lt: cutoff },
+      },
+      data: {
+        status: DeviceStatus.OFFLINE,
+        telemetryStateUpdatedAt: null,
+      },
     });
   }
 

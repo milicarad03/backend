@@ -25,9 +25,39 @@ type SocketUser = {
   email?: string;
 };
 
+const defaultFrontendOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5174',
+];
+
+function isFrontendOriginAllowed(origin: string | undefined): boolean {
+  if (!origin) return true;
+
+  const configuredOrigins = process.env.FRONTEND_ORIGINS
+    ?.split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  return (configuredOrigins?.length
+    ? configuredOrigins
+    : defaultFrontendOrigins
+  ).includes(origin);
+}
+
 @WebSocketGateway({
   cors: {
-    origin: 'http://localhost:5173',
+    origin: (
+      origin: string | undefined,
+      callback: (error: Error | null, allowed?: boolean) => void,
+    ) => {
+      const allowed = isFrontendOriginAllowed(origin);
+      callback(
+        allowed ? null : new Error('WEBSOCKET_ORIGIN_NOT_ALLOWED'),
+        allowed,
+      );
+    },
     credentials: true,
   },
 })

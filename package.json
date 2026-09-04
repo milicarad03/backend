@@ -17,9 +17,11 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json",
-    "test:system:e2e": "npm --prefix /home/rmilica/projectplugin/serverplugin run build && node ./test/run-system-e2e.mjs",
-    "performance:transports": "node ./test/run-transport-performance.mjs"
+       "test:e2e": "jest --config ./test/jest-e2e.json",
+    "test:system:e2e": "npm --prefix ../../projectplugin/serverplugin/plugin run build && node ./test/run-system-e2e.mjs",
+    "test:system:e2e:bulk": "npm --prefix ../../projectplugin/serverplugin/plugin run build && node ./test/run-system-e2e.mjs test/bulk-device-import.system-spec.ts",
+    "performance:transports": "node ./test/run-transport-performance.mjs",
+    "performance:report": "node ./test/generate-performance-report.mjs"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -50,7 +52,7 @@
     "react-hot-toast": "^2.6.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "serverplugin": "file:../../projectplugin/serverplugin",
+    "serverplugin": "file:../../projectplugin/serverplugin/plugin",
     "socket.io": "^4.8.3",
     "typeorm": "^0.3.28"
   },
@@ -110,5 +112,13 @@
   },
   "prisma": {
     "seed": "node --loader ts-node/esm prisma/seed.ts"
+  },
+    "allowScripts": {
+    "@nestjs/core@11.1.19": true,
+    "@prisma/engines@7.7.0": true,
+    "bcrypt@6.0.0": true,
+    "esbuild@0.28.0": true,
+    "prisma@7.7.0": true,
+    "unrs-resolver@1.11.1": true
   }
 }

@@ -16,6 +16,8 @@ describe('DeviceTelemetryService', () => {
     findLatestTelemetryByDeviceId: jest.fn(),
     findOne: jest.fn(), 
     deleteOldTelemetryForDevice: jest.fn(),
+    findStaleOnlineDevices: jest.fn(),
+    markOfflineIfStale: jest.fn(),
   };
 
   const mockTelemetryGateway = {
@@ -181,6 +183,77 @@ describe('DeviceTelemetryService', () => {
       },
     });
     expect(mockTelemetryGateway.emitStatusUpdate).toHaveBeenCalledWith('sn-100', 'OFFLINE');
+  });
+
+  it('marks only devices that are still stale as OFFLINE', async () => {
+    const cutoff = new Date('2026-09-01T12:00:00.000Z');
+    mockDeviceRepository.findStaleOnlineDevices.mockResolvedValue([
+      { serialNumber: 'stale-1', lastseen: new Date('2026-09-01T11:59:00.000Z') },
+      { serialNumber: 'recovered-1', lastseen: new Date('2026-09-01T11:59:10.000Z') },
+    ]);
+    mockDeviceRepository.markOfflineIfStale
+      .mockResolvedValueOnce({ count: 1 })
+      .mockResolvedValueOnce({ count: 0 });
+
+    await expect(
+      service.markStaleDevicesOffline(cutoff),
+    ).resolves.toEqual(['stale-1']);
+
+    expect(mockDeviceRepository.markOfflineIfStale).toHaveBeenCalledWith(
+      'stale-1',
+      cutoff,
+    );
+    expect(mockDeviceRepository.markOfflineIfStale).toHaveBeenCalledWith(
+      'recovered-1',
+      cutoff,
+    );
+    expect(mockTelemetryGateway.emitStatusUpdate).toHaveBeenCalledWith(
+      'stale-1',
+      'OFFLINE',
+    );
+    expect(mockTelemetryGateway.emitStatusUpdate).not.toHaveBeenCalledWith(
+      'recovered-1',
+      'OFFLINE',
+    );
+  });
+
+  it('refreshes lastseen without emitting a duplicate ONLINE event for a heartbeat', async () => {
+    mockDeviceRepository.findOne.mockResolvedValue({
+      id: 'device-1',
+      status: 'ONLINE',
+    });
+    mockDeviceRepository.update.mockResolvedValue({});
+
+    await service.handleStatusChange('sn-100', 'ONLINE', {
+      heartbeat: true,
+    });
+
+    expect(mockDeviceRepository.update).toHaveBeenCalledWith({
+      where: { serialNumber: 'sn-100' },
+      data: {
+        status: 'ONLINE',
+        lastseen: expect.any(Date),
+        telemetryStateUpdatedAt: null,
+      },
+    });
+    expect(mockTelemetryGateway.emitStatusUpdate).not.toHaveBeenCalled();
+  });
+
+  it('emits ONLINE when a heartbeat revives an OFFLINE device', async () => {
+    mockDeviceRepository.findOne.mockResolvedValue({
+      id: 'device-1',
+      status: 'OFFLINE',
+    });
+    mockDeviceRepository.update.mockResolvedValue({});
+
+    await service.handleStatusChange('sn-100', 'ONLINE', {
+      heartbeat: true,
+    });
+
+    expect(mockTelemetryGateway.emitStatusUpdate).toHaveBeenCalledWith(
+      'sn-100',
+      'ONLINE',
+    );
   });
 
   it('persists a telemetry state confirmed by the device', async () => {

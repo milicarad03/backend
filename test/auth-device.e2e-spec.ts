@@ -12,6 +12,7 @@ import request from 'supertest';
 import { DeviceDashboardService } from 'serverplugin';
 import { DeviceController } from '../src/device/device.controller';
 import { DeviceCommandAuditService } from '../src/device/device-command-audit.service';
+import { DeviceBulkImportService } from '../src/device/device-bulk-import.service';
 import { DeviceService } from '../src/device/device.service';
 import { DeviceTelemetryService } from '../src/device/device-telemetry.service';
 import { JwtStrategy } from '../src/jwt.strategy';
@@ -61,6 +62,10 @@ describe('Authentication and device authorization (e2e)', () => {
         value: await action('audit-correlation-1'),
       }),
     ),
+  };
+
+  const deviceBulkImportService = {
+    importDevices: jest.fn(),
   };
 
   const login = async (email: string, password: string) => {
@@ -157,6 +162,10 @@ describe('Authentication and device authorization (e2e)', () => {
             provide: DeviceCommandAuditService,
             useValue: deviceCommandAuditService,
           },
+          {
+            provide: DeviceBulkImportService,
+            useValue: deviceBulkImportService,
+          },
         ],
       }).compile();
 
@@ -244,6 +253,15 @@ describe('Authentication and device authorization (e2e)', () => {
 
     deviceDashboardService.executeCommand.mockResolvedValue({
       status: 'DISPATCHED',
+    });
+    deviceBulkImportService.importDevices.mockResolvedValue({
+      total: 2,
+      created: 2,
+      skipped: 0,
+      failed: 0,
+      targetUser: { id: 2, email: 'user@example.com' },
+      skippedSerialNumbers: [],
+      concurrentSkips: 0,
     });
   });
 
@@ -690,5 +708,73 @@ describe('Authentication and device authorization (e2e)', () => {
       .expect(400);
 
     expect(deviceService.createDevice).not.toHaveBeenCalled();
+  });
+
+  it('forbids a regular user from bulk importing devices', async () => {
+    const userToken = await login(
+      'user@example.com',
+      'user-password',
+    );
+
+    await request(app.getHttpServer())
+      .post('/device/bulk-import')
+      .set('Authorization', `Bearer ${userToken}`)
+      .send({
+        targetUserEmail: 'user@example.com',
+        devices: [
+          {
+            serialNumber: 'fleet-a-001',
+            name: 'Fleet sensor 001',
+            type: 'sensor',
+            model: 'modelA',
+            version: '10.0.0',
+          },
+        ],
+      })
+      .expect(403);
+
+    expect(deviceBulkImportService.importDevices).not.toHaveBeenCalled();
+  });
+
+  it('allows an administrator to bulk import a valid manifest', async () => {
+    const adminToken = await login(
+      'admin@example.com',
+      'admin-password',
+    );
+    const manifest = {
+      targetUserEmail: 'user@example.com',
+      devices: [
+        {
+          serialNumber: 'fleet-a-001',
+          name: 'Fleet sensor 001',
+          type: 'sensor',
+          model: 'modelA',
+          version: '10.0.0',
+        },
+        {
+          serialNumber: 'fleet-b-001',
+          name: 'Fleet compressor 001',
+          type: 'compressor',
+          model: 'modelB',
+          version: '10.0.0',
+        },
+      ],
+    };
+
+    const response = await request(app.getHttpServer())
+      .post('/device/bulk-import')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send(manifest)
+      .expect(201);
+
+    expect(response.body).toMatchObject({
+      total: 2,
+      created: 2,
+      skipped: 0,
+      failed: 0,
+    });
+    expect(deviceBulkImportService.importDevices).toHaveBeenCalledWith(
+      manifest,
+    );
   });
 });

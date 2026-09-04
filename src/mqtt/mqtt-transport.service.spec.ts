@@ -304,7 +304,7 @@ describe('MqttTransportService', () => {
         );
     });
 
-    it('should ignore retained status messages', async () => {
+    it('should ignore retained ONLINE status messages', async () => {
         const loggerSpy = jest.spyOn(service['logger'], 'debug');
 
         await messageHandler(
@@ -316,8 +316,29 @@ describe('MqttTransportService', () => {
         expect(mockPluginCore.processStatus).not.toHaveBeenCalled();
         expect(mockCoapRegistry.unregister).not.toHaveBeenCalled();
         expect(loggerSpy).toHaveBeenCalledWith(
-            expect.stringContaining('Ignoring retained status')
+            expect.stringContaining('Ignoring retained non-OFFLINE status')
         );
+    });
+
+    it('should apply a retained OFFLINE status message', async () => {
+        const topic = 'iot/devices/dev-123/status';
+        const message = {
+            deviceId: 'dev-123',
+            status: 'offline',
+            timestamp: '2026-09-01T12:00:00.000Z',
+        };
+
+        await messageHandler(
+            topic,
+            Buffer.from(JSON.stringify(message)),
+            { retain: true },
+        );
+
+        expect(mockPluginCore.processStatus).toHaveBeenCalledWith(
+            message,
+            { deviceId: 'dev-123', topic, transport: 'mqtt' },
+        );
+        expect(mockCoapRegistry.unregister).toHaveBeenCalledWith('dev-123');
     });
 
     it('should handle INVALID_TIMESTAMP error', async () => {

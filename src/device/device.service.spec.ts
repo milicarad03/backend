@@ -666,10 +666,9 @@ describe('applyModelVersion', () => {
     });
 
     it('should successfully apply new model version', async () => {
-      // Uspešan stage i restart
       mockMqttCommandService.sendCommandAndWaitForResponse
-        .mockResolvedValueOnce({ success: true }) // Za STAGE
-        .mockResolvedValueOnce({ success: true }); // Za RESTART
+        .mockResolvedValueOnce({ success: true })
+        .mockResolvedValueOnce({ success: true });
 
       const result = await service.applyModelVersion(mockDevice.id, mockTargetVersion.id);
 
@@ -699,24 +698,21 @@ describe('applyModelVersion', () => {
     });
 
     it('should rollback database if RESTART command fails', async () => {
-      // Uspešan stage, ali RESTART puca
       mockMqttCommandService.sendCommandAndWaitForResponse
-        .mockResolvedValueOnce({ success: true }) // Za STAGE
-        .mockResolvedValueOnce({ success: false, error: 'TIMEOUT' }); // Za RESTART
+        .mockResolvedValueOnce({ success: true })
+        .mockResolvedValueOnce({ success: false, error: 'TIMEOUT' });
 
       await expect(
         service.applyModelVersion(mockDevice.id, mockTargetVersion.id)
       ).rejects.toThrow(ConflictException);
 
-      // Trebalo bi da se pozove update 2 puta: prvi put za promenu, drugi put za rollback
       expect(mockDeviceRepository.update).toHaveBeenCalledTimes(2);
       
       expect(mockDeviceRepository.update).toHaveBeenLastCalledWith({
         where: { id: mockDevice.id },
-        data: { modelVersion: { connect: { id: mockDevice.modelVersionId } } } // vraća na staru
+        data: { modelVersion: { connect: { id: mockDevice.modelVersionId } } }
       });
 
-      // Invalidacija keša bi trebalo da se desi ponovo prilikom rollback-a
       expect(mockDashboardPlugin.invalidateDeviceCache).toHaveBeenCalledTimes(2);
     });
     

@@ -17,12 +17,10 @@ export type IncomingTelemetry = {
 export class DeviceTelemetryService {
   private readonly logger = new Logger(DeviceTelemetryService.name);
   private readonly statusEmitter = new EventEmitter();
-
   constructor(
     private readonly deviceRepository: DeviceRepository,
     private readonly telemetryGateway: DeviceTelemetryGateway,
   ) {}
-
   async waitForDeviceStatus(deviceId: string, timeout: number): Promise<boolean> {
     return new Promise((resolve) => {
       const timer = setTimeout(() => {
@@ -37,8 +35,14 @@ export class DeviceTelemetryService {
     });
   }
 
-  async handleStatusChange(deviceId: string, status: string) {
-    this.logger.log(`[SERVICE] Handling status change for ${deviceId} -> ${status}`);
+  async handleStatusChange(
+    deviceId: string,
+    status: string,
+    context?: { heartbeat?: boolean },
+  ) {
+    const statusMessage = `[SERVICE] Handling status change for ${deviceId} -> ${status}`;
+    if (context?.heartbeat) this.logger.debug(statusMessage);
+    else this.logger.log(statusMessage);
 
     try {
       const device = await this.deviceRepository.findOne({ serialNumber: deviceId });
@@ -46,24 +50,55 @@ export class DeviceTelemetryService {
         this.logger.warn(`[SERVICE] Skipping status update. Device ${deviceId} does not exist in DB.`);
         return;
       }
-
-      await this.deviceRepository.update({
-        where: { serialNumber: deviceId },
-        data: {
-          status: status as DeviceStatus,
-          lastseen: new Date(),
-          telemetryStateUpdatedAt: null,
-        },
-      });
-
+    await this.deviceRepository.update({
+      where: { serialNumber: deviceId },
+      data: {
+        status: status as DeviceStatus,
+        lastseen: new Date(), 
+        telemetryStateUpdatedAt: null,
+      },
+    });
+    if (!context?.heartbeat || device.status !== status) {
       this.telemetryGateway.emitStatusUpdate(deviceId, status);
       this.statusEmitter.emit(`status:${deviceId}`, status);
+    }
 
-      this.logger.debug(`[SERVICE] Status successfully persisted in DB for: ${deviceId}`);
+    this.logger.debug(`[SERVICE] Status successfully persisted in DB for: ${deviceId}`);
     } catch (err: any) {
       this.logger.error(`[SERVICE] Failed to persist status change for ${deviceId}: ${err.message}`, err.stack);
       throw err;
     }
+
+  }
+
+  async markStaleDevicesOffline(cutoff: Date): Promise<string[]> {
+    const staleDevices =
+      await this.deviceRepository.findStaleOnlineDevices(cutoff);
+    const changedDeviceIds: string[] = [];
+
+    for (const device of staleDevices) {
+      const result = await this.deviceRepository.markOfflineIfStale(
+        device.serialNumber,
+        cutoff,
+      );
+
+      if (result.count === 0) continue;
+
+      changedDeviceIds.push(device.serialNumber);
+      this.telemetryGateway.emitStatusUpdate(
+        device.serialNumber,
+        DeviceStatus.OFFLINE,
+      );
+      this.statusEmitter.emit(
+        `status:${device.serialNumber}`,
+        DeviceStatus.OFFLINE,
+      );
+      this.logger.warn(
+        `[PRESENCE] Device ${device.serialNumber} marked OFFLINE after heartbeat timeout.`,
+      );
+    }
+
+    return changedDeviceIds;
   }
 
   async handleTelemetryStateChange(
@@ -88,21 +123,23 @@ export class DeviceTelemetryService {
   }
 
   async handleTelemetry(telemetry: IncomingTelemetry) {
-    this.logger.debug(`Telemetry received from plugin for device: ${telemetry.deviceId}`);
-    
+
+   this.logger.debug(`Telemetry received from plugin for device: ${telemetry.deviceId}`);
+
     const timestamp = new Date(telemetry.timestamp);
-    if (isNaN(timestamp.getTime())) {
+   if (isNaN(timestamp.getTime())) {
       this.logger.error(`Invalid timestamp received: ${telemetry.timestamp}`);
+
       throw new InvalidTimestampException();
     }
+    
 
-    const device = await this.deviceRepository.findOne({ serialNumber: telemetry.deviceId });
-
-    if (!device) {
-      this.logger.error(`Failed to handle telemetry. Device not found: ${telemetry.deviceId}`);
-      throw new NotFoundException(`Device not found: ${telemetry.deviceId}`);
+    const device = await this.deviceRepository.findOne({ serialNumber: telemetry.deviceId});
+    
+      if (!device) {
+       this.logger.error(`Failed to handle telemetry. Device not found: ${telemetry.deviceId}`);
+       throw new NotFoundException(`Device not found: ${telemetry.deviceId}`);
     }
-
     if (!device.isVerified) {
       this.logger.warn(`[SECURITY] Telemetry rejected: Device ${telemetry.deviceId} is not verified. Access denied.`);
       throw new ForbiddenException(`Device ${telemetry.deviceId} is not verified. Please register your certificate.`);
@@ -110,24 +147,25 @@ export class DeviceTelemetryService {
 
     const last = await this.deviceRepository.findLatestTelemetryByDeviceId(telemetry.deviceId);
     const historicalTelemetry = telemetry.data.historicalTelemetry;
-    const lastData = _.omit((last?.data as Record<string, any>) ?? {}, 'historicalTelemetry');
+    const lastData = _.omit( (last?.data as Record<string, any>) ?? {},"historicalTelemetry");
 
     const mergedData: Record<string, any> = {
-      ...lastData,
-    };
-    
-    const currentData = _.omit(telemetry.data, 'historicalTelemetry');
+        ...lastData
+      };
+    const currentData = _.omit(telemetry.data, "historicalTelemetry");
 
     const mergedCurrent = _.merge(
       {},
       lastData,
-      currentData,
+      currentData
     );
-
-    const history = telemetry.data.historicalTelemetry as Record<string, any>;
+    const history =
+      telemetry.data.historicalTelemetry as Record<string, any>;
 
     if (history) {
+
       Object.entries(history).forEach(([field, values]) => {
+
         if (!Array.isArray(mergedData[field])) {
           mergedData[field] = [];
         }
@@ -135,10 +173,10 @@ export class DeviceTelemetryService {
         mergedData[field].push(...(values as any[]));
       });
     }
-
     Object.entries(telemetry.data).forEach(
       ([field, value]) => {
-        if (field === 'historicalTelemetry') {
+
+        if (field === "historicalTelemetry") {
           return;
         }
 
@@ -149,12 +187,13 @@ export class DeviceTelemetryService {
 
         mergedData[field].push([
           value,
-          telemetry.timestamp,
+          telemetry.timestamp
         ]);
-      },
+      
+      }
     );
+     Object.keys(mergedData).forEach(field => {
 
-    Object.keys(mergedData).forEach(field => {
       if (!Array.isArray(mergedData[field])) {
         return;
       }
@@ -169,19 +208,20 @@ export class DeviceTelemetryService {
         .sort(
           (a: any, b: any) =>
             new Date(a[1]).getTime() -
-            new Date(b[1]).getTime(),
+            new Date(b[1]).getTime()
         )
         .slice(-50);
-    });
+
+  });
 
     const savedTelemetry = await this.deviceRepository.createTelemetry({
-      deviceId: telemetry.deviceId,
-      timestamp,
-      data: mergedData as Prisma.InputJsonValue,
-      modelVersionId: device.modelVersionId ?? undefined,
-    });
-
+        deviceId: telemetry.deviceId,
+        timestamp,
+        data: mergedData as Prisma.InputJsonValue,
+        modelVersionId: device.modelVersionId ?? undefined
+     });
     this.logger.log(`[DATABASE SAVE] Saved telemetry structure: ${JSON.stringify(savedTelemetry, null, 2)}`);
+
     this.logger.debug(`Cleaning up old telemetry records for device: ${telemetry.deviceId}`);
 
     await this.deviceRepository.deleteOldTelemetryForDevice(
@@ -199,15 +239,16 @@ export class DeviceTelemetryService {
       },
     });
 
+
     this.telemetryGateway.emitTelemetryUpdate({
-      deviceId: telemetry.deviceId,
-      timestamp: savedTelemetry.timestamp,
-      data: savedTelemetry.data as Record<string, unknown>,
+        deviceId: telemetry.deviceId,
+        timestamp: savedTelemetry.timestamp,
+        data: savedTelemetry.data as Record<string, unknown>,
     });
 
-    this.logger.log(`Telemetry processed, saved and emitted for device: ${telemetry.deviceId}`);
+  this.logger.log(`Telemetry processed, saved and emitted for device: ${telemetry.deviceId}`);
 
-    return savedTelemetry;
+  return savedTelemetry;
   }
 
   async getTelemetryHistory(deviceId: string) {
@@ -219,4 +260,6 @@ export class DeviceTelemetryService {
     this.logger.log(`Fetching latest telemetry record for device: ${deviceId}`);
     return this.deviceRepository.findLatestTelemetryByDeviceId(deviceId);
   }
+
+ 
 }

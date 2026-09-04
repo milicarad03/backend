@@ -5,6 +5,7 @@ import { User as UserModel } from "../generated/prisma/client.js";
 import { Role } from '../../enums/role.enum'; 
 import { Roles } from '../roles.decorator'; 
 import { RolesGuard } from '../roles.guard';
+import { JwtService } from '@nestjs/jwt';
 import { UseGuards} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import {CreateUserDto} from './dto/create-user.dto'
@@ -39,7 +40,6 @@ export class UsersController {
   @Get('profile')
   @UseGuards(AuthGuard('jwt'))
   getProfile(@Req() req) {
-
     this.logger.debug(`HTTP GET /users/profile - Active profile checked by user ID: ${req.user?.userId}`);
     return req.user; 
   }

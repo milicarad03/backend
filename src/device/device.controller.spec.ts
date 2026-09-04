@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DeviceController } from './device.controller';
+import { DeviceBulkImportService } from './device-bulk-import.service';
 import { DeviceService } from './device.service';
 import { DeviceTelemetryService } from './device-telemetry.service';
 import { NotFoundException,ForbiddenException } from '@nestjs/common';
@@ -58,6 +59,10 @@ const mockDeviceCommandAuditService = {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [DeviceController],
       providers: [
+        {
+          provide: DeviceBulkImportService,
+          useValue: { importDevices: jest.fn() },
+        },
         {
           provide: DeviceService,
           useValue: mockDeviceService,

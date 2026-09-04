@@ -45,7 +45,7 @@ export class PostController {
 
     
     @Post("post")
-    @Roles(Role.USER, Role.ADMIN) 
+    @Roles(Role.USER, Role.ADMIN)
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     async createDraft(
         @Req() req,

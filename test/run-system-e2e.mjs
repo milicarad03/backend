@@ -103,7 +103,31 @@ console.log(
 
 runLocalBinary('prisma', ['migrate', 'deploy']);
 
-console.log('[system-e2e] Starting telemetry pipeline test...');
+const defaultTestPaths = [
+  'test/telemetry-pipeline.system-spec.ts',
+  'test/bulk-device-import.system-spec.ts',
+];
+const requestedTestPaths = process.argv.slice(2);
+const testPaths =
+  requestedTestPaths.length > 0
+    ? requestedTestPaths
+    : defaultTestPaths;
+
+for (const testPath of testPaths) {
+  if (
+    !/^test\/[A-Za-z0-9._-]+\.system-spec\.ts$/.test(testPath) ||
+    !existsSync(join(backendDirectory, testPath))
+  ) {
+    console.error(
+      `SYSTEM_E2E_TEST_PATH_INVALID: ${testPath}`,
+    );
+    process.exit(1);
+  }
+}
+
+console.log(
+  `[system-e2e] Starting: ${testPaths.join(', ')}`,
+);
 
 runLocalBinary('jest', [
   '--config',
@@ -111,5 +135,5 @@ runLocalBinary('jest', [
   '--runInBand',
   '--detectOpenHandles',
   '--runTestsByPath',
-  'test/telemetry-pipeline.system-spec.ts',
+  ...testPaths,
 ]);

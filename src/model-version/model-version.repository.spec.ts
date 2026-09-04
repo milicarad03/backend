@@ -94,7 +94,7 @@ describe('ModelVersionRepository', () => {
       await expect(repository.findMany()).rejects.toThrow('Connection refused');
     });
     it('should log the error when findOne fails', async () => {
-      const loggerSpy = jest.spyOn(repository['logger'], 'error'); // Pristupamo privatnom loggeru
+      const loggerSpy = jest.spyOn(repository['logger'], 'error');
       const error = new Error('DB Connection Lost');
       mockPrismaService.modelVersion.findUnique.mockRejectedValue(error);
 

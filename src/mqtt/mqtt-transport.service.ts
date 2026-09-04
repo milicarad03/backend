@@ -77,10 +77,6 @@ export class MqttTransportService
     this.disconnect();
   }
 
-  // ==================================================
-  // INITIALIZATION
-  // ==================================================
-
   private loadTopics(): string[] {
     const configPath = path.join(
       process.cwd(),
@@ -188,10 +184,6 @@ export class MqttTransportService
     }
   }
 
-  // ==================================================
-  // MESSAGE HANDLING
-  // ==================================================
-
   private extractDeviceIdFromTopic(
     topic: string,
   ): string | null {
@@ -228,7 +220,6 @@ export class MqttTransportService
         transport: 'mqtt',
       };
 
-      // Handle response messages
       if (topic.endsWith('/response')) {
         this.mqttCommandService.handleResponse(
           context.deviceId,
@@ -237,7 +228,6 @@ export class MqttTransportService
         return;
       }
 
-      // Handle telemetry messages
       if (topic.endsWith('/telemetry')) {
         this.logger.debug(
           `Received raw telemetry for ${context.deviceId}: ${JSON.stringify(message, null, 2)}`,
@@ -279,7 +269,6 @@ export class MqttTransportService
         );
         return;
       }
-      // Handle attribute messages
       if (topic.endsWith('/attributes')) {
         this.logger.log(
           `Incoming device attributes update for device: ${context.deviceId}`,
@@ -300,22 +289,35 @@ export class MqttTransportService
         return;
       }
 
-      // Handle status messages
       if (topic.endsWith('/status')) {
         const publishPacket = packet as any;
+        const normalizedStatus =
+          message && typeof message === 'object' && 'status' in message
+            ? String((message as { status?: unknown }).status).toUpperCase()
+            : null;
+        const isHeartbeat =
+          message && typeof message === 'object' && 'heartbeat' in message
+            ? (message as { heartbeat?: unknown }).heartbeat === true
+            : false;
 
-        if (publishPacket?.retain) {
+        if (publishPacket?.retain && normalizedStatus !== 'OFFLINE') {
           this.logger.debug(
-            `Ignoring retained status for ${context.deviceId}`,
+            `Ignoring retained non-OFFLINE status for ${context.deviceId}`,
           );
           return;
         }
 
-        this.logger.log(
-          `Incoming operational status event update for device: ${context.deviceId}`,
-        );
+        if (publishPacket?.retain) {
+          this.logger.log(
+            `Applying retained OFFLINE status for ${context.deviceId}`,
+          );
+        }
 
-        // A fresh MQTT status makes an older CoAP endpoint invalid.
+        const statusMessage =
+          `Incoming operational status event update for device: ${context.deviceId}`;
+        if (isHeartbeat) this.logger.debug(statusMessage);
+        else this.logger.log(statusMessage);
+
         this.coapRegistry.unregister(context.deviceId);
         await processStatus(message, context);
 
